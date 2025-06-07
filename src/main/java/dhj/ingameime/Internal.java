@@ -124,20 +124,20 @@ public class Internal {
                 try {
                     LOG.info("Commit: {}", arg0);
                     GuiScreen screen = Minecraft.getMinecraft().currentScreen;
-//                    if (screen != null) {
-//                        // NEI Integration
+                    if (screen != null) {
+                        // NEI Integration
 //                        if (Loader.isModLoaded("NotEnoughItems") && GuiContainerManager.getManager() != null) {
 //                            for (char c : arg0.toCharArray()) {
 //                                GuiContainerManager.getManager().keyTyped(c, Keyboard.KEY_NONE);
 //                            }
 //                            return;
 //                        }
-//
-//                        // Normal Minecraft Guis
-//                        for (char c : arg0.toCharArray()) {
-//                            ((MixinGuiScreen) screen).callKeyTyped(c, Keyboard.KEY_NONE);
-//                        }
-//                    }
+
+                        // Normal Minecraft Guis
+                        for (char c : arg0.toCharArray()) {
+                            ((MixinGuiScreen) screen).callKeyTyped(c, Keyboard.KEY_NONE);
+                        }
+                    }
                 } catch (Throwable e) {
                     LOG.error("Exception thrown during callback handling", e);
                 }
