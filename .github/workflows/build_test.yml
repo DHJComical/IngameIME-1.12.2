@@ -1,0 +1,46 @@
+# This workflow will build and upload test artifact
+# Simple workflow with ignoring condition to prevent unneccessary build
+# To download artifact check on job task
+
+name: Build Test Artifact
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    name: Build and Test For example
+    runs-on: ubuntu-latest
+
+    steps:
+          - name: Checkout Repository
+            uses: actions/checkout@v4
+          - name: Gather Gradle properties
+            uses: madhead/read-java-properties@latest
+            id: gradle_properties
+            with:
+                 file: gradle.properties
+                 all: true
+          - name: Grant Execute Permission for gradlew
+            run: chmod +x gradlew
+          - name: Get current date
+            id: date
+            run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
+          - name: Change mod version
+            run: sed -i "s/mod_version.*=.*/mod_version = ${{ steps.date.outputs.date }}/g"  gradle.properties
+          - name: Setup Java
+            uses: actions/setup-java@v3
+            with:
+              java-version: '21'
+              distribution: 'zulu'
+              cache: gradle
+          - name: Build
+            uses: gradle/gradle-build-action@v2
+            with:
+              arguments: build --info --stacktrace
+          - name: Upload Build Artifacts
+            uses: actions/upload-artifact@v4
+            with:
+              name: ${{steps.gradle_properties.mod_id}}-1.12.2-${{ steps.date.outputs.date }}-${{ github.run_number}}
+              path: build/libs
