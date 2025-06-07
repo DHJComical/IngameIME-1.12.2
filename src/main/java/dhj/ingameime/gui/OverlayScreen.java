@@ -28,7 +28,7 @@ public class OverlayScreen extends Widget {
         GlStateManager.enableDepth();
 
         GlStateManager.pushMatrix();
-        GlStateManager.translate(0, 0, 1000);
+        GlStateManager.translate(0, 0, 0.1f);
         PreEdit.draw();
         CandidateList.draw();
         WInputMode.draw();
