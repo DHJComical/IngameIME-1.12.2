@@ -232,6 +232,7 @@ processResources {
 
 }
 
+
 jar {
     manifest {
         def attribute_map = [:]
@@ -249,9 +250,14 @@ jar {
             attribute_map['FMLAT'] = propertyString('access_transformer_locations')
         }
         attributes(attribute_map)
+        attributes["TweakClass"] = "org.spongepowered.asm.launch.MixinTweaker"
+        attributes["MixinConfigs"] = "mixins.ingameime.json"
+        attributes["ForceLoadAsMod"] = "true"
+        attributes["FMLCorePluginContainsFMLMod"] = "true"
     }
     // Add all embedded dependencies into the jar
     from(provider{ configurations.embed.collect {it.isDirectory() ? it : zipTree(it)} })
+
 }
 
 idea {
