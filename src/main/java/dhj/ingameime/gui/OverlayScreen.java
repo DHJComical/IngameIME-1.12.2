@@ -2,6 +2,7 @@ package dhj.ingameime.gui;
 
 import dhj.ingameime.Internal;
 import ingameime.InputContext;
+import net.minecraft.client.renderer.GlStateManager;
 import org.lwjgl.opengl.GL11;
 
 public class OverlayScreen extends Widget {
@@ -22,11 +23,21 @@ public class OverlayScreen extends Widget {
     @Override
     public void draw() {
         if (!isActive()) return;
-        GL11.glDisable(GL11.GL_DEPTH_TEST);
+
+        boolean depthTest = GL11.glIsEnabled(GL11.GL_DEPTH_TEST);
+        GlStateManager.enableDepth();
+
+        GlStateManager.pushMatrix();
+        GlStateManager.translate(0, 0, 1000);
         PreEdit.draw();
         CandidateList.draw();
         WInputMode.draw();
-        GL11.glEnable(GL11.GL_DEPTH_TEST);
+        GlStateManager.popMatrix();
+
+        if (depthTest)
+            GlStateManager.enableDepth();
+        else
+            GlStateManager.disableDepth();
     }
 
     public void setCaretPos(int x, int y) {
