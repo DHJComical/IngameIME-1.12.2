@@ -5,6 +5,9 @@ import com.gtnewhorizons.retrofuturagradle.mcp.InjectTagsTask
 import org.jetbrains.changelog.Changelog
 import org.jetbrains.gradle.ext.Gradle
 
+
+
+
 plugins {
     id 'java'
     id 'java-library'
@@ -107,6 +110,14 @@ repositories {
         name 'CleanroomMC Maven'
         url 'https://maven.cleanroommc.com'
     }
+    maven {
+        name = 'MixinGradle'
+        url = 'https://repo.spongepowered.org/repository/maven-public'
+    }
+    maven {
+        name = 'CodeChickenLib'
+        url = 'https://maven.covers1624.net'
+    }
 }
 
 dependencies {
@@ -144,6 +155,28 @@ dependencies {
         testImplementation 'org.junit.jupiter:junit-jupiter:5.7.1'
         testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     }
+    // Common:
+    annotationProcessor 'org.ow2.asm:asm-debug-all:5.2'
+    annotationProcessor 'com.google.guava:guava:32.1.2-jre'
+    annotationProcessor 'com.google.code.gson:gson:2.8.9'
+
+
+    // RetroFuturaGradle:
+    String mixinBooter = modUtils.enableMixins('zone.rong:mixinbooter:10.1')
+    modUtils.enableMixins('zone.rong:mixinbooter:10.1', 'ingameime.mixins.refmap.json')
+    api (mixinBooter) {
+        transitive = false
+    }
+    annotationProcessor (mixinBooter) {
+        transitive = false
+    }
+
+    implementation 'org.spongepowered:mixin:0.8.5'
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+
+    implementation 'codechicken:CodeChickenLib:1.12.2-3.2.3.358:deobf'
+
+    implementation 'mezz:jei:4.28.0'
 }
 
 apply from: 'gradle/scripts/dependencies.gradle'
@@ -357,3 +390,16 @@ idea.project.settings {
 
 apply from: 'gradle/scripts/publishing.gradle'
 apply from: 'gradle/scripts/extra.gradle'
+
+// 定义预编译生成的代码目录
+def nativeSourcesDir = file("IngameIME-Native")
+def modsDir = file("src")
+
+// 配置源码集 (sourceSets)
+sourceSets.main {
+    java {
+        // 添加预编译目录到主源码集
+        srcDir nativeSourcesDir
+        srcDir modsDir
+    }
+}

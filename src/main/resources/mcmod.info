@@ -1,12 +1,25 @@
-[{
-	"modid": "${mod_id}",
-	"name": "${mod_name}",
-	"version": "${mod_version}",
-	"mcversion": "1.12.2",
-	"description": "${mod_description}",
-	"authorList": ["${mod_authors}"],
-	"credits": "${mod_credits}",
-	"url": "${mod_url}",
-	"updateJSON": "${mod_update_json}",
-	"logoFile": "${mod_logo_path}"
-}]
+{
+  "modListVersion": 2,
+  "modList": [
+    {
+      "modid": "ingameime",
+      "name": "IngameIME",
+      "description": "Use InputMethod in full screen minecraft",
+      "version": "${modVersion}",
+      "mcversion": "1.7.10",
+      "url": "https://github.com/Windmill-City/IngameIME-Minecraft",
+      "updateUrl": "",
+      "authorList": [
+        "Windmill_City"
+      ],
+      "credits": "",
+      "logoFile": "Icon.png",
+      "screenshots": [],
+      "parent": "",
+      "requiredMods": [],
+      "dependencies": [],
+      "dependants": [],
+      "useDependencyInformation": true
+    }
+  ]
+}
