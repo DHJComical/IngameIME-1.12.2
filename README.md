@@ -10,12 +10,12 @@ Use `InputMethod` in **Full screen** Minecraft!
 
 ## Preview
 
-### Window Mode
+[//]: # (### Window Mode)
 
 [//]: # (![Window Mode]&#40;docs/WindowInput.gif&#41;)
 
 [//]: # ()
-[//]: # (### Full screen Mode)
+### Full screen Mode
 
 ![Full screen Mode](docs/FullScreenInput.gif)
 
