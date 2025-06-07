@@ -11,7 +11,7 @@ import org.apache.logging.log4j.Logger;
         modid = Tags.MOD_ID,
         version = Tags.VERSION,
         name = Tags.MOD_NAME,
-        acceptedMinecraftVersions = "[1.12.2.]",
+        acceptedMinecraftVersions = "[1.12.2]",
         acceptableRemoteVersions = "*",
         dependencies = "required-after:mixinbooter;after:jei"
 )
