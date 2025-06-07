@@ -12,7 +12,7 @@ public class IngameIMEJNI {
   public final static native void delete_PreEditCallbackImpl(long jarg1);
   public final static native void PreEditCallbackImpl_call(long jarg1, PreEditCallbackImpl jarg1_, int jarg2, long jarg3, PreEditContext jarg3_);
   public final static native long new_PreEditCallbackImpl();
-  public final static native void PreEditCallbackImpl_director_connect(ingameime.PreEditCallbackImpl obj, long cptr, boolean mem_own, boolean weak_global);
+  public final static native void PreEditCallbackImpl_director_connect(PreEditCallbackImpl obj, long cptr, boolean mem_own, boolean weak_global);
   public final static native void PreEditCallbackImpl_change_ownership(PreEditCallbackImpl obj, long cptr, boolean take_or_release);
   public final static native void PreEditCallback_call(long jarg1, PreEditCallback jarg1_, int jarg2, long jarg3, PreEditContext jarg3_);
   public final static native long new_PreEditCallback(long jarg1, PreEditCallbackImpl jarg1_);

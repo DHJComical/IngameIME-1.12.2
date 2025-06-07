@@ -28,9 +28,7 @@ public class Widget extends Gui {
 
         // Check if exceed screen
         ScaledResolution scaledresolution = new ScaledResolution(
-                Minecraft.getMinecraft(),
-                Minecraft.getMinecraft().displayWidth,
-                Minecraft.getMinecraft().displayHeight);
+                Minecraft.getMinecraft());
         int displayHeight = scaledresolution.getScaledHeight();
         int displayWidth = scaledresolution.getScaledWidth();
         if (X + Width > displayWidth) X = Math.max(0, displayWidth - Width);

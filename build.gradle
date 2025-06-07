@@ -174,8 +174,6 @@ dependencies {
     implementation 'org.spongepowered:mixin:0.8.5'
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
-    implementation 'codechicken:CodeChickenLib:1.12.2-3.2.3.358:deobf'
-
     implementation 'mezz:jei:4.28.0'
 }
 
@@ -390,16 +388,3 @@ idea.project.settings {
 
 apply from: 'gradle/scripts/publishing.gradle'
 apply from: 'gradle/scripts/extra.gradle'
-
-// 定义预编译生成的代码目录
-def nativeSourcesDir = file("IngameIME-Native")
-def modsDir = file("src")
-
-// 配置源码集 (sourceSets)
-sourceSets.main {
-    java {
-        // 添加预编译目录到主源码集
-        srcDir nativeSourcesDir
-        srcDir modsDir
-    }
-}

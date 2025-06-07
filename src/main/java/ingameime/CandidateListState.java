@@ -6,7 +6,7 @@
  * the SWIG interface file instead.
  * ----------------------------------------------------------------------------- */
 
-package src.main.java.ingameime;
+package ingameime;
 
 public final class CandidateListState {
   public final static CandidateListState Begin = new CandidateListState("Begin");

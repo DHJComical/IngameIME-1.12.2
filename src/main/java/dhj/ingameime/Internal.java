@@ -1,10 +1,10 @@
 package dhj.ingameime;
 
 import dhj.ingameime.mixins.MixinGuiScreen;
-import codechicken.nei.guihook.GuiContainerManager;
+//import codechicken.nei.guihook.GuiContainerManager;
 //import cpw.mods.fml.common.Loader;
-import ingameime.API;
 import net.minecraftforge.fml.common.Loader;
+import ingameime.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import org.lwjgl.LWJGLUtil;
@@ -22,19 +22,19 @@ import static dhj.ingameime.IngameIME_Forge.LOG;
 
 public class Internal {
     public static boolean LIBRARY_LOADED = false;
-    public static ingameime.InputContext InputCtx = null;
-    static ingameime.PreEditCallbackImpl preEditCallbackProxy = null;
-    static ingameime.CommitCallbackImpl commitCallbackProxy = null;
-    static ingameime.CandidateListCallbackImpl candidateListCallbackProxy = null;
-    static ingameime.InputModeCallbackImpl inputModeCallbackProxy = null;
-    static ingameime.PreEditCallback preEditCallback = null;
-    static ingameime.CommitCallback commitCallback = null;
-    static ingameime.CandidateListCallback candidateListCallback = null;
-    static ingameime.InputModeCallback inputModeCallback = null;
+    public static InputContext InputCtx = null;
+    static PreEditCallbackImpl preEditCallbackProxy = null;
+    static CommitCallbackImpl commitCallbackProxy = null;
+    static CandidateListCallbackImpl candidateListCallbackProxy = null;
+    static InputModeCallbackImpl inputModeCallbackProxy = null;
+    static PreEditCallback preEditCallback = null;
+    static CommitCallback commitCallback = null;
+    static CandidateListCallback candidateListCallback = null;
+    static InputModeCallback inputModeCallback = null;
 
     private static void tryLoadLibrary(String libName) {
         if (!LIBRARY_LOADED) try {
-            InputStream lib = ingameime.IngameIME.class.getClassLoader().getResourceAsStream(libName);
+            InputStream lib = IngameIME.class.getClassLoader().getResourceAsStream(libName);
             if (lib == null) throw new RuntimeException("Required library resource not exist!");
             Path path = Files.createTempFile("IngameIME-Native", null);
             Files.copy(lib, path, StandardCopyOption.REPLACE_EXISTING);
@@ -86,7 +86,7 @@ public class Internal {
     public static void createInputCtx() {
         if (!LIBRARY_LOADED) return;
 
-        LOG.info("Using IngameIME-Native: {}", ingameime.InputContext.getVersion());
+        LOG.info("Using IngameIME-Native: {}", InputContext.getVersion());
 
         long hWnd = Loader.isModLoaded("lwjgl3ify") ? getWindowHandle_LWJGL3() : getWindowHandle_LWJGL2();
         if (hWnd != 0) {
@@ -94,21 +94,21 @@ public class Internal {
             if (Minecraft.getMinecraft().isFullScreen()) Config.UiLess_Windows.set(true);
             API api = Config.API_Windows.getString().equals("TextServiceFramework") ? API.TextServiceFramework : API.Imm32;
             LOG.info("Using API: {}, UiLess: {}", api, Config.UiLess_Windows.getBoolean());
-            InputCtx = ingameime.IngameIME.CreateInputContextWin32(hWnd, api, Config.UiLess_Windows.getBoolean());
+            InputCtx = IngameIME.CreateInputContextWin32(hWnd, api, Config.UiLess_Windows.getBoolean());
             LOG.info("InputContext has created!");
         } else {
             LOG.error("InputContext could not init as the hWnd is NULL!");
             return;
         }
 
-        preEditCallbackProxy = new ingameime.PreEditCallbackImpl() {
+        preEditCallbackProxy = new PreEditCallbackImpl() {
             @Override
-            protected void call(ingameime.CompositionState arg0, ingameime.PreEditContext arg1) {
+            protected void call(CompositionState arg0, PreEditContext arg1) {
                 try {
                     LOG.info("PreEdit State: {}", arg0);
 
                     //Hide Indicator when PreEdit start
-                    if (arg0 == ingameime.CompositionState.Begin) ClientProxy.Screen.WInputMode.setActive(false);
+                    if (arg0 == CompositionState.Begin) ClientProxy.Screen.WInputMode.setActive(false);
 
                     if (arg1 != null) ClientProxy.Screen.PreEdit.setContent(arg1.getContent(), arg1.getSelStart());
                     else ClientProxy.Screen.PreEdit.setContent(null, -1);
@@ -117,27 +117,27 @@ public class Internal {
                 }
             }
         };
-        preEditCallback = new ingameime.PreEditCallback(preEditCallbackProxy);
-        commitCallbackProxy = new ingameime.CommitCallbackImpl() {
+        preEditCallback = new PreEditCallback(preEditCallbackProxy);
+        commitCallbackProxy = new CommitCallbackImpl() {
             @Override
             protected void call(String arg0) {
                 try {
                     LOG.info("Commit: {}", arg0);
                     GuiScreen screen = Minecraft.getMinecraft().currentScreen;
-                    if (screen != null) {
-                        // NEI Integration
-                        if (Loader.isModLoaded("jei") && GuiContainerManager.getManager() != null) {
-                            for (char c : arg0.toCharArray()) {
-                                GuiContainerManager.getManager().keyTyped(c, Keyboard.KEY_NONE);
-                            }
-                            return;
-                        }
-
-                        // Normal Minecraft Guis
-                        for (char c : arg0.toCharArray()) {
-                            ((MixinGuiScreen) screen).callKeyTyped(c, Keyboard.KEY_NONE);
-                        }
-                    }
+//                    if (screen != null) {
+//                        // NEI Integration
+//                        if (Loader.isModLoaded("NotEnoughItems") && GuiContainerManager.getManager() != null) {
+//                            for (char c : arg0.toCharArray()) {
+//                                GuiContainerManager.getManager().keyTyped(c, Keyboard.KEY_NONE);
+//                            }
+//                            return;
+//                        }
+//
+//                        // Normal Minecraft Guis
+//                        for (char c : arg0.toCharArray()) {
+//                            ((MixinGuiScreen) screen).callKeyTyped(c, Keyboard.KEY_NONE);
+//                        }
+//                    }
                 } catch (Throwable e) {
                     LOG.error("Exception thrown during callback handling", e);
                 }

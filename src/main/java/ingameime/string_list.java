@@ -52,7 +52,7 @@ public class string_list extends java.util.AbstractSequentialList<String> {
     this();
     java.util.ListIterator<String> it = listIterator(0);
     // Special case the "copy constructor" here to avoid lots of cross-language calls
-    for (java.lang.Object o : c) {
+    for (Object o : c) {
       it.add((String)o);
     }
   }
@@ -180,20 +180,20 @@ public class string_list extends java.util.AbstractSequentialList<String> {
       IngameIMEJNI.string_list_Iterator_set_unchecked(swigCPtr, this, v);
     }
   
-    public string_list.Iterator next_unchecked() {
-      return new string_list.Iterator(IngameIMEJNI.string_list_Iterator_next_unchecked(swigCPtr, this), true);
+    public Iterator next_unchecked() {
+      return new Iterator(IngameIMEJNI.string_list_Iterator_next_unchecked(swigCPtr, this), true);
     }
   
-    public string_list.Iterator previous_unchecked() {
-      return new string_list.Iterator(IngameIMEJNI.string_list_Iterator_previous_unchecked(swigCPtr, this), true);
+    public Iterator previous_unchecked() {
+      return new Iterator(IngameIMEJNI.string_list_Iterator_previous_unchecked(swigCPtr, this), true);
     }
   
     public String deref_unchecked() {
       return IngameIMEJNI.string_list_Iterator_deref_unchecked(swigCPtr, this);
     }
   
-    public string_list.Iterator advance_unchecked(long index) {
-      return new string_list.Iterator(IngameIMEJNI.string_list_Iterator_advance_unchecked(swigCPtr, this, index), true);
+    public Iterator advance_unchecked(long index) {
+      return new Iterator(IngameIMEJNI.string_list_Iterator_advance_unchecked(swigCPtr, this, index), true);
     }
   
   }
@@ -214,8 +214,8 @@ public class string_list extends java.util.AbstractSequentialList<String> {
     IngameIMEJNI.string_list_clear(swigCPtr, this);
   }
 
-  public string_list.Iterator remove(string_list.Iterator pos) {
-    return new string_list.Iterator(IngameIMEJNI.string_list_remove(swigCPtr, this, string_list.Iterator.getCPtr(pos), pos), true);
+  public Iterator remove(Iterator pos) {
+    return new Iterator(IngameIMEJNI.string_list_remove(swigCPtr, this, Iterator.getCPtr(pos), pos), true);
   }
 
   public void removeLast() {
@@ -234,16 +234,16 @@ public class string_list extends java.util.AbstractSequentialList<String> {
     IngameIMEJNI.string_list_addFirst(swigCPtr, this, value);
   }
 
-  private string_list.Iterator begin() {
-    return new string_list.Iterator(IngameIMEJNI.string_list_begin(swigCPtr, this), true);
+  private Iterator begin() {
+    return new Iterator(IngameIMEJNI.string_list_begin(swigCPtr, this), true);
   }
 
-  public string_list.Iterator end() {
-    return new string_list.Iterator(IngameIMEJNI.string_list_end(swigCPtr, this), true);
+  public Iterator end() {
+    return new Iterator(IngameIMEJNI.string_list_end(swigCPtr, this), true);
   }
 
-  private string_list.Iterator insert(string_list.Iterator pos, String value) {
-    return new string_list.Iterator(IngameIMEJNI.string_list_insert(swigCPtr, this, string_list.Iterator.getCPtr(pos), pos, value), true);
+  private Iterator insert(Iterator pos, String value) {
+    return new Iterator(IngameIMEJNI.string_list_insert(swigCPtr, this, Iterator.getCPtr(pos), pos, value), true);
   }
 
   public string_list(int count, String value) {
@@ -254,16 +254,16 @@ public class string_list extends java.util.AbstractSequentialList<String> {
     return IngameIMEJNI.string_list_doSize(swigCPtr, this);
   }
 
-  private int doPreviousIndex(string_list.Iterator pos) {
-    return IngameIMEJNI.string_list_doPreviousIndex(swigCPtr, this, string_list.Iterator.getCPtr(pos), pos);
+  private int doPreviousIndex(Iterator pos) {
+    return IngameIMEJNI.string_list_doPreviousIndex(swigCPtr, this, Iterator.getCPtr(pos), pos);
   }
 
-  private int doNextIndex(string_list.Iterator pos) {
-    return IngameIMEJNI.string_list_doNextIndex(swigCPtr, this, string_list.Iterator.getCPtr(pos), pos);
+  private int doNextIndex(Iterator pos) {
+    return IngameIMEJNI.string_list_doNextIndex(swigCPtr, this, Iterator.getCPtr(pos), pos);
   }
 
-  private boolean doHasNext(string_list.Iterator pos) {
-    return IngameIMEJNI.string_list_doHasNext(swigCPtr, this, string_list.Iterator.getCPtr(pos), pos);
+  private boolean doHasNext(Iterator pos) {
+    return IngameIMEJNI.string_list_doHasNext(swigCPtr, this, Iterator.getCPtr(pos), pos);
   }
 
 }

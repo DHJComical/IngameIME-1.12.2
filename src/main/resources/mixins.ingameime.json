@@ -1,15 +1,15 @@
 {
   "required": false,
   "minVersion": "0.8",
-  "package": "city.windmill.ingameime.mixins",
+  "package": "dhj.ingameime.mixins",
   "compatibilityLevel": "JAVA_8",
   "refmap": "mixins.ingameime.refmap.json",
   "mixins": [
   ],
   "client": [
-    "windmill.ingameime.mixins.MixinGuiScreen",
-    "windmill.ingameime.mixins.MixinGuiTextField",
-    "windmill.ingameime.mixins.MixinMinecraft"
+    "MixinGuiScreen",
+    "MixinGuiTextField",
+    "MixinMinecraft"
   ],
   "injectors": {
     "defaultRequire": 0

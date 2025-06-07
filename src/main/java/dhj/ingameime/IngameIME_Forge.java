@@ -17,7 +17,7 @@ import org.apache.logging.log4j.Logger;
 )
 public class IngameIME_Forge {
     public static final Logger LOG = LogManager.getLogger(Tags.MOD_NAME);
-    @SidedProxy(clientSide = "ingameime.dhj.ClientProxy", serverSide = "ingameime.dhj.CommonProxy")
+    @SidedProxy(clientSide = "dhj.ingameime.ClientProxy", serverSide = "dhj.ingameime.CommonProxy")
     public static CommonProxy proxy;
 
     @Mod.EventHandler
