@@ -163,7 +163,7 @@ dependencies {
 
     // RetroFuturaGradle:
     String mixinBooter = modUtils.enableMixins('zone.rong:mixinbooter:10.6')
-    modUtils.enableMixins('zone.rong:mixinbooter:10.6', 'ingameime.mixins.refmap.json')
+    modUtils.enableMixins('zone.rong:mixinbooter:10.6', 'mixins.ingameime.refmap.json')
     api (mixinBooter) {
         transitive = false
     }
