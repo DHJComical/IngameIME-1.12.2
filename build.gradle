@@ -160,21 +160,6 @@ dependencies {
     annotationProcessor 'com.google.guava:guava:32.1.2-jre'
     annotationProcessor 'com.google.code.gson:gson:2.8.9'
 
-
-    // RetroFuturaGradle:
-    String mixinBooter = modUtils.enableMixins('zone.rong:mixinbooter:10.1')
-    modUtils.enableMixins('zone.rong:mixinbooter:10.1', 'mixins.ingameime.refmap.json')
-    api (mixinBooter) {
-        transitive = false
-    }
-    annotationProcessor (mixinBooter) {
-        transitive = false
-    }
-
-    implementation 'org.spongepowered:mixin:0.8.5'
-    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
-
-    implementation 'mezz:jei:4.28.0'
 }
 
 apply from: 'gradle/scripts/dependencies.gradle'

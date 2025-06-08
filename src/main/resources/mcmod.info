@@ -2,12 +2,12 @@
   "modListVersion": 2,
   "modList": [
     {
-      "modid": "ingameime",
-      "name": "In game IME",
+      "modid": "${mod_id}",
+      "name": "${mod_name}",
       "description": "Use InputMethod in full screen minecraft",
-      "version": "0.0.3",
+      "version": "${mod_version}",
       "mcversion": "1.12.2",
-      "url": "https://github.com/Windmill-City/IngameIME-Minecraft",
+      "url": "https://github.com/DHJComical/IngameIME-1.12.2",
       "updateUrl": "",
       "authorList": [
         "Windmill_City",
@@ -17,7 +17,7 @@
       "logoFile": "icon.png",
       "screenshots": [],
       "parent": "",
-      "requiredMods": ["mixinbooter", "jei"],
+      "requiredMods": ["mixinbooter"],
       "dependencies": [],
       "dependants": [],
       "useDependencyInformation": true
