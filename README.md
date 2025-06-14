@@ -23,6 +23,7 @@ Use `InputMethod` in **Full screen** Minecraft!
 - [Windmill-City](https://github.com/Windmill-City):Module founder
 - [Kappa-maintainer](https://github.com/kappa-maintainer):The biggest contributor, helped with most of the bugs and provided solutions
 - [tttsaurus](https://github.com/tttsaurus):Helped to fix the bug of InGameInfoXML 
+- [Andrea Frederica](https://github.com/AndreaFrederica):Patched a possible unknown crash issue with LoliASM(maybe
 - There will be more in the future :)
 ## Supported Platforms
 
