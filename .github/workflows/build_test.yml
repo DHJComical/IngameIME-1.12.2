@@ -5,8 +5,14 @@
 name: Build Test Artifact
 
 on:
-  push:
   pull_request:
+  push:
+    tags:
+      - '*'
+    paths-ignore:
+      - '.github/workflows/**'
+      - '**.md'
+  workflow_dispatch:
 
 jobs:
   build:
