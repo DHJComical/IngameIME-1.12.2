@@ -88,7 +88,7 @@ public class Internal {
 
         LOG.info("Using IngameIME-Native: {}", InputContext.getVersion());
 
-        long hWnd = Loader.isModLoaded("lwjgl3ify") ? getWindowHandle_LWJGL3() : getWindowHandle_LWJGL2();
+        long hWnd = Loader.isModLoaded("cleanroom") ? getWindowHandle_LWJGL3() : getWindowHandle_LWJGL2();
         if (hWnd != 0) {
             // Once switched to the full screen, we can't back to not UiLess mode, unless restart the game
             if (Minecraft.getMinecraft().isFullScreen()) Config.UiLess_Windows.set(true);
