@@ -1,12 +1,12 @@
-# This workflow will build and upload test artifact
-# Simple workflow with ignoring condition to prevent unneccessary build
-# To download artifact check on job task
-
 name: Build Test Artifact
 
 on:
   push:
+    branches:
+      - master
   pull_request:
+    branches:
+      - '*'
 
 jobs:
   build:
@@ -41,6 +41,28 @@ jobs:
               distribution: 'zulu'
               cache: gradle
 
+          - name: Run Tests
+            uses: gradle/gradle-build-action@v2
+            with:
+               arguments: test --info --stacktrace
+
+          - name: Publish Test Report
+            uses: actions/upload-artifact@v4
+            if: always()
+            with:
+              name: test-results
+              path: build/test-results/test/TEST-*.xml
+
+          - name: Show Test Results in UI
+            uses: dorny/test-reporter@v1
+            if: always()
+            with:
+              name: Unit Test Results
+              path: build/test-results/test/TEST-*.xml
+              reporter: java-junit
+              list-tests: 'always'
+              fail-on-error: false
+
           - name: Build
             uses: gradle/gradle-build-action@v2
             with:
@@ -51,3 +73,10 @@ jobs:
             with:
               name: ${{ steps.gradle_properties.outputs.mod_id }}-1.12.2-${{ steps.date.outputs.date }}-${{ github.run_number }}
               path: build/libs
+
+          - name: Verify Results
+            run:
+              if grep -q "FAILED" build/reports/tests/test/index.txt; then
+                echo "::error::Unit tests failed!"
+                exit 1
+              fi
