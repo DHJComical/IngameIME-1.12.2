@@ -25,6 +25,10 @@ Use `InputMethod` in **Full screen** Minecraft!
 - [tttsaurus](https://github.com/tttsaurus):Helped to fix the bug of InGameInfoXML 
 - [Andrea Frederica](https://github.com/AndreaFrederica):Patched a possible unknown crash issue with LoliASM(maybe
 - There will be more in the future :)
+
+## Bug
+- Unable to enter in the search box of JEI/HEI
+
 ## Supported Platforms
 
 | Platform | Supported |
