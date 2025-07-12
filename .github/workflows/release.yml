@@ -1,0 +1,172 @@
+name: Build and Release Minecraft 1.12.2 Forge Mod
+
+on:
+  release:
+    types: [created]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 8
+        uses: actions/setup-java@v4
+        with:
+          java-version: '8'
+          distribution: 'temurin'
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-1.12.2-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-1.12.2-
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build with Gradle
+        run: ./gradlew build
+
+      - name: Get mod version and name
+        id: mod_info
+        run: |
+          # 从 gradle.properties 获取版本信息
+          if [ -f "gradle.properties" ]; then
+            VERSION=$(grep -oP 'mod_version\s*=\s*\K.*' gradle.properties | tr -d ' ')
+            MOD_ID=$(grep -oP 'mod_id\s*=\s*\K.*' gradle.properties | tr -d ' ')
+          else
+            # 从 build.gradle 获取版本信息
+            VERSION=$(grep -oP "version\s*=\s*['\"]?\K[^'\"]*" build.gradle | head -1)
+            MOD_ID=$(grep -oP "archivesBaseName\s*=\s*['\"]?\K[^'\"]*" build.gradle | head -1)
+          fi
+          
+          # 如果没有找到，使用默认值
+          if [ -z "$VERSION" ]; then
+            VERSION="1.0.0"
+          fi
+          if [ -z "$MOD_ID" ]; then
+            MOD_ID="minecraft-mod"
+          fi
+          
+          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+          echo "MOD_ID=${MOD_ID}" >> $GITHUB_OUTPUT
+          echo "Mod ID: ${MOD_ID}, Version: ${VERSION}"
+
+      - name: Find built jar files
+        id: find_jars
+        run: |
+          # 查找编译好的 jar 文件
+          MAIN_JAR=$(find build/libs -name "*.jar" ! -name "*-sources.jar" ! -name "*-dev.jar" ! -name "*-deobf.jar" | head -1)
+          SOURCES_JAR=$(find build/libs -name "*-sources.jar" | head -1)
+          DEV_JAR=$(find build/libs -name "*-dev.jar" | head -1)
+          
+          echo "MAIN_JAR=${MAIN_JAR}" >> $GITHUB_OUTPUT
+          echo "SOURCES_JAR=${SOURCES_JAR}" >> $GITHUB_OUTPUT
+          echo "DEV_JAR=${DEV_JAR}" >> $GITHUB_OUTPUT
+          
+          echo "Found main jar: ${MAIN_JAR}"
+          if [ -f "$SOURCES_JAR" ]; then
+            echo "Found sources jar: ${SOURCES_JAR}"
+          fi
+          if [ -f "$DEV_JAR" ]; then
+            echo "Found dev jar: ${DEV_JAR}"
+          fi
+
+      - name: Generate checksums
+        run: |
+          if [ -f "${{ steps.find_jars.outputs.MAIN_JAR }}" ]; then
+            sha256sum "${{ steps.find_jars.outputs.MAIN_JAR }}" > "${{ steps.find_jars.outputs.MAIN_JAR }}.sha256"
+            echo "Generated checksum for main jar"
+          fi
+          if [ -f "${{ steps.find_jars.outputs.SOURCES_JAR }}" ]; then
+            sha256sum "${{ steps.find_jars.outputs.SOURCES_JAR }}" > "${{ steps.find_jars.outputs.SOURCES_JAR }}.sha256"
+            echo "Generated checksum for sources jar"
+          fi
+          if [ -f "${{ steps.find_jars.outputs.DEV_JAR }}" ]; then
+            sha256sum "${{ steps.find_jars.outputs.DEV_JAR }}" > "${{ steps.find_jars.outputs.DEV_JAR }}.sha256"
+            echo "Generated checksum for dev jar"
+          fi
+
+      - name: List all files to upload
+        run: |
+          echo "Files to upload:"
+          ls -la build/libs/
+          echo "Checksum files:"
+          ls -la build/libs/*.sha256 || echo "No checksum files found"
+
+      - name: Upload jar files to release
+        uses: softprops/action-gh-release@v1
+        if: success()
+        with:
+          files: |
+            ${{ steps.find_jars.outputs.MAIN_JAR }}
+            ${{ steps.find_jars.outputs.SOURCES_JAR }}
+            ${{ steps.find_jars.outputs.DEV_JAR }}
+            ${{ steps.find_jars.outputs.MAIN_JAR }}.sha256
+            ${{ steps.find_jars.outputs.SOURCES_JAR }}.sha256
+            ${{ steps.find_jars.outputs.DEV_JAR }}.sha256
+          draft: false
+          prerelease: false
+          body: |
+            ## Minecraft 1.12.2 Forge Mod Release
+            
+            **Mod Version:** ${{ steps.mod_info.outputs.VERSION }}
+            **Minecraft Version:** 1.12.2
+            **Forge Version:** Compatible with Minecraft Forge 1.12.2
+            
+            ### Files:
+            - `*.jar` - Main mod file for production use
+            - `*-sources.jar` - Source code (for developers)
+            - `*-dev.jar` - Development version (for mod developers)
+            - `*.sha256` - Checksum files for verification
+            
+            ### Installation:
+            1. Download the main `.jar` file (not sources or dev)
+            2. Place it in your `.minecraft/mods/` folder
+            3. Make sure you have Minecraft Forge 1.12.2 installed
+            
+            ### Verification:
+            You can verify file integrity using the provided SHA256 checksums.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  test-build:
+    runs-on: ubuntu-latest
+    if: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 8
+        uses: actions/setup-java@v4
+        with:
+          java-version: '8'
+          distribution: 'temurin'
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-test-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-test-
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Run tests
+        run: ./gradlew test
+
+      - name: Test build
+        run: ./gradlew build --info
