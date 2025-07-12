@@ -3,6 +3,11 @@ name: Build and Release Minecraft 1.12.2 Forge Mod
 on:
   release:
     types: [created]
+  # 或者当推送标签时触发
+  # push:
+  #   tags:
+  #     - 'v*'
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -27,6 +32,17 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-1.12.2-
             ${{ runner.os }}-gradle-
+
+      - name: Force Gradle version to 7.6 (Java 8 compatible)
+        run: |
+          # 修改 gradle/wrapper/gradle-wrapper.properties 使用 Java 8 兼容的版本
+          mkdir -p gradle/wrapper
+          echo "distributionBase=GRADLE_USER_HOME" > gradle/wrapper/gradle-wrapper.properties
+          echo "distributionPath=wrapper/dists" >> gradle/wrapper/gradle-wrapper.properties
+          echo "distributionUrl=https\://services.gradle.org/distributions/gradle-7.6-bin.zip" >> gradle/wrapper/gradle-wrapper.properties
+          echo "zipStoreBase=GRADLE_USER_HOME" >> gradle/wrapper/gradle-wrapper.properties
+          echo "zipStorePath=wrapper/dists" >> gradle/wrapper/gradle-wrapper.properties
+          echo "Updated Gradle wrapper to version 7.6"
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
@@ -120,6 +136,7 @@ jobs:
             **Mod Version:** ${{ steps.mod_info.outputs.VERSION }}
             **Minecraft Version:** 1.12.2
             **Forge Version:** Compatible with Minecraft Forge 1.12.2
+            **Built with:** Java 8 + Gradle 7.6
             
             ### Files:
             - `*.jar` - Main mod file for production use
@@ -137,9 +154,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  # 可选：构建测试作业
   test-build:
     runs-on: ubuntu-latest
-    if: false
+    if: false  # 设置为 true 启用测试构建
 
     steps:
       - name: Checkout code
