@@ -1,12 +1,11 @@
 package dhj.ingameime;
 
 import dhj.ingameime.mixins.MixinGuiScreen;
-//import codechicken.nei.guihook.GuiContainerManager;
-//import cpw.mods.fml.common.Loader;
-import net.minecraftforge.fml.common.Loader;
 import ingameime.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.gui.GuiTextField;
+import net.minecraftforge.fml.common.Loader;
 import org.lwjgl.LWJGLUtil;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.Display;
@@ -90,7 +89,6 @@ public class Internal {
 
         long hWnd = Loader.isModLoaded("cleanroom") ? getWindowHandle_LWJGL3() : getWindowHandle_LWJGL2();
         if (hWnd != 0) {
-            // Once switched to the full screen, we can't back to not UiLess mode, unless restart the game
             if (Minecraft.getMinecraft().isFullScreen()) Config.UiLess_Windows.set(true);
             API api = Config.API_Windows.getString().equals("TextServiceFramework") ? API.TextServiceFramework : API.Imm32;
             LOG.info("Using API: {}, UiLess: {}", api, Config.UiLess_Windows.getBoolean());
@@ -106,10 +104,7 @@ public class Internal {
             protected void call(CompositionState arg0, PreEditContext arg1) {
                 try {
                     LOG.info("PreEdit State: {}", arg0);
-
-                    //Hide Indicator when PreEdit start
                     if (arg0 == CompositionState.Begin) ClientProxy.Screen.WInputMode.setActive(false);
-
                     if (arg1 != null) ClientProxy.Screen.PreEdit.setContent(arg1.getContent(), arg1.getSelStart());
                     else ClientProxy.Screen.PreEdit.setContent(null, -1);
                 } catch (Throwable e) {
@@ -118,24 +113,29 @@ public class Internal {
             }
         };
         preEditCallback = new PreEditCallback(preEditCallbackProxy);
+
         commitCallbackProxy = new CommitCallbackImpl() {
             @Override
-            protected void call(String arg0) {
+            protected void call(String text) {
                 try {
-                    LOG.info("Commit: {}", arg0);
+                    //LOG.info("Commit: {}", text);
+
+                    if (Loader.isModLoaded("jei") && IMStates.ActiveControl != null &&
+                            IMStates.ActiveControl.getClass().getName().equals("mezz.jei.input.GuiTextFieldFilter")) {
+
+                        LOG.info("JEI/HEI text field detected, using API to set text.");
+                        String oldText = JEICompat.getJEIFilterText();
+                        JEICompat.setJEIFilterText(oldText + text);
+                    }
+
                     GuiScreen screen = Minecraft.getMinecraft().currentScreen;
                     if (screen != null) {
-                        // NEI Integration
-//                        if (Loader.isModLoaded("NotEnoughItems") && GuiContainerManager.getManager() != null) {
-//                            for (char c : arg0.toCharArray()) {
-//                                GuiContainerManager.getManager().keyTyped(c, Keyboard.KEY_NONE);
-//                            }
-//                            return;
-//                        }
-
-                        // Normal Minecraft Guis
-                        for (char c : arg0.toCharArray()) {
-                            ((MixinGuiScreen) screen).callKeyTyped(c, Keyboard.KEY_NONE);
+                        if (IMStates.ActiveControl instanceof GuiTextField) {
+                            ((GuiTextField) IMStates.ActiveControl).writeText(text);
+                        } else {
+                            for (char c : text.toCharArray()) {
+                                ((MixinGuiScreen) screen).callKeyTyped(c, Keyboard.KEY_NONE);
+                            }
                         }
                     }
                 } catch (Throwable e) {
@@ -144,6 +144,7 @@ public class Internal {
             }
         };
         commitCallback = new CommitCallback(commitCallbackProxy);
+
         candidateListCallbackProxy = new CandidateListCallbackImpl() {
             @Override
             protected void call(CandidateListState arg0, CandidateListContext arg1) {
@@ -174,7 +175,6 @@ public class Internal {
         InputCtx.setCallback(candidateListCallback);
         InputCtx.setCallback(inputModeCallback);
 
-        // Free unused native object
         System.gc();
     }
 

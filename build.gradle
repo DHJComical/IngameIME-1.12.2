@@ -156,6 +156,7 @@ dependencies {
         testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     }
 
+    implementation 'mezz:jei:4.28.0'
 }
 
 apply from: 'gradle/scripts/dependencies.gradle'
