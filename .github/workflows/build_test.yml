@@ -5,8 +5,10 @@
 name: Build Test Artifact
 
 on:
+
   pull_request:
   push:
+    branches: [ master ]
     tags:
       - '*'
     paths-ignore:
