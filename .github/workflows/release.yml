@@ -143,4 +143,3 @@ jobs:
           prerelease: false
           tag_name: ${{ github.event_name == 'release' && github.event.release.tag_name || github.ref_name }}
           name: ${{ steps.gradle_properties.outputs.mod_id }} v${{ steps.version.outputs.VERSION }}
-          
