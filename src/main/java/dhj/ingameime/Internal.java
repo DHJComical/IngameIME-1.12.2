@@ -115,25 +115,17 @@ public class Internal {
         preEditCallback = new PreEditCallback(preEditCallbackProxy);
 
         commitCallbackProxy = new CommitCallbackImpl() {
-            /**
-             * BUG修复：通过添加if-else结构，防止JEI搜索框的文本被写入两次。
-             * Author: (Your Name Here) for the fix
-             */
+            
             @Override
             protected void call(String text) {
                 try {
-                    // 检查是否为JEI搜索框
+                    
                     if (Loader.isModLoaded("jei") && IMStates.ActiveControl != null &&
                             IMStates.ActiveControl.getClass().getName().equals("mezz.jei.input.GuiTextFieldFilter")) {
-
-                        // 【路径A：JEI专用路径】
-                        // 如果是，则只使用JEI的API来设置文本
                         LOG.info("JEI/HEI text field detected, using API to set text.");
                         String oldText = JEICompat.getJEIFilterText();
                         JEICompat.setJEIFilterText(oldText + text);
                     } else {
-                        // 【路径B：通用路径】
-                        // 如果不是JEI搜索框，则使用通用的方法处理
                         GuiScreen screen = Minecraft.getMinecraft().currentScreen;
                         if (screen != null) {
                             if (IMStates.ActiveControl instanceof GuiTextField) {
