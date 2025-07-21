@@ -115,30 +115,32 @@ public class Internal {
         preEditCallback = new PreEditCallback(preEditCallbackProxy);
 
         commitCallbackProxy = new CommitCallbackImpl() {
-            
             @Override
             protected void call(String text) {
                 try {
-                    
-                    if (Loader.isModLoaded("jei") && IMStates.ActiveControl != null &&
-                            IMStates.ActiveControl.getClass().getName().equals("mezz.jei.input.GuiTextFieldFilter")) {
-                        LOG.info("JEI/HEI text field detected, using API to set text.");
-                        String oldText = JEICompat.getJEIFilterText();
-                        JEICompat.setJEIFilterText(oldText + text);
-                    } else {
-                        GuiScreen screen = Minecraft.getMinecraft().currentScreen;
-                        if (screen != null) {
-                            if (IMStates.ActiveControl instanceof GuiTextField) {
-                                ((GuiTextField) IMStates.ActiveControl).writeText(text);
+                    Minecraft.getMinecraft().addScheduledTask(() -> {
+                        try {
+                            if (Loader.isModLoaded("jei") && IMStates.ActiveControl != null &&
+                                    IMStates.ActiveControl.getClass().getName().equals("mezz.jei.input.GuiTextFieldFilter")) {
+
+                                LOG.info("JEI text field detected, using JEI API to set text.");
+                                String oldText = JEICompat.getJEIFilterText();
+                                JEICompat.setJEIFilterText(oldText + text);
+
                             } else {
-                                for (char c : text.toCharArray()) {
-                                    ((MixinGuiScreen) screen).callKeyTyped(c, Keyboard.KEY_NONE);
+                                final GuiScreen screen = Minecraft.getMinecraft().currentScreen;
+                                if (screen != null) {
+                                    for (char c : text.toCharArray()) {
+                                        ((MixinGuiScreen) screen).callKeyTyped(c, Keyboard.KEY_NONE);
+                                    }
                                 }
                             }
+                        } catch (Throwable e) {
+                            LOG.error("Exception thrown during scheduled commit task", e);
                         }
-                    }
+                    });
                 } catch (Throwable e) {
-                    LOG.error("Exception thrown during callback handling", e);
+                    LOG.error("Exception thrown when scheduling commit callback", e);
                 }
             }
         };

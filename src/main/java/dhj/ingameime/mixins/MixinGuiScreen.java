@@ -4,8 +4,10 @@ import net.minecraft.client.gui.GuiScreen;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
+import java.io.IOException; // 导入 IOException
+
 @Mixin(GuiScreen.class)
 public interface MixinGuiScreen {
-    @Invoker()
-    void callKeyTyped(char typedChar, int keyCode);
+    @Invoker("keyTyped")
+    void callKeyTyped(char typedChar, int keyCode) throws IOException;
 }
