@@ -4,9 +4,9 @@
 
 Use `InputMethod` in **Full screen** Minecraft!
 
-[//]: # (![CurseForge Bandage Downloads]&#40;http://cf.way2muchnoise.eu/full_440032_downloads.svg&#41;)
+![CurseForge Bandage Downloads](http://cf.way2muchnoise.eu/full_1281907_downloads.svg)
 
-[//]: # (![CurseForge Bandage Versions]&#40;http://cf.way2muchnoise.eu/versions/440032.svg&#41;)
+![CurseForge Bandage Versions](http://cf.way2muchnoise.eu/versions/1281907.svg)
 
 ## Preview
 
