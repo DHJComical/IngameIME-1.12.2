@@ -42,7 +42,7 @@ jobs:
         with:
           java-version: '17'  
           distribution: 'temurin'  
-          cache: gradl
+          cache: gradle
           
       - name: Update Gradle Wrapper
         run: ./gradlew wrapper --gradle-version=8.5
