@@ -1,11 +1,6 @@
-# This workflow will build and upload test artifact
-# Simple workflow with ignoring condition to prevent unneccessary build
-# To download artifact check on job task
-
 name: Build Test Artifact
 
 on:
-
   pull_request:
   push:
     branches: [ master ]
@@ -22,40 +17,50 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-          - name: Checkout Repository
-            uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-          - name: Gather Gradle properties
-            uses: madhead/read-java-properties@latest
-            id: gradle_properties
-            with:
-              file: gradle.properties
-              all: true
+      - name: Gather Gradle properties
+        uses: madhead/read-java-properties@latest
+        id: gradle_properties
+        with:
+          file: gradle.properties
+          all: true
 
-          - name: Grant Execute Permission for gradlew
-            run: chmod +x gradlew
+      - name: Grant Execute Permission for gradlew
+        run: chmod +x gradlew
 
-          - name: Get current date
-            id: date
-            run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+      - name: Get current date
+        id: date
+        run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
 
-          - name: Change mod version
-            run: sed -i "s/mod_version.*=.*/mod_version = ${{ steps.date.outputs.date }}/g" gradle.properties
+      - name: Change mod version
+        run: sed -i "s/mod_version.*=.*/mod_version = ${{ steps.date.outputs.date }}/g" gradle.properties
 
-          - name: Setup Java
-            uses: actions/setup-java@v4
-            with:
-              java-version: '8'
-              distribution: 'zulu'
-              cache: gradle
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'  
+          distribution: 'temurin'  
+          cache: gradl
+          
+      - name: Update Gradle Wrapper
+        run: ./gradlew wrapper --gradle-version=8.5
+        
+      - name: Build
+        uses: gradle/actions/setup-gradle@v3  
+        with:
+          gradle-version: wrapper
 
-          - name: Build
-            uses: gradle/gradle-build-action@v2
-            with:
-              arguments: build --info --stacktrace
+      - name: Clean and Build with warnings
+        run: |
+          ./gradlew clean
+          ./gradlew build --warning-mode all --info --stacktrace
 
-          - name: Upload Build Artifacts
-            uses: actions/upload-artifact@v4
-            with:
-              name: ${{ steps.gradle_properties.outputs.mod_id }}-1.12.2-${{ steps.date.outputs.date }}-${{ github.run_number }}
-              path: build/libs
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        if: success()  
+        with:
+          name: ${{ steps.gradle_properties.outputs.mod_id }}-1.12.2-${{ steps.date.outputs.date }}-${{ github.run_number }}
+          path: build/libs
+          retention-days: 30  
