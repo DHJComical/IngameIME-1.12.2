@@ -9,7 +9,8 @@
   "client": [
     "MixinGuiScreen",
     "MixinGuiTextField",
-    "MixinMinecraft"
+    "MixinMinecraft",
+    "MixinGuiEditSign"
   ],
   "injectors": {
     "defaultRequire": 0
