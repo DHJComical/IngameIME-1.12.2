@@ -37,18 +37,31 @@ jobs:
       - name: Change mod version
         run: sed -i "s/mod_version.*=.*/mod_version = ${{ steps.date.outputs.date }}/g" gradle.properties
 
-      - name: Setup Java
+      # 修复 1: 设置多个 Java 版本以支持工具链
+      - name: Setup Java 8 (for project)
         uses: actions/setup-java@v4
         with:
-          java-version: '17'  
-          distribution: 'temurin'  
+          java-version: '8'
+          distribution: 'zulu'  # Zulu 有更好的 Java 8 支持
           cache: gradle
-          
-      - name: Update Gradle Wrapper
-        run: ./gradlew wrapper --gradle-version=8.5
-        
+
+      - name: Setup Java 21 (for Gradle)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      # 修复 2: 设置 JAVA_HOME 并检查工具链
+      - name: Set JAVA_HOME and check toolchains
+        run: |
+          echo "JAVA_HOME_8_X64=$JAVA_HOME_8_X64" >> $GITHUB_ENV
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> $GITHUB_ENV
+          java -version
+          ./gradlew javaToolchains
+
+      # 修复 3: 使用更新的 gradle-build-action 并添加警告模式
       - name: Build
-        uses: gradle/actions/setup-gradle@v3  
+        uses: gradle/actions/setup-gradle@v3  # 更新到 v3
         with:
           gradle-version: wrapper
 
@@ -56,11 +69,14 @@ jobs:
         run: |
           ./gradlew clean
           ./gradlew build --warning-mode all --info --stacktrace
+        env:
+          # 确保使用正确的 Java 版本
+          JAVA_TOOL_OPTIONS: "-Dfile.encoding=UTF-8"
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
-        if: success()  
+        if: success()  # 只在构建成功时上传
         with:
           name: ${{ steps.gradle_properties.outputs.mod_id }}-1.12.2-${{ steps.date.outputs.date }}-${{ github.run_number }}
           path: build/libs
-          retention-days: 30  
+          retention-days: 30  # 设置保留天数
