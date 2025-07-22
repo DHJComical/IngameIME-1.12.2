@@ -43,9 +43,9 @@ jobs:
             run: sed -i "s/mod_version.*=.*/mod_version = ${{ steps.date.outputs.date }}/g" gradle.properties
 
           - name: Setup Java
-            uses: actions/setup-java@v3
+            uses: actions/setup-java@v4
             with:
-              java-version: '21'
+              java-version: '11'
               distribution: 'zulu'
               cache: gradle
 
