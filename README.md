@@ -27,7 +27,9 @@ Use `InputMethod` in **Full screen** Minecraft!
 - There will be more in the future :)
 
 ## Bug
-- Unable to enter in the search box of JEI/HEI
+- Unable to enter in the search box of JEI/HEI(Fixed in 0.0.7)
+- Unable to enter text in Xaero's Minimap interface(Fixed in 0.0.9)
+- Can't type text into Minecraft signs(Fixed in 0.1.0)
 
 ## Supported Platforms
 
