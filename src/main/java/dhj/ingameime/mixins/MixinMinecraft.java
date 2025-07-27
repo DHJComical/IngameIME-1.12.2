@@ -28,15 +28,12 @@ public class MixinMinecraft {
     @Inject(method = "displayGuiScreen", at = @At("RETURN"))
     private void postDisplayScreen(GuiScreen guiScreenIn, CallbackInfo ci) {
         try {
-            // 如果还没初始化好 Screen proxy，就跳过
             if (ClientProxy.Screen == null) {
                 return;
             }
 
-            // 重置光标
             ClientProxy.Screen.setCaretPos(0, 0);
 
-            // guiScreenIn 为 null 则说明刚关闭所有界面
             if (guiScreenIn == null) {
                 ClientProxy.INSTANCE.onScreenClose();
             } else {
