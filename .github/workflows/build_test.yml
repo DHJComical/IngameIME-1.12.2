@@ -34,9 +34,6 @@ jobs:
         id: date
         run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
 
-      - name: Change mod version
-        run: sed -i "s/mod_version.*=.*/mod_version = ${{ steps.date.outputs.date }}/g" gradle.properties
-
       # 修复 1: 设置多个 Java 版本以支持工具链
       - name: Setup Java 8 (for project)
         uses: actions/setup-java@v4
