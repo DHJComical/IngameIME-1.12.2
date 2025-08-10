@@ -202,9 +202,51 @@ public class Internal {
     }
 
     public static void setActivated(boolean activated) {
-        if (InputCtx != null && getActivated() != activated) {
+        if (InputCtx == null) {
+            if (activated) {
+                LOG.warn("InputContext is null. Attempting to recreate it...");
+                if (InputCtx == null) {
+                    LOG.error("Failed to recreate InputContext. IME will be unavailable.");
+                    return;
+                }
+                LOG.info("InputContext recreated successfully.");
+            } else {
+                return;
+            }
+        }
+
+        if (getActivated() == activated) {
+            return;
+        }
+
+        try {
             InputCtx.setActivated(activated);
             LOG.info("IM active state: {}", activated);
+        } catch (Throwable t) {
+            LOG.error("Failed to set IME active state. This indicates the InputContext may be stale. Attempting to recover.", t);
+
+            try {
+//                LOG.info("Destroying stale InputContext...");
+                destroyInputCtx();
+
+//                LOG.info("Recreating new InputContext...");
+                createInputCtx();
+
+                if (InputCtx != null) {
+//                    LOG.info("Recovery successful. Retrying setActivated...");
+                    try {
+                        InputCtx.setActivated(activated);
+//                        LOG.info("IM active state after recovery: {}", activated);
+                    } catch (Throwable retryError) {
+//                        LOG.error("Failed to set active state even after recovery.", retryError);
+                    }
+                }
+//                else {
+//                    LOG.error("Recovery failed. Could not recreate InputContext.");
+//                }
+            } catch (Throwable recoveryError) {
+                LOG.error("A critical error occurred during the recovery process itself.", recoveryError);
+            }
         }
     }
 }
