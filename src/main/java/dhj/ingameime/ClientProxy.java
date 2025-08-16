@@ -1,7 +1,7 @@
 package dhj.ingameime;
 
 import dhj.ingameime.gui.OverlayScreen;
-
+import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.common.MinecraftForge;
@@ -24,6 +24,17 @@ public class ClientProxy extends CommonProxy implements IMEventHandler {
 
     @SubscribeEvent
     public void onRenderScreen(GuiScreenEvent.DrawScreenEvent.Post event) {
+
+        if (IMStates.ActiveControl instanceof GuiTextField) {
+
+            GuiTextField textField = (GuiTextField) IMStates.ActiveControl;
+
+            int x = textField.x;
+            int y = textField.y;
+
+            ClientProxy.Screen.setCaretPos(x, y);
+        }
+
         ClientProxy.Screen.draw();
 
         if (Keyboard.isKeyDown(ClientProxy.KeyBind.getKeyCode())) {

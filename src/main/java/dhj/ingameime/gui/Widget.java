@@ -19,26 +19,34 @@ public class Widget extends Gui {
     }
 
     public void layout() {
-        // Update Width & Height before positioning
-        Width += 2 * Padding;
-        Height += 2 * Padding;
+        int totalWidth = Width + 2 * Padding;
+        int totalHeight = Height + 2 * Padding;
 
         X = offsetX;
-        Y = offsetY + (DrawInline ? 0 : Minecraft.getMinecraft().fontRenderer.FONT_HEIGHT);
+        Y = offsetY;
+        if (!DrawInline) {
+            Y += Minecraft.getMinecraft().fontRenderer.FONT_HEIGHT;
+        }
 
-        // Check if exceed screen
-        ScaledResolution scaledresolution = new ScaledResolution(
-                Minecraft.getMinecraft());
+        ScaledResolution scaledresolution = new ScaledResolution(Minecraft.getMinecraft());
         int displayHeight = scaledresolution.getScaledHeight();
         int displayWidth = scaledresolution.getScaledWidth();
-        if (X + Width > displayWidth) X = Math.max(0, displayWidth - Width);
-        if (Y + Height > displayHeight) Y = (DrawInline ? displayHeight : offsetY) - Height;
+
+        if (X + totalWidth > displayWidth) X = Math.max(0, displayWidth - totalWidth);
+        if (Y + totalHeight > displayHeight) {
+            int yAbove = offsetY - totalHeight;
+            if (yAbove >= 0) {
+                Y = yAbove;
+            } else {
+                Y = displayHeight - totalHeight;
+            }
+        }
 
         isDirty = false;
     }
 
     public void draw() {
-        drawRect(X, Y, X + Width, Y + Height, Background);
+        drawRect(X, Y, X + Width + 2 * Padding, Y + Height + 2 * Padding, Background);
     }
 
     public void setPos(int x, int y) {
@@ -46,6 +54,5 @@ public class Widget extends Gui {
         offsetX = x;
         offsetY = y;
         isDirty = true;
-        layout();
     }
 }
