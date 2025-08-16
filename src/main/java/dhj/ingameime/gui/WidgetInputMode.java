@@ -50,6 +50,9 @@ public class WidgetInputMode extends Widget {
     @Override
     public void draw() {
         if (!isActive()) return;
+
+        if (isDirty) layout();
+
         super.draw();
 
         if (Mode == InputMode.AlphaNumeric)
