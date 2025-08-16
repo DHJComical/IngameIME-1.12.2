@@ -42,12 +42,12 @@ public class Config {
 
         AlphaModeText = configuration.get("ModeText",
                 "AlphaMode",
-                "Alpha",
+                "A",
                 "Text to display when in Alpha mode");
 
         NativeModeText = configuration.get("ModeText",
                 "NativeMode",
-                "Native",
+                "中",
                 "Text to display when in Native mode");
 
         if (configuration.hasChanged()) {
