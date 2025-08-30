@@ -108,7 +108,7 @@ public class Internal {
             @Override
             protected void call(CompositionState arg0, PreEditContext arg1) {
                 try {
-                    LOG.info("PreEdit State: {}", arg0);
+                    //LOG.info("PreEdit State: {}", arg0);
                     if (arg0 == CompositionState.Begin) ClientProxy.Screen.WInputMode.setActive(false);
                     if (arg1 != null) ClientProxy.Screen.PreEdit.setContent(arg1.getContent(), arg1.getSelStart());
                     else ClientProxy.Screen.PreEdit.setContent(null, -1);
