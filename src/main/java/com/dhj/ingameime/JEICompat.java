@@ -1,4 +1,4 @@
-package dhj.ingameime;
+package com.dhj.ingameime;
 
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JEIPlugin;

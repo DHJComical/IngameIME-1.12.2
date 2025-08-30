@@ -1,6 +1,6 @@
-package dhj.ingameime;
+package com.dhj.ingameime;
 
-import dhj.ingameime.gui.OverlayScreen;
+import com.dhj.ingameime.gui.OverlayScreen;
 import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraftforge.client.event.GuiScreenEvent;

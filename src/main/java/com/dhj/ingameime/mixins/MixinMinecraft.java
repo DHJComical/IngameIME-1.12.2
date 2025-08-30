@@ -1,7 +1,7 @@
-package dhj.ingameime.mixins;
+package com.dhj.ingameime.mixins;
 
-import dhj.ingameime.ClientProxy;
-import dhj.ingameime.Internal;
+import com.dhj.ingameime.ClientProxy;
+import com.dhj.ingameime.Internal;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import org.spongepowered.asm.mixin.Mixin;

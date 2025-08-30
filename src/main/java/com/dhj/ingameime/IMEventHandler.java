@@ -1,4 +1,4 @@
-package dhj.ingameime;
+package com.dhj.ingameime;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;

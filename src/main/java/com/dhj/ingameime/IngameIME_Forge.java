@@ -1,4 +1,4 @@
-package dhj.ingameime;
+package com.dhj.ingameime;
 
 import com.dhj.imgameime.ingameime.Tags;
 import net.minecraftforge.fml.common.Mod;
@@ -17,7 +17,7 @@ import org.apache.logging.log4j.Logger;
 )
 public class IngameIME_Forge {
     public static final Logger LOG = LogManager.getLogger(Tags.MOD_NAME);
-    @SidedProxy(clientSide = "dhj.ingameime.ClientProxy", serverSide = "dhj.ingameime.CommonProxy")
+    @SidedProxy(clientSide = "com.dhj.ingameime.ClientProxy", serverSide = "com.ingameime.CommonProxy")
     public static CommonProxy proxy;
 
     @Mod.EventHandler

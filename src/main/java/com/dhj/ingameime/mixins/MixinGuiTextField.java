@@ -1,7 +1,7 @@
-package dhj.ingameime.mixins;
+package com.dhj.ingameime.mixins;
 
-import dhj.ingameime.IMStates;
-import dhj.ingameime.Internal;
+import com.dhj.ingameime.IMStates;
+import com.dhj.ingameime.Internal;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiTextField;
 import org.apache.logging.log4j.LogManager;

@@ -1,6 +1,6 @@
-package dhj.ingameime.mixins;
+package com.dhj.ingameime.mixins;
 
-import dhj.ingameime.Internal;
+import com.dhj.ingameime.Internal;
 import net.minecraft.client.gui.inventory.GuiEditSign;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

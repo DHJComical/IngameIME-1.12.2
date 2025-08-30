@@ -1,10 +1,9 @@
-package dhj.ingameime;
+package com.dhj.ingameime;
 
-import dhj.ingameime.mixins.MixinGuiScreen;
+import com.dhj.ingameime.mixins.MixinGuiScreen;
 import ingameime.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.GuiTextField;
 import net.minecraftforge.fml.common.Loader;
 import org.lwjgl.LWJGLUtil;
 import org.lwjgl.input.Keyboard;
@@ -17,7 +16,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 
-import static dhj.ingameime.IngameIME_Forge.LOG;
+import static com.dhj.ingameime.IngameIME_Forge.LOG;
 
 public class Internal {
     public static boolean LIBRARY_LOADED = false;
@@ -126,12 +125,13 @@ public class Internal {
                 try {
                     Minecraft.getMinecraft().addScheduledTask(() -> {
                         try {
-                            if (Loader.isModLoaded("jei") && IMStates.ActiveControl != null &&
+                            if (Loader.isModLoaded("jei") && IMStates.ActiveControl instanceof net.minecraft.client.gui.GuiTextField &&
                                     IMStates.ActiveControl.getClass().getName().equals("mezz.jei.input.GuiTextFieldFilter")) {
 
-                                LOG.info("JEI text field detected, using JEI API to set text.");
-                                String oldText = JEICompat.getJEIFilterText();
-                                JEICompat.setJEIFilterText(oldText + text);
+                                LOG.info("JEI text field detected, using GuiTextField.writeText().");
+
+                                net.minecraft.client.gui.GuiTextField jeiTextField = (net.minecraft.client.gui.GuiTextField) IMStates.ActiveControl;
+                                jeiTextField.writeText(text);
 
                             } else {
                                 final GuiScreen screen = Minecraft.getMinecraft().currentScreen;
@@ -232,24 +232,24 @@ public class Internal {
             LOG.error("Failed to set IME active state. This indicates the InputContext may be stale. Attempting to recover.", t);
 
             try {
-//                LOG.info("Destroying stale InputContext...");
+                //LOG.info("Destroying stale InputContext...");
                 destroyInputCtx();
 
-//                LOG.info("Recreating new InputContext...");
+                //LOG.info("Recreating new InputContext...");
                 createInputCtx();
 
                 if (InputCtx != null) {
-//                    LOG.info("Recovery successful. Retrying setActivated...");
+                    //LOG.info("Recovery successful. Retrying setActivated...");
                     try {
                         InputCtx.setActivated(activated);
-//                        LOG.info("IM active state after recovery: {}", activated);
+                        //LOG.info("IM active state after recovery: {}", activated);
                     } catch (Throwable retryError) {
-//                        LOG.error("Failed to set active state even after recovery.", retryError);
+                        //LOG.error("Failed to set active state even after recovery.", retryError);
                     }
                 }
-//                else {
-//                    LOG.error("Recovery failed. Could not recreate InputContext.");
-//                }
+                //else {
+                    //LOG.error("Recovery failed. Could not recreate InputContext.");
+                //}
             } catch (Throwable recoveryError) {
                 LOG.error("A critical error occurred during the recovery process itself.", recoveryError);
             }

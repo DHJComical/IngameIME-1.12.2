@@ -1,7 +1,7 @@
-package dhj.ingameime.gui;
+package com.dhj.ingameime.gui;
 
-import dhj.ingameime.ClientProxy;
-import dhj.ingameime.Internal;
+import com.dhj.ingameime.ClientProxy;
+import com.dhj.ingameime.Internal;
 import ingameime.PreEditRect;
 import net.minecraft.client.Minecraft;
 

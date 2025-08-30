@@ -1,6 +1,6 @@
-package dhj.ingameime.gui;
+package com.dhj.ingameime.gui;
 
-import dhj.ingameime.Internal;
+import com.dhj.ingameime.Internal;
 import ingameime.InputContext;
 import net.minecraft.client.renderer.GlStateManager;
 

@@ -1,4 +1,4 @@
-package dhj.ingameime;
+package com.dhj.ingameime;
 
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 

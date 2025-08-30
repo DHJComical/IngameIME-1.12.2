@@ -1,10 +1,10 @@
-package dhj.ingameime.gui;
+package com.dhj.ingameime.gui;
 
 import ingameime.InputMode;
 import net.minecraft.client.Minecraft;
 
-import static dhj.ingameime.Config.AlphaModeText;
-import static dhj.ingameime.Config.NativeModeText;
+import static com.dhj.ingameime.Config.AlphaModeText;
+import static com.dhj.ingameime.Config.NativeModeText;
 
 public class WidgetInputMode extends Widget {
     public final long ActiveTime = 3000;

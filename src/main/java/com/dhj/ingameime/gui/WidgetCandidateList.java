@@ -1,4 +1,4 @@
-package dhj.ingameime.gui;
+package com.dhj.ingameime.gui;
 
 import net.minecraft.client.Minecraft;
 import java.util.List;

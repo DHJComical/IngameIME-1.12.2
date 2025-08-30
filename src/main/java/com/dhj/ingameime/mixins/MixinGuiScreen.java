@@ -1,4 +1,4 @@
-package dhj.ingameime.mixins;
+package com.dhj.ingameime.mixins;
 
 import net.minecraft.client.gui.GuiScreen;
 import org.spongepowered.asm.mixin.Mixin;
