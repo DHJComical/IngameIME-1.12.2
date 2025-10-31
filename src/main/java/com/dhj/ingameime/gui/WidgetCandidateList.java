@@ -1,14 +1,14 @@
 package com.dhj.ingameime.gui;
 
 import net.minecraft.client.Minecraft;
+
 import java.util.List;
 
 // 从1.17的 IngameIME 移植个人认为更好看的 UI (已适配1.12.2)
 public class WidgetCandidateList extends Widget {
+    private final CandidateEntry drawItem = new CandidateEntry();
     private List<String> Candidates = null;
     private int Selected = -1;
-
-    private final CandidateEntry drawItem = new CandidateEntry();
 
     WidgetCandidateList() {
         Padding = 3;
@@ -77,18 +77,22 @@ public class WidgetCandidateList extends Widget {
     }
 
     private static final class CandidateEntry {
+        private final Minecraft mc = Minecraft.getMinecraft();
         private String text = null;
         private int index = 0;
-
-        private final Minecraft mc = Minecraft.getMinecraft();
 
         // Index area width equals width of "00" + 5 in 1.17
         private int getIndexAreaWidth() {
             return mc.fontRenderer.getStringWidth("00") + 5;
         }
 
-        void setText(String text) { this.text = text; }
-        void setIndex(int index) { this.index = index; }
+        void setText(String text) {
+            this.text = text;
+        }
+
+        void setIndex(int index) {
+            this.index = index;
+        }
 
         int getTextWidth() {
             return mc.fontRenderer.getStringWidth(text);

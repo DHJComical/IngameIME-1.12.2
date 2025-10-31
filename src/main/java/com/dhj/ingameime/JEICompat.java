@@ -1,18 +1,13 @@
 package com.dhj.ingameime;
 
+import mezz.jei.api.IJeiRuntime;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JEIPlugin;
-import mezz.jei.api.IJeiRuntime;
 
 @JEIPlugin
 public class JEICompat implements IModPlugin {
 
     private static IJeiRuntime jeiRuntime;
-
-    @Override
-    public void onRuntimeAvailable(IJeiRuntime runtime) {
-        JEICompat.jeiRuntime = runtime;
-    }
 
     public static String getJEIFilterText() {
         if (jeiRuntime != null) {
@@ -25,5 +20,10 @@ public class JEICompat implements IModPlugin {
         if (jeiRuntime != null) {
             jeiRuntime.getIngredientFilter().setFilterText(text);
         }
+    }
+
+    @Override
+    public void onRuntimeAvailable(IJeiRuntime runtime) {
+        JEICompat.jeiRuntime = runtime;
     }
 }

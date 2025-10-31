@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(GuiTextField.class)
 public abstract class MixinGuiTextField extends Gui {
 
-     private static final Logger LOGGER = LogManager.getLogger("IngameIME");
+    private static final Logger LOGGER = LogManager.getLogger("IngameIME");
 
 
     @Inject(method = "setFocused(Z)V", at = @At("TAIL"))
