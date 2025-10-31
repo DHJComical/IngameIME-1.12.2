@@ -81,7 +81,8 @@ public class Internal {
             InputCtx.setCallback((CommitCallback) null);
             InputCtx.setCallback((CandidateListCallback) null);
             InputCtx.setCallback((InputModeCallback) null);
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
         InputCtx.delete();
         InputCtx = null;
         LOG.info("InputContext has destroyed!");
@@ -125,13 +126,12 @@ public class Internal {
                 try {
                     Minecraft.getMinecraft().addScheduledTask(() -> {
                         try {
-                            if (Loader.isModLoaded("jei") && IMStates.ActiveControl instanceof net.minecraft.client.gui.GuiTextField &&
+                            if (Loader.isModLoaded("jei") && IMStates.ActiveControl != null &&
                                     IMStates.ActiveControl.getClass().getName().equals("mezz.jei.input.GuiTextFieldFilter")) {
 
-                                LOG.info("JEI text field detected, using GuiTextField.writeText().");
-
-                                net.minecraft.client.gui.GuiTextField jeiTextField = (net.minecraft.client.gui.GuiTextField) IMStates.ActiveControl;
-                                jeiTextField.writeText(text);
+                                LOG.info("JEI text field detected, using JEI API to set text.");
+                                String oldText = JEICompat.getJEIFilterText();
+                                JEICompat.setJEIFilterText(oldText + text);
 
                             } else {
                                 final GuiScreen screen = Minecraft.getMinecraft().currentScreen;
@@ -248,7 +248,7 @@ public class Internal {
                     }
                 }
                 //else {
-                    //LOG.error("Recovery failed. Could not recreate InputContext.");
+                //LOG.error("Recovery failed. Could not recreate InputContext.");
                 //}
             } catch (Throwable recoveryError) {
                 LOG.error("A critical error occurred during the recovery process itself.", recoveryError);
