@@ -25,21 +25,19 @@ public class OverlayScreen extends Widget {
         if (!isActive()) return;
 
         GlStateManager.pushMatrix();
-
+        GlStateManager.disableLighting();
         GlStateManager.disableDepth();
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         GlStateManager.enableBlend();
         GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-
-        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-
         GlStateManager.translate(0, 0, 30f);
 
         PreEdit.draw();
         CandidateList.draw();
         WInputMode.draw();
 
-        GlStateManager.disableBlend();
         GlStateManager.enableDepth();
+        GlStateManager.disableBlend();
 
         GlStateManager.popMatrix();
     }
