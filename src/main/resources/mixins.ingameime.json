@@ -8,6 +8,7 @@
   ],
   "client": [
     "MixinEsc",
+    "MixinFluxInternalTextField",
     "MixinGuiEditSign",
     "MixinGuiScreen",
     "MixinGuiTextField",
