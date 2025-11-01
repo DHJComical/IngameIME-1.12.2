@@ -1,6 +1,8 @@
 package com.dhj.ingameime;
 
 import com.dhj.ingameime.gui.OverlayScreen;
+import com.dhj.ingameime.mixins.AccessorGuiTextField;
+import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraftforge.client.event.GuiScreenEvent;
@@ -26,13 +28,8 @@ public class ClientProxy extends CommonProxy implements IMEventHandler {
     public void onRenderScreen(GuiScreenEvent.DrawScreenEvent.Post event) {
 
         if (IMStates.ActiveControl instanceof GuiTextField) {
-
             GuiTextField textField = (GuiTextField) IMStates.ActiveControl;
-
-            int x = textField.x;
-            int y = textField.y;
-
-            ClientProxy.Screen.setCaretPos(x, y);
+            ClientProxy.Screen.setCaretPos(getX(textField), getY(textField));
         }
 
         ClientProxy.Screen.draw();
@@ -48,6 +45,28 @@ public class ClientProxy extends CommonProxy implements IMEventHandler {
             if (IMEventHandler == IMStates.OpenedManual && (Mouse.getDX() > 0 || Mouse.getDY() > 0)) {
                 onMouseMove();
             }
+    }
+
+    private static int getX(@Nonnull GuiTextField textField) {
+        AccessorGuiTextField accessor = (AccessorGuiTextField) textField;
+        FontRenderer font = accessor.getFR();
+        int lineScrollOffset = accessor.getLineScrollOffset();
+
+        int cursorPosRelative = accessor.getCursorPosition() - lineScrollOffset;
+        String visibleText = font.trimStringToWidth(textField.getText().substring(lineScrollOffset), textField.getWidth());
+        int currentDrawX = textField.getEnableBackgroundDrawing() ? textField.x + 4 : textField.x;
+
+        if (!visibleText.isEmpty()) {
+            if (cursorPosRelative > visibleText.length()) return currentDrawX; // Perform when Ctrl + A
+            String rawTextBeforeCursor = visibleText.substring(0, cursorPosRelative);
+            currentDrawX += font.getStringWidth(rawTextBeforeCursor);
+        }
+
+        return currentDrawX;
+    }
+
+    private static int getY(@Nonnull GuiTextField textField) {
+        return (textField.getEnableBackgroundDrawing() ? textField.y + (textField.height - 8) / 2 : textField.y) - 1;
     }
 
     public void preInit(FMLPreInitializationEvent event) {
