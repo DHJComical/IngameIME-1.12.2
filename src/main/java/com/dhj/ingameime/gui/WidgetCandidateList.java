@@ -68,7 +68,7 @@ public class WidgetCandidateList extends Widget {
             boolean isSelected = (index - 1) == (Selected + 1);
             if (isSelected) {
                 int entryWidth = drawItem.getTotalWidth();
-                drawRect(drawX, Y, drawX + entryWidth, Y + Height + (Padding * 2), 0xEB_B2DAE0);
+                drawRect(drawX, Y, drawX + entryWidth, Y + Height + (Padding * 2), 0xEB_EB_EB_EB);
             }
 
             drawItem.draw(drawX, drawY, TextColor);
