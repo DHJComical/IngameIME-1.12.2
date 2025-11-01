@@ -7,12 +7,12 @@
   "mixins": [
   ],
   "client": [
-    "MixinEsc",
     "MixinFluxInternalTextField",
     "MixinGuiEditSign",
     "MixinGuiScreen",
     "MixinGuiTextField",
-    "MixinMinecraft"
+    "MixinMinecraft",
+    "MixinGuiEditSign"
   ],
   "injectors": {
     "defaultRequire": 0
