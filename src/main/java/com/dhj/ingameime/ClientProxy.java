@@ -1,9 +1,9 @@
 package com.dhj.ingameime;
 
+import com.dhj.ingameime.control.IControl;
+import com.dhj.ingameime.control.NoControl;
 import com.dhj.ingameime.gui.OverlayScreen;
-import com.dhj.ingameime.mixins.AccessorGuiTextField;
-import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.gui.GuiTextField;
+import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.common.MinecraftForge;
@@ -26,12 +26,8 @@ public class ClientProxy extends CommonProxy implements IMEventHandler {
 
     @SubscribeEvent
     public void onRenderScreen(GuiScreenEvent.DrawScreenEvent.Post event) {
-
-        if (IMStates.ActiveControl instanceof GuiTextField) {
-            GuiTextField textField = (GuiTextField) IMStates.ActiveControl;
-            ClientProxy.Screen.setCaretPos(getX(textField), getY(textField));
-        }
-
+        if (IMStates.getActiveControl() == NoControl.NO_CONTROL) return;
+        ClientProxy.Screen.setCaretPos(IMStates.getActiveControl().getCursorX(), IMStates.getActiveControl().getCursorY());
         ClientProxy.Screen.draw();
 
         if (Keyboard.isKeyDown(ClientProxy.KeyBind.getKeyCode())) {
@@ -41,32 +37,11 @@ public class ClientProxy extends CommonProxy implements IMEventHandler {
             onToggleKey();
         }
 
-        if (Config.TurnOffOnMouseMove.getBoolean())
+        if (Config.TurnOffOnMouseMove.getBoolean()) {
             if (IMEventHandler == IMStates.OpenedManual && (Mouse.getDX() > 0 || Mouse.getDY() > 0)) {
                 onMouseMove();
             }
-    }
-
-    private static int getX(@Nonnull GuiTextField textField) {
-        AccessorGuiTextField accessor = (AccessorGuiTextField) textField;
-        FontRenderer font = accessor.getFR();
-        int lineScrollOffset = accessor.getLineScrollOffset();
-
-        int cursorPosRelative = accessor.getCursorPosition() - lineScrollOffset;
-        String visibleText = font.trimStringToWidth(textField.getText().substring(lineScrollOffset), textField.getWidth());
-        int currentDrawX = textField.getEnableBackgroundDrawing() ? textField.x + 4 : textField.x;
-
-        if (!visibleText.isEmpty()) {
-            if (cursorPosRelative > visibleText.length()) return currentDrawX; // Perform when Ctrl + A
-            String rawTextBeforeCursor = visibleText.substring(0, cursorPosRelative);
-            currentDrawX += font.getStringWidth(rawTextBeforeCursor);
         }
-
-        return currentDrawX;
-    }
-
-    private static int getY(@Nonnull GuiTextField textField) {
-        return (textField.getEnableBackgroundDrawing() ? textField.y + (textField.height - 8) / 2 : textField.y) - 1;
     }
 
     public void preInit(FMLPreInitializationEvent event) {
@@ -85,13 +60,13 @@ public class ClientProxy extends CommonProxy implements IMEventHandler {
     }
 
     @Override
-    public IMStates onControlFocus(@Nonnull Object control, boolean focused) {
+    public IMStates onControlFocus(@Nonnull IControl control, boolean focused) {
         IMEventHandler = IMEventHandler.onControlFocus(control, focused);
         return null;
     }
 
     @Override
-    public IMStates onScreenOpen(Object screen) {
+    public IMStates onScreenOpen(GuiScreen screen) {
         IMEventHandler = IMEventHandler.onScreenOpen(screen);
         return null;
     }

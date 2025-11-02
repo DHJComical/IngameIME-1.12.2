@@ -1,15 +1,21 @@
 package com.dhj.ingameime;
 
+import com.dhj.ingameime.control.IControl;
+import com.dhj.ingameime.control.NoControl;
+import net.minecraft.client.gui.GuiScreen;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+
+import static com.dhj.ingameime.IngameIME_Forge.LOG;
 
 public enum IMStates implements IMEventHandler {
     Disabled {
         @Override
-        public IMStates onControlFocus(@Nonnull Object control, boolean focused) {
+        public IMStates onControlFocus(@Nonnull IControl control, boolean focused) {
             if (focused) {
                 ActiveControl = control;
-                IngameIME_Forge.LOG.info("Opened by control focus: {}", ActiveControl.getClass());
+                LOG.debug("Opened by control focus: {}", ActiveControl.getClass());
                 Internal.setActivated(true);
                 return OpenedAuto;
             } else {
@@ -19,14 +25,14 @@ public enum IMStates implements IMEventHandler {
 
         @Override
         public IMStates onToggleKey() {
-            IngameIME_Forge.LOG.info("Turned on by toggle key");
+            LOG.debug("Turned on by toggle key");
             Internal.setActivated(true);
             return OpenedManual;
         }
 
     }, OpenedManual {
         @Override
-        public IMStates onControlFocus(@Nonnull Object control, boolean focused) {
+        public IMStates onControlFocus(@Nonnull IControl control, boolean focused) {
             // Ignore all focus event
             return this;
         }
@@ -34,18 +40,18 @@ public enum IMStates implements IMEventHandler {
         @Override
         public IMStates onMouseMove() {
             if (!Config.TurnOffOnMouseMove.getBoolean()) return this;
-            IngameIME_Forge.LOG.info("Turned off by mouse move");
+            LOG.debug("Turned off by mouse move");
             Internal.setActivated(false);
             return Disabled;
         }
     }, OpenedAuto {
         @Override
-        public IMStates onControlFocus(@Nonnull Object control, boolean focused) {
+        public IMStates onControlFocus(@Nonnull IControl control, boolean focused) {
             // Ignore not active focus one
             if (!focused && control != ActiveControl) return this;
 
             if (!focused) {
-                IngameIME_Forge.LOG.info("Turned off by losing control focus: {}", ActiveControl.getClass());
+                LOG.debug("Turned off by losing control focus: {}", ActiveControl.getClass());
                 Internal.setActivated(false);
                 return Disabled;
             }
@@ -53,7 +59,7 @@ public enum IMStates implements IMEventHandler {
             // Update active focused control
             if (ActiveControl != control) {
                 ActiveControl = control;
-                IngameIME_Forge.LOG.info("Opened by control focus: {}", ActiveControl.getClass());
+                LOG.debug("Opened by control focus: {}", ActiveControl.getClass());
                 Internal.setActivated(true);
                 ClientProxy.Screen.WInputMode.setActive(true);
             }
@@ -62,23 +68,63 @@ public enum IMStates implements IMEventHandler {
     };
 
     @Nullable
-    public static Object ActiveScreen = null;
+    public static GuiScreen ActiveScreen = null;
     @Nullable
-    public static Object ActiveControl = null;
+    private static IControl ActiveControl = null;
+    @Nonnull
+    private static IControl CommonControl = NoControl.NO_CONTROL;
+    @Nonnull
+    private static IControl OverlayControl = NoControl.NO_CONTROL;
+
+    public static void setOverlayControl(@Nonnull IControl control) {
+        if (OverlayControl.getControlObject() != control.getControlObject()) {
+            Internal.setActivated(false);
+        }
+        OverlayControl = control;
+        LOG.debug("Overlay control set to {}", control.getClass().getSimpleName());
+        Internal.setActivated(getActiveControl() != NoControl.NO_CONTROL);
+    }
+
+    public static void setCommonControl(@Nonnull IControl control) {
+        if (OverlayControl != NoControl.NO_CONTROL) {
+            CommonControl = control;
+            return;
+        }
+        if (CommonControl.getControlObject() != control.getControlObject()) {
+            Internal.setActivated(false);
+        }
+        CommonControl = control;
+        LOG.debug("Common control set to {}", control.getClass().getSimpleName());
+        Internal.setActivated(getActiveControl() != NoControl.NO_CONTROL);
+    }
+
+    public static boolean isOverlayControlObject(Object controlObject) {
+        return IMStates.OverlayControl.isControlObject(controlObject);
+    }
+
+    public static boolean isCommonControlObject(Object controlObject) {
+        return IMStates.CommonControl.isControlObject(controlObject);
+    }
+
+    public static @Nonnull IControl getActiveControl() {
+        return OverlayControl == NoControl.NO_CONTROL ? CommonControl : OverlayControl;
+    }
 
     @Override
     public IMStates onScreenClose() {
-        if (ActiveScreen != null) IngameIME_Forge.LOG.info("Screen closed: {}", ActiveScreen.getClass());
+        if (ActiveScreen != null) LOG.debug("Screen closed: {}", ActiveScreen.getClass());
         Internal.setActivated(false);
+        IMStates.setOverlayControl(NoControl.NO_CONTROL);
+        IMStates.setCommonControl(NoControl.NO_CONTROL);
         ActiveScreen = null;
         return Disabled;
     }
 
     @Override
-    public IMStates onScreenOpen(Object screen) {
+    public IMStates onScreenOpen(GuiScreen screen) {
         if (ActiveScreen == screen) return this;
         ActiveScreen = screen;
-        if (ActiveScreen != null) IngameIME_Forge.LOG.info("Screen Opened: {}", ActiveScreen.getClass());
+        if (ActiveScreen != null) LOG.debug("Screen Opened: {}", ActiveScreen.getClass());
         return this;
     }
 
@@ -89,7 +135,7 @@ public enum IMStates implements IMEventHandler {
 
     @Override
     public IMStates onToggleKey() {
-        IngameIME_Forge.LOG.info("Turned off by toggle key");
+        LOG.debug("Turned off by toggle key");
         Internal.setActivated(false);
         return Disabled;
     }

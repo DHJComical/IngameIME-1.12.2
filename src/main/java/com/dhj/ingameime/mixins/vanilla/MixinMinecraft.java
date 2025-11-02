@@ -1,4 +1,4 @@
-package com.dhj.ingameime.mixins;
+package com.dhj.ingameime.mixins.vanilla;
 
 import com.dhj.ingameime.ClientProxy;
 import com.dhj.ingameime.Internal;

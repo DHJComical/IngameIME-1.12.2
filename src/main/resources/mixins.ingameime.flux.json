@@ -1,0 +1,14 @@
+{
+  "package": "com.dhj.ingameime.mixins.flux",
+  "required": true,
+  "refmap": "mixins.ingameime.refmap.json",
+  "target": "@env(DEFAULT)",
+  "minVersion": "0.8.5",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [],
+  "server": [],
+  "client": [
+    "AccessorGuiTextField",
+    "MixinGuiTextField"
+  ]
+}

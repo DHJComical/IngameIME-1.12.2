@@ -1,4 +1,4 @@
-package com.dhj.ingameime.mixins;
+package com.dhj.ingameime.mixins.vanilla;
 
 import com.dhj.ingameime.Internal;
 import net.minecraft.client.gui.inventory.GuiEditSign;
