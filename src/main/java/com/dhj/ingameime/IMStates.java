@@ -40,7 +40,7 @@ public enum IMStates implements IMEventHandler {
         public IMStates onMouseMove() {
             if (!Config.TurnOffOnMouseMove.getBoolean()) return this;
             LOG.info("Turned off by mouse move");
-            Internal.setActivated(false); // Just turn off. Do not clear controls.
+            Internal.setActivated(false);
             return Disabled;
         }
     }, OpenedAuto {

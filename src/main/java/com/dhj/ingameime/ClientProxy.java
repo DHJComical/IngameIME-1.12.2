@@ -7,8 +7,10 @@ import net.minecraft.client.settings.KeyBinding;
 import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
+import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.InputEvent;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
@@ -24,11 +26,10 @@ public class ClientProxy extends CommonProxy implements IMEventHandler {
 
     @SubscribeEvent
     public void onRenderScreen(GuiScreenEvent.DrawScreenEvent.Post event) {
-        if (!IMStates.getActiveControl().isVisible()) return;
         ClientProxy.Screen.setCaretPos(IMStates.getActiveControl().getCursorX(), IMStates.getActiveControl().getCursorY());
         ClientProxy.Screen.draw();
 
-        if (KeyBind.isKeyDown()) {
+        if (Keyboard.isKeyDown(ClientProxy.KeyBind.getKeyCode())) {
             IsKeyDown = true;
         } else if (IsKeyDown) {
             IsKeyDown = false;
@@ -39,6 +40,14 @@ public class ClientProxy extends CommonProxy implements IMEventHandler {
             if (IMEventHandler == IMStates.OpenedManual && (Mouse.getDX() > 0 || Mouse.getDY() > 0)) {
                 onMouseMove();
             }
+        }
+    }
+
+    @SubscribeEvent
+    public void onKeyInput(InputEvent.KeyInputEvent event) {
+        if (KeyBind.isPressed()) {
+            IngameIME_Forge.LOG.info("KEYDOWN");
+            onToggleKey();
         }
     }
 
