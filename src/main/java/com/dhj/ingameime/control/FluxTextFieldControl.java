@@ -11,17 +11,22 @@ public class FluxTextFieldControl<T extends GuiTextField> extends AbstractContro
     }
 
     @Override
+    public boolean isVisible() {
+        return this.controlObject.getVisible();
+    }
+
+    @Override
     public int getCursorX() {
         AccessorGuiTextField accessor = (AccessorGuiTextField) this.controlObject;
         return AbstractControl.getCursorX(accessor.getFont(), this.controlObject.getText(),
-                this.controlObject.x, this.controlObject.getWidth(),
+                this.controlObject.x + 4, this.controlObject.getWidth(),
                 accessor.getLineScrollOffset(), this.controlObject.getCursorPosition(),
                 this.controlObject.getEnableBackgroundDrawing());
     }
 
     @Override
     public int getCursorY() {
-        return AbstractControl.getCursorY(this.controlObject.y, this.controlObject.height, this.controlObject.getEnableBackgroundDrawing());
+        return AbstractControl.getCursorY(this.controlObject.y + (this.controlObject.height - 8) / 2, this.controlObject.height, this.controlObject.getEnableBackgroundDrawing());
     }
 
     /**

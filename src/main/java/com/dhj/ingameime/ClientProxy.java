@@ -26,7 +26,7 @@ public class ClientProxy extends CommonProxy implements IMEventHandler {
 
     @SubscribeEvent
     public void onRenderScreen(GuiScreenEvent.DrawScreenEvent.Post event) {
-        if (IMStates.getActiveControl() == NoControl.NO_CONTROL) return;
+        if (!IMStates.getActiveControl().isVisible()) return;
         ClientProxy.Screen.setCaretPos(IMStates.getActiveControl().getCursorX(), IMStates.getActiveControl().getCursorY());
         ClientProxy.Screen.draw();
 

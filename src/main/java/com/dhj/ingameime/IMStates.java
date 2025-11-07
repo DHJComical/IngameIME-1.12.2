@@ -15,7 +15,7 @@ public enum IMStates implements IMEventHandler {
         public IMStates onControlFocus(@Nonnull IControl control, boolean focused) {
             if (focused) {
                 ActiveControl = control;
-                LOG.debug("Opened by control focus: {}", ActiveControl.getClass());
+                LOG.info("Opened by control focus: {}", ActiveControl.getClass());
                 Internal.setActivated(true);
                 return OpenedAuto;
             } else {
@@ -25,7 +25,7 @@ public enum IMStates implements IMEventHandler {
 
         @Override
         public IMStates onToggleKey() {
-            LOG.debug("Turned on by toggle key");
+            LOG.info("Turned on by toggle key");
             Internal.setActivated(true);
             return OpenedManual;
         }
@@ -40,7 +40,7 @@ public enum IMStates implements IMEventHandler {
         @Override
         public IMStates onMouseMove() {
             if (!Config.TurnOffOnMouseMove.getBoolean()) return this;
-            LOG.debug("Turned off by mouse move");
+            LOG.info("Turned off by mouse move");
             Internal.setActivated(false);
             return Disabled;
         }
@@ -51,7 +51,7 @@ public enum IMStates implements IMEventHandler {
             if (!focused && control != ActiveControl) return this;
 
             if (!focused) {
-                LOG.debug("Turned off by losing control focus: {}", ActiveControl.getClass());
+                LOG.info("Turned off by losing control focus: {}", ActiveControl.getClass());
                 Internal.setActivated(false);
                 return Disabled;
             }
@@ -59,7 +59,7 @@ public enum IMStates implements IMEventHandler {
             // Update active focused control
             if (ActiveControl != control) {
                 ActiveControl = control;
-                LOG.debug("Opened by control focus: {}", ActiveControl.getClass());
+                LOG.info("Opened by control focus: {}", ActiveControl.getClass());
                 Internal.setActivated(true);
                 ClientProxy.Screen.WInputMode.setActive(true);
             }
@@ -81,7 +81,7 @@ public enum IMStates implements IMEventHandler {
             Internal.setActivated(false);
         }
         OverlayControl = control;
-        LOG.debug("Overlay control set to {}", control.getClass().getSimpleName());
+        LOG.info("Overlay control set to {}", control.getClass().getSimpleName());
         Internal.setActivated(getActiveControl() != NoControl.NO_CONTROL);
     }
 
@@ -94,16 +94,16 @@ public enum IMStates implements IMEventHandler {
             Internal.setActivated(false);
         }
         CommonControl = control;
-        LOG.debug("Common control set to {}", control.getClass().getSimpleName());
+        LOG.info("Common control set to {}", control.getClass().getSimpleName());
         Internal.setActivated(getActiveControl() != NoControl.NO_CONTROL);
     }
 
     public static boolean isOverlayControlObject(Object controlObject) {
-        return IMStates.OverlayControl.isControlObject(controlObject);
+        return IMStates.OverlayControl.getControlObject() == controlObject;
     }
 
     public static boolean isCommonControlObject(Object controlObject) {
-        return IMStates.CommonControl.isControlObject(controlObject);
+        return IMStates.CommonControl.getControlObject() == controlObject;
     }
 
     public static @Nonnull IControl getActiveControl() {
@@ -112,7 +112,7 @@ public enum IMStates implements IMEventHandler {
 
     @Override
     public IMStates onScreenClose() {
-        if (ActiveScreen != null) LOG.debug("Screen closed: {}", ActiveScreen.getClass());
+        if (ActiveScreen != null) LOG.info("Screen closed: {}", ActiveScreen.getClass());
         Internal.setActivated(false);
         IMStates.setOverlayControl(NoControl.NO_CONTROL);
         IMStates.setCommonControl(NoControl.NO_CONTROL);
@@ -124,7 +124,7 @@ public enum IMStates implements IMEventHandler {
     public IMStates onScreenOpen(GuiScreen screen) {
         if (ActiveScreen == screen) return this;
         ActiveScreen = screen;
-        if (ActiveScreen != null) LOG.debug("Screen Opened: {}", ActiveScreen.getClass());
+        if (ActiveScreen != null) LOG.info("Screen Opened: {}", ActiveScreen.getClass());
         return this;
     }
 
@@ -135,7 +135,7 @@ public enum IMStates implements IMEventHandler {
 
     @Override
     public IMStates onToggleKey() {
-        LOG.debug("Turned off by toggle key");
+        LOG.info("Turned off by toggle key");
         Internal.setActivated(false);
         return Disabled;
     }

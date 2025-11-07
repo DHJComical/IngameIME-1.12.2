@@ -5,17 +5,17 @@ public class NoControl implements IControl {
     public static final NoControl NO_CONTROL = new NoControl();
 
     @Override
-    public boolean isControlObject(Object o) {
-        return false;
-    }
-
-    @Override
     public Object getControlObject() {
         return null;
     }
 
     @Override
     public void writeText(String text) {
+    }
+
+    @Override
+    public boolean isVisible() {
+        return false;
     }
 
     @Override

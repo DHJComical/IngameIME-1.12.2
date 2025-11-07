@@ -18,11 +18,6 @@ public abstract class AbstractControl<T> implements IControl {
     }
 
     @Override
-    public boolean isControlObject(Object controlObject) {
-        return this.controlObject == controlObject;
-    }
-
-    @Override
     public T getControlObject() {
         return this.controlObject;
     }

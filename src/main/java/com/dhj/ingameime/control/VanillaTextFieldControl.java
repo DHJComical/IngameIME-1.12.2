@@ -11,6 +11,11 @@ public class VanillaTextFieldControl<T extends GuiTextField> extends AbstractCon
     }
 
     @Override
+    public boolean isVisible() {
+        return this.controlObject.getVisible();
+    }
+
+    @Override
     public int getCursorX() {
         AccessorGuiTextField accessor = (AccessorGuiTextField) this.controlObject;
         return AbstractControl.getCursorX(accessor.getFont(), this.controlObject.getText(),

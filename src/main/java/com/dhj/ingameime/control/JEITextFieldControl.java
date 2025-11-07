@@ -8,11 +8,9 @@ import net.minecraft.client.gui.GuiTextField;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Optional;
 
-import static com.dhj.ingameime.IngameIME_Forge.LOG;
-
 public class JEITextFieldControl extends VanillaTextFieldControl<GuiTextFieldFilter> {
 
-    private static final String JEI_MOD_ID = "jei";
+    public static final String JEI_MOD_ID = "jei";
 
     protected JEITextFieldControl(GuiTextFieldFilter control) {
         super(control);
@@ -20,7 +18,6 @@ public class JEITextFieldControl extends VanillaTextFieldControl<GuiTextFieldFil
 
     @Override
     public void writeText(String text) {
-        LOG.info("JEI text field detected, using JEI API to set text.");
         // FIXME: It just works!
         this.controlObject.writeText(text);
         int cursorPos = this.controlObject.getCursorPosition();
@@ -47,13 +44,8 @@ public class JEITextFieldControl extends VanillaTextFieldControl<GuiTextFieldFil
      * @param object The field to be set
      * @return Success or not
      */
-    public static boolean onFocus(GuiTextField object) {
-        if (!Loader.isModLoaded(JEI_MOD_ID)) return false;
-        return onFocusOptional(object);
-    }
-
     @Optional.Method(modid = JEI_MOD_ID)
-    private static boolean onFocusOptional(GuiTextField object) {
+    public static boolean onFocus(GuiTextField object) {
         if (object instanceof GuiTextFieldFilter) {
             IMStates.setOverlayControl(new JEITextFieldControl((GuiTextFieldFilter) object));
             return true;

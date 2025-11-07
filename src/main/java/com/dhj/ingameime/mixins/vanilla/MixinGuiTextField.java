@@ -4,6 +4,7 @@ import com.dhj.ingameime.IngameIME_Forge;
 import com.dhj.ingameime.control.JEITextFieldControl;
 import com.dhj.ingameime.control.VanillaTextFieldControl;
 import net.minecraft.client.gui.GuiTextField;
+import net.minecraftforge.fml.common.Loader;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -19,7 +20,7 @@ public abstract class MixinGuiTextField {
 
         try {
             if (isFocusedIn) {
-                if (!JEITextFieldControl.onFocus(self)) {
+                if (!Loader.isModLoaded(JEITextFieldControl.JEI_MOD_ID) || !JEITextFieldControl.onFocus(self)) {
                     VanillaTextFieldControl.onFocus(self);
                 }
             } else {
