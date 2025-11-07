@@ -21,9 +21,11 @@ public class JEITextFieldControl extends VanillaTextFieldControl<GuiTextFieldFil
     @Override
     public void writeText(String text) {
         LOG.info("JEI text field detected, using JEI API to set text.");
-        // Hacky. Fix it.
+        // FIXME: It just works!
         this.controlObject.writeText(text);
+        int cursorPos = this.controlObject.getCursorPosition();
         JEICompat.setJEIFilterText(this.controlObject.getText());
+        this.controlObject.setCursorPosition(cursorPos);
     }
 
     @Override

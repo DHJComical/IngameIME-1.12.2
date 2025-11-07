@@ -11,11 +11,6 @@ public class FluxTextFieldControl<T extends GuiTextField> extends AbstractContro
     }
 
     @Override
-    public void writeText(String text) {
-        this.controlObject.writeText(text);
-    }
-
-    @Override
     public int getCursorX() {
         AccessorGuiTextField accessor = (AccessorGuiTextField) this.controlObject;
         return AbstractControl.getCursorX(accessor.getFont(), this.controlObject.getText(),
