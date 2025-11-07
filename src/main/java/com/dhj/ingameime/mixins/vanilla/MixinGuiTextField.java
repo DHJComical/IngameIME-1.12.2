@@ -15,16 +15,10 @@ public abstract class MixinGuiTextField {
     @Inject(method = "setFocused(Z)V", at = @At("HEAD"))
     private void onSetFocus(boolean isFocusedIn, CallbackInfo ci) {
         GuiTextField self = (GuiTextField) (Object) this;
-        boolean wasFocused = self.isFocused();
-        if (wasFocused == isFocusedIn) return;
 
         try {
-            if (isFocusedIn) {
-                if (!Loader.isModLoaded(JEITextFieldControl.JEI_MOD_ID) || !JEITextFieldControl.onFocus(self)) {
-                    VanillaTextFieldControl.onFocus(self);
-                }
-            } else {
-                VanillaTextFieldControl.onLoseFocus(self);
+            if (!Loader.isModLoaded(JEITextFieldControl.JEI_MOD_ID) || !JEITextFieldControl.onFocusChange(self, isFocusedIn)) {
+                VanillaTextFieldControl.onFocusChange(self, isFocusedIn);
             }
         } catch (Throwable t) {
             IngameIME_Forge.LOG.error("IngameIME failed to handle focus change. This is a compatibility issue but the game was prevented from crashing.", t);

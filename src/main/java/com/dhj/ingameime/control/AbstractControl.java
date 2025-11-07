@@ -58,14 +58,4 @@ public abstract class AbstractControl<T> implements IControl {
     protected static int getCursorY(int y, int height, boolean enableBackgroundDrawing) {
         return (enableBackgroundDrawing ? y + (height - 8) / 2 : y) - 1;
     }
-
-    public static void onLoseFocus(Object controlObject) {
-        if (IMStates.isOverlayControlObject(controlObject)) {
-            IMStates.setOverlayControl(NoControl.NO_CONTROL);
-            return;
-        }
-        if (IMStates.isCommonControlObject(controlObject)) {
-            IMStates.setCommonControl(NoControl.NO_CONTROL);
-        }
-    }
 }

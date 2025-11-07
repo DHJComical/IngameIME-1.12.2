@@ -1,6 +1,6 @@
 package com.dhj.ingameime.control;
 
-import com.dhj.ingameime.IMStates;
+import com.dhj.ingameime.ClientProxy;
 import com.dhj.ingameime.mixins.flux.AccessorGuiTextField;
 import sonar.fluxnetworks.client.gui.basic.GuiTextField;
 
@@ -33,7 +33,7 @@ public class FluxTextFieldControl<T extends GuiTextField> extends AbstractContro
      * Try to set the GuiTextField object focus.
      * @param object The field to be set
      */
-    public static void onFocus(GuiTextField object) {
-        IMStates.setCommonControl(new FluxTextFieldControl<>(object));
+    public static void onFocusChange(GuiTextField object, boolean focused) {
+        ClientProxy.INSTANCE.onControlFocus(new FluxTextFieldControl<>(object), focused, false);
     }
 }

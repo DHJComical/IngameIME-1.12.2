@@ -211,7 +211,7 @@ public class Internal {
 
         try {
             InputCtx.setActivated(activated);
-            LOG.debug("IM active state: {}", activated);
+            LOG.info("IM active state: {}", activated);
         } catch (Throwable t) {
             LOG.error("Failed to set IME active state. This indicates the InputContext may be stale. Attempting to recover.", t);
 

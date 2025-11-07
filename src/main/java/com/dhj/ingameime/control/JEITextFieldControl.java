@@ -1,11 +1,11 @@
 package com.dhj.ingameime.control;
 
+import com.dhj.ingameime.ClientProxy;
 import com.dhj.ingameime.IMStates;
 import com.dhj.ingameime.JEICompat;
 import com.dhj.ingameime.mixins.vanilla.AccessorGuiTextField;
 import mezz.jei.input.GuiTextFieldFilter;
 import net.minecraft.client.gui.GuiTextField;
-import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Optional;
 
 public class JEITextFieldControl extends VanillaTextFieldControl<GuiTextFieldFilter> {
@@ -45,9 +45,9 @@ public class JEITextFieldControl extends VanillaTextFieldControl<GuiTextFieldFil
      * @return Success or not
      */
     @Optional.Method(modid = JEI_MOD_ID)
-    public static boolean onFocus(GuiTextField object) {
+    public static boolean onFocusChange(GuiTextField object, boolean focused) {
         if (object instanceof GuiTextFieldFilter) {
-            IMStates.setOverlayControl(new JEITextFieldControl((GuiTextFieldFilter) object));
+            ClientProxy.INSTANCE.onControlFocus(new JEITextFieldControl((GuiTextFieldFilter) object), focused, true);
             return true;
         }
         return false;

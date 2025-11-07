@@ -5,21 +5,20 @@ import com.dhj.ingameime.control.NoControl;
 import net.minecraft.client.gui.GuiScreen;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import static com.dhj.ingameime.IngameIME_Forge.LOG;
 
 public enum IMStates implements IMEventHandler {
     Disabled {
         @Override
-        public IMStates onControlFocus(@Nonnull IControl control, boolean focused) {
+        public IMStates onControlFocus(@Nonnull IControl control, boolean focused, boolean isOverlay) {
             if (focused) {
-                ActiveControl = control;
-                LOG.info("Opened by control focus: {}", ActiveControl.getClass());
+                setControl(control, isOverlay);
+                LOG.info("Opened by control focus: {}", control.getClass().getSimpleName());
                 Internal.setActivated(true);
                 return OpenedAuto;
             } else {
-                return this;
+                return this; // Do nothing
             }
         }
 
@@ -32,7 +31,7 @@ public enum IMStates implements IMEventHandler {
 
     }, OpenedManual {
         @Override
-        public IMStates onControlFocus(@Nonnull IControl control, boolean focused) {
+        public IMStates onControlFocus(@Nonnull IControl control, boolean focused, boolean isOverlay) {
             // Ignore all focus event
             return this;
         }
@@ -41,90 +40,51 @@ public enum IMStates implements IMEventHandler {
         public IMStates onMouseMove() {
             if (!Config.TurnOffOnMouseMove.getBoolean()) return this;
             LOG.info("Turned off by mouse move");
-            Internal.setActivated(false);
+            Internal.setActivated(false); // Just turn off. Do not clear controls.
             return Disabled;
         }
     }, OpenedAuto {
         @Override
-        public IMStates onControlFocus(@Nonnull IControl control, boolean focused) {
-            // Ignore not active focus one
-            if (!focused && control != ActiveControl) return this;
-
+        public IMStates onControlFocus(@Nonnull IControl control, boolean focused, boolean isOverlay) {
+            // Handle active control lose focus
+            Object object = control.getControlObject();
+            boolean changed = !(isOverlay ? isOverlayControlObject(object) : isCommonControlObject(object));
             if (!focused) {
-                LOG.info("Turned off by losing control focus: {}", ActiveControl.getClass());
-                Internal.setActivated(false);
-                return Disabled;
+                if (!changed) {
+                    Internal.setActivated(false);
+                    setControl(NoControl.NO_CONTROL, isOverlay);
+                    if (IMStates.getActiveControl() != NoControl.NO_CONTROL) {
+                        Internal.setActivated(true);
+                        LOG.info("Focus changed from Overlay {} to Common {}", control.getClass().getSimpleName(), IMStates.getActiveControl().getClass().getSimpleName());
+                        return this;
+                    }
+                    LOG.info("Turned off by losing control focus: {}", control.getClass().getSimpleName());
+                    return Disabled;
+                }
+                return this;
             }
 
             // Update active focused control
-            if (ActiveControl != control) {
-                ActiveControl = control;
-                LOG.info("Opened by control focus: {}", ActiveControl.getClass());
-                Internal.setActivated(true);
-                ClientProxy.Screen.WInputMode.setActive(true);
-            }
-            return this;
+            if (changed) Internal.setActivated(false); // Empty the typing list when changed
+            setControl(control, isOverlay);
+            if (changed) LOG.info("Opened by control focus: {}", control.getClass().getSimpleName());
+            Internal.setActivated(true);
+            ClientProxy.Screen.WInputMode.setActive(true);
+            return this; // Still OpenAuto
         }
     };
 
-    @Nullable
-    public static GuiScreen ActiveScreen = null;
-    @Nullable
-    private static IControl ActiveControl = null;
-    @Nonnull
-    private static IControl CommonControl = NoControl.NO_CONTROL;
-    @Nonnull
-    private static IControl OverlayControl = NoControl.NO_CONTROL;
-
-    public static void setOverlayControl(@Nonnull IControl control) {
-        if (OverlayControl.getControlObject() != control.getControlObject()) {
-            Internal.setActivated(false);
-        }
-        OverlayControl = control;
-        LOG.info("Overlay control set to {}", control.getClass().getSimpleName());
-        Internal.setActivated(getActiveControl() != NoControl.NO_CONTROL);
-    }
-
-    public static void setCommonControl(@Nonnull IControl control) {
-        if (OverlayControl != NoControl.NO_CONTROL) {
-            CommonControl = control;
-            return;
-        }
-        if (CommonControl.getControlObject() != control.getControlObject()) {
-            Internal.setActivated(false);
-        }
-        CommonControl = control;
-        LOG.info("Common control set to {}", control.getClass().getSimpleName());
-        Internal.setActivated(getActiveControl() != NoControl.NO_CONTROL);
-    }
-
-    public static boolean isOverlayControlObject(Object controlObject) {
-        return IMStates.OverlayControl.getControlObject() == controlObject;
-    }
-
-    public static boolean isCommonControlObject(Object controlObject) {
-        return IMStates.CommonControl.getControlObject() == controlObject;
-    }
-
-    public static @Nonnull IControl getActiveControl() {
-        return OverlayControl == NoControl.NO_CONTROL ? CommonControl : OverlayControl;
-    }
-
     @Override
     public IMStates onScreenClose() {
-        if (ActiveScreen != null) LOG.info("Screen closed: {}", ActiveScreen.getClass());
         Internal.setActivated(false);
-        IMStates.setOverlayControl(NoControl.NO_CONTROL);
-        IMStates.setCommonControl(NoControl.NO_CONTROL);
-        ActiveScreen = null;
+        // Empty controls
+        setControl(NoControl.NO_CONTROL, false);
+        setControl(NoControl.NO_CONTROL, true);
         return Disabled;
     }
 
     @Override
     public IMStates onScreenOpen(GuiScreen screen) {
-        if (ActiveScreen == screen) return this;
-        ActiveScreen = screen;
-        if (ActiveScreen != null) LOG.info("Screen Opened: {}", ActiveScreen.getClass());
         return this;
     }
 
@@ -138,5 +98,30 @@ public enum IMStates implements IMEventHandler {
         LOG.info("Turned off by toggle key");
         Internal.setActivated(false);
         return Disabled;
+    }
+
+    @Nonnull
+    private static IControl CommonControl = NoControl.NO_CONTROL;
+    @Nonnull
+    private static IControl OverlayControl = NoControl.NO_CONTROL;
+
+    public static void setControl(@Nonnull IControl control, boolean isOverlay) {
+        if (isOverlay) {
+            OverlayControl = control;
+        } else {
+            CommonControl = control;
+        }
+    }
+
+    public static boolean isOverlayControlObject(Object controlObject) {
+        return IMStates.OverlayControl.getControlObject() == controlObject;
+    }
+
+    public static boolean isCommonControlObject(Object controlObject) {
+        return IMStates.CommonControl.getControlObject() == controlObject;
+    }
+
+    public static @Nonnull IControl getActiveControl() {
+        return OverlayControl == NoControl.NO_CONTROL ? CommonControl : OverlayControl;
     }
 }

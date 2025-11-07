@@ -15,11 +15,7 @@ public class MixinGuiTextField {
         GuiTextField self = (GuiTextField) (Object) this;
 
         try {
-            if (isFocusedIn) {
-                FluxTextFieldControl.onFocus(self);
-            } else {
-                FluxTextFieldControl.onLoseFocus(self);
-            }
+            FluxTextFieldControl.onFocusChange(self, isFocusedIn);
         } catch (Throwable t) {
             IngameIME_Forge.LOG.error("IngameIME failed to handle focus change. This is a compatibility issue but the game was prevented from crashing.", t);
             System.err.println("IngameIME caught an error during focus change, preventing a crash: " + t.getMessage());

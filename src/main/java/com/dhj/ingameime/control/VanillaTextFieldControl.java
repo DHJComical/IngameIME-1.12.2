@@ -1,8 +1,10 @@
 package com.dhj.ingameime.control;
 
-import com.dhj.ingameime.IMStates;
+import com.dhj.ingameime.ClientProxy;
 import com.dhj.ingameime.mixins.vanilla.AccessorGuiTextField;
 import net.minecraft.client.gui.GuiTextField;
+
+import static com.dhj.ingameime.IngameIME_Forge.LOG;
 
 public class VanillaTextFieldControl<T extends GuiTextField> extends AbstractControl<GuiTextField> {
 
@@ -35,8 +37,8 @@ public class VanillaTextFieldControl<T extends GuiTextField> extends AbstractCon
      * @return Success or not
      */
     @SuppressWarnings("UnusedReturnValue")
-    public static boolean onFocus(GuiTextField object) {
-        IMStates.setCommonControl(new VanillaTextFieldControl<>(object));
+    public static boolean onFocusChange(GuiTextField object, boolean focused) {
+        ClientProxy.INSTANCE.onControlFocus(new VanillaTextFieldControl<>(object), focused, false);
         return true;
     }
 }
