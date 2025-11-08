@@ -1,6 +1,6 @@
 package com.dhj.ingameime.mixins;
 
-import com.dhj.imgameime.ingameime.Tags;
+import com.dhj.ingameime.Tags;
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
 import zone.rong.mixinbooter.IEarlyMixinLoader;
 

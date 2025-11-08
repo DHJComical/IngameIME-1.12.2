@@ -1,11 +1,15 @@
 package com.dhj.ingameime.control;
 
 import com.dhj.ingameime.ClientProxy;
-import com.dhj.ingameime.JEICompat;
 import com.dhj.ingameime.mixins.vanilla.AccessorGuiTextField;
+import mezz.jei.api.IJeiRuntime;
+import mezz.jei.api.IModPlugin;
+import mezz.jei.api.JEIPlugin;
 import mezz.jei.input.GuiTextFieldFilter;
 import net.minecraft.client.gui.GuiTextField;
 import net.minecraftforge.fml.common.Optional;
+
+import javax.annotation.Nonnull;
 
 public class JEITextFieldControl extends VanillaTextFieldControl<GuiTextFieldFilter> {
 
@@ -20,7 +24,7 @@ public class JEITextFieldControl extends VanillaTextFieldControl<GuiTextFieldFil
         // FIXME: It just works!
         this.controlObject.writeText(text);
         int cursorPos = this.controlObject.getCursorPosition();
-        JEICompat.setJEIFilterText(this.controlObject.getText());
+        Plugin.setJEIFilterText(this.controlObject.getText());
         this.controlObject.setCursorPosition(cursorPos);
     }
 
@@ -51,5 +55,25 @@ public class JEITextFieldControl extends VanillaTextFieldControl<GuiTextFieldFil
             return true;
         }
         return false;
+    }
+
+    @JEIPlugin
+    public static class Plugin implements IModPlugin {
+        private static IJeiRuntime jeiRuntime;
+
+        // Necessary to stop JEI erroring
+        public Plugin() {
+        }
+
+        public static void setJEIFilterText(String text) {
+            if (jeiRuntime != null) {
+                jeiRuntime.getIngredientFilter().setFilterText(text);
+            }
+        }
+
+        @Override
+        public void onRuntimeAvailable(@Nonnull IJeiRuntime runtime) {
+            jeiRuntime = runtime;
+        }
     }
 }

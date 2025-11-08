@@ -45,7 +45,6 @@ public class ClientProxy extends CommonProxy implements IMEventHandler {
     @SubscribeEvent
     public void onKeyInput(InputEvent.KeyInputEvent event) {
         if (KeyBind.isPressed()) {
-            IngameIME_Forge.LOG.info("KEYDOWN");
             onToggleKey();
         }
     }

@@ -1,6 +1,5 @@
 package com.dhj.ingameime;
 
-import com.dhj.imgameime.ingameime.Tags;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
