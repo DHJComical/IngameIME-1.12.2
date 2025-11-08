@@ -19,7 +19,7 @@ public class ClientProxy extends CommonProxy implements IMEventHandler {
     public static ClientProxy INSTANCE = null;
     public static OverlayScreen Screen = new OverlayScreen();
 
-    private static final KeyBinding KeyBind = new KeyBinding("ingameime.key.desc", Keyboard.KEY_NONE, "In game IME");
+    private static final KeyBinding KeyBind = new KeyBinding("ingameime.key.desc", Keyboard.KEY_NONE, "ingameime.key.category");
     private static IMEventHandler IMEventHandler = IMStates.Disabled;
     private static boolean IsKeyDown = false;
 
