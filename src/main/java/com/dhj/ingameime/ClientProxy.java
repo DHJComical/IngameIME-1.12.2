@@ -26,8 +26,10 @@ public class ClientProxy extends CommonProxy implements IMEventHandler {
 
     @SubscribeEvent
     public void onRenderScreen(GuiScreenEvent.DrawScreenEvent.Post event) {
-        ClientProxy.Screen.setCaretPos(IMStates.getActiveControl().getCursorX(), IMStates.getActiveControl().getCursorY());
-        ClientProxy.Screen.draw();
+        if (IMEventHandler == IMStates.OpenedManual || IMStates.getActiveControl().isVisible()) {
+            ClientProxy.Screen.setCaretPos(IMStates.getActiveControl().getCursorX(), IMStates.getActiveControl().getCursorY());
+            ClientProxy.Screen.draw();
+        }
 
         if (Keyboard.isKeyDown(ClientProxy.KeyBind.getKeyCode())) {
             IsKeyDown = true;
