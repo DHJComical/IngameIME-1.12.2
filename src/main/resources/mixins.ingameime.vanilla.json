@@ -10,7 +10,6 @@
   "client": [
     "AccessorGuiScreen",
     "AccessorGuiTextField",
-    "MixinGuiEditSign",
     "MixinGuiTextField",
     "MixinMinecraft"
   ]

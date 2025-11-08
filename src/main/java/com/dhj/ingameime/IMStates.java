@@ -3,13 +3,27 @@ package com.dhj.ingameime;
 import com.dhj.ingameime.control.IControl;
 import com.dhj.ingameime.control.NoControl;
 import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.gui.inventory.GuiEditSign;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import static com.dhj.ingameime.IngameIME_Forge.LOG;
 
 public enum IMStates implements IMEventHandler {
+    /**
+     * IME is disabled.
+     */
     Disabled {
+        @Override
+        public IMStates onScreenOpen(@Nullable GuiScreen screen) {
+            if (screen instanceof GuiEditSign) {
+                Internal.setActivated(true); // What's wrong with you ojng
+                return OpenedInternal;
+            }
+            return this;
+        }
+
         @Override
         public IMStates onControlFocus(@Nonnull IControl control, boolean focused, boolean isOverlay) {
             if (focused) {
@@ -18,7 +32,7 @@ public enum IMStates implements IMEventHandler {
                 Internal.setActivated(true);
                 return OpenedAuto;
             } else {
-                return this; // Do nothing
+                return this;
             }
         }
 
@@ -28,27 +42,38 @@ public enum IMStates implements IMEventHandler {
             Internal.setActivated(true);
             return OpenedManual;
         }
-
-    }, OpenedManual {
+    },
+    /**
+     * IME is opened manually by internal code.
+     */
+    OpenedInternal {
         @Override
-        public IMStates onControlFocus(@Nonnull IControl control, boolean focused, boolean isOverlay) {
-            // Ignore all focus event
-            return this;
+        public void onLeaveState() {
+            NoControl.NO_CONTROL.setCursorX(0);
+            NoControl.NO_CONTROL.setCursorY(0);
         }
-
+    },
+    /**
+     * IME is opened manually by the user. Will turn off when mouse move.
+     */
+    OpenedManual {
         @Override
         public IMStates onMouseMove() {
             if (!Config.TurnOffOnMouseMove.getBoolean()) return this;
-            LOG.info("Turned off by mouse move");
             Internal.setActivated(false);
+            LOG.info("Turned off by mouse move");
             return Disabled;
         }
-    }, OpenedAuto {
+    },
+    /**
+     * IME is opened automatically by internal code.
+     */
+    OpenedAuto {
         @Override
         public IMStates onControlFocus(@Nonnull IControl control, boolean focused, boolean isOverlay) {
             // Handle active control lose focus
             Object object = control.getControlObject();
-            boolean changed = !(isOverlay ? isOverlayControlObject(object) : isCommonControlObject(object));
+            boolean changed = !isControlObject(object, isOverlay);
             if (!focused) {
                 if (!changed) {
                     Internal.setActivated(false);
@@ -65,14 +90,25 @@ public enum IMStates implements IMEventHandler {
             }
 
             // Update active focused control
-            if (changed) Internal.setActivated(false); // Empty the typing list when changed
+            if (changed) Internal.setActivated(false); // Simply empty the typing list
             setControl(control, isOverlay);
             if (changed) LOG.info("Opened by control focus: {}", control.getClass().getSimpleName());
             Internal.setActivated(true);
             ClientProxy.Screen.WInputMode.setActive(true);
-            return this; // Still OpenAuto
+            return this;
         }
     };
+
+    @Override
+    public IMStates onControlFocus(@Nonnull IControl control, boolean focused, boolean isOverlay) {
+        // Update control but do not change status
+        if (focused) {
+            setControl(control, isOverlay);
+        } else if (isControlObject(control.getControlObject(), isOverlay)) {
+            setControl(NoControl.NO_CONTROL, isOverlay);
+        }
+        return this;
+    }
 
     @Override
     public IMStates onScreenClose() {
@@ -113,15 +149,17 @@ public enum IMStates implements IMEventHandler {
         }
     }
 
-    public static boolean isOverlayControlObject(Object controlObject) {
-        return IMStates.OverlayControl.getControlObject() == controlObject;
+    public static boolean isControlObject(Object controlObject, boolean isOverlay) {
+        return isOverlay ? IMStates.OverlayControl.getControlObject() == controlObject :
+                IMStates.CommonControl.getControlObject() == controlObject;
     }
 
-    public static boolean isCommonControlObject(Object controlObject) {
-        return IMStates.CommonControl.getControlObject() == controlObject;
-    }
-
+    /**
+     * @return The control to be rendered and call typed etc.
+     */
     public static @Nonnull IControl getActiveControl() {
-        return OverlayControl == NoControl.NO_CONTROL ? CommonControl : OverlayControl;
+        IMEventHandler eventHandler = ClientProxy.getIMEventHandler();
+        return eventHandler == IMStates.OpenedManual || eventHandler == IMStates.OpenedInternal ? NoControl.NO_CONTROL :
+                (OverlayControl == NoControl.NO_CONTROL ? CommonControl : OverlayControl);
     }
 }

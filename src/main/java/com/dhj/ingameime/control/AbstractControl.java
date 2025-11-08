@@ -21,11 +21,15 @@ public abstract class AbstractControl<T> implements IControl {
         return this.controlObject;
     }
 
+    @Override
+    public void writeText(String text) throws IOException {
+        writeCurrentScreenText(text);
+    }
+
     /**
      * Universal write method.
      */
-    @Override
-    public void writeText(String text) throws IOException {
+    public static void writeCurrentScreenText(String text) throws IOException {
         final GuiScreen screen = Minecraft.getMinecraft().currentScreen;
         if (screen != null) {
             for (char c : text.toCharArray()) {

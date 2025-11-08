@@ -43,4 +43,14 @@ public interface IMEventHandler {
      * @return New IMStates to be set
      */
     IMStates onMouseMove();
+
+    /**
+     * Called before the state is changed from itself to another.
+     */
+    default void onLeaveState() {}
+
+    /**
+     * Called after the state is changed to itself from another.
+     */
+    default void onGetState() {}
 }

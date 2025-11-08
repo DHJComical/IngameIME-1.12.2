@@ -25,7 +25,7 @@ public class ClientProxy extends CommonProxy implements IMEventHandler {
 
     @SubscribeEvent
     public void onRenderScreen(GuiScreenEvent.DrawScreenEvent.Post event) {
-        if (IMEventHandler == IMStates.OpenedManual || IMStates.getActiveControl().isVisible()) {
+        if (IMStates.getActiveControl().isVisible()) {
             ClientProxy.Screen.setCaretPos(IMStates.getActiveControl().getCursorX(), IMStates.getActiveControl().getCursorY());
             ClientProxy.Screen.draw();
         }
@@ -37,10 +37,8 @@ public class ClientProxy extends CommonProxy implements IMEventHandler {
             onToggleKey();
         }
 
-        if (Config.TurnOffOnMouseMove.getBoolean()) {
-            if (IMEventHandler == IMStates.OpenedManual && (Mouse.getDX() > 0 || Mouse.getDY() > 0)) {
-                onMouseMove();
-            }
+        if (Mouse.getDX() > 0 || Mouse.getDY() > 0) {
+            onMouseMove();
         }
     }
 
@@ -50,6 +48,10 @@ public class ClientProxy extends CommonProxy implements IMEventHandler {
             IngameIME_Forge.LOG.info("KEYDOWN");
             onToggleKey();
         }
+    }
+
+    public static IMEventHandler getIMEventHandler() {
+        return IMEventHandler;
     }
 
     public void preInit(@Nonnull FMLPreInitializationEvent event) {
@@ -63,31 +65,56 @@ public class ClientProxy extends CommonProxy implements IMEventHandler {
 
     @Override
     public IMStates onScreenClose() {
-        IMEventHandler = IMEventHandler.onScreenClose();
+        IMEventHandler newEventHandler = IMEventHandler.onScreenClose();
+        if (newEventHandler != IMEventHandler) {
+            IMEventHandler.onLeaveState();
+            IMEventHandler = newEventHandler;
+            IMEventHandler.onGetState();
+        }
         return null;
     }
 
     @Override
     public IMStates onControlFocus(@Nonnull IControl control, boolean focused, boolean isOverlay) {
-        IMEventHandler = IMEventHandler.onControlFocus(control, focused, isOverlay);
+        IMEventHandler newEventHandler = IMEventHandler.onControlFocus(control, focused, isOverlay);
+        if (newEventHandler != IMEventHandler) {
+            IMEventHandler.onLeaveState();
+            IMEventHandler = newEventHandler;
+            IMEventHandler.onGetState();
+        }
         return null;
     }
 
     @Override
     public IMStates onScreenOpen(GuiScreen screen) {
-        IMEventHandler = IMEventHandler.onScreenOpen(screen);
+        IMEventHandler newEventHandler = IMEventHandler.onScreenOpen(screen);
+        if (newEventHandler != IMEventHandler) {
+            IMEventHandler.onLeaveState();
+            IMEventHandler = newEventHandler;
+            IMEventHandler.onGetState();
+        }
         return null;
     }
 
     @Override
     public IMStates onToggleKey() {
-        IMEventHandler = IMEventHandler.onToggleKey();
+        IMEventHandler newEventHandler = IMEventHandler.onToggleKey();
+        if (newEventHandler != IMEventHandler) {
+            IMEventHandler.onLeaveState();
+            IMEventHandler = newEventHandler;
+            IMEventHandler.onGetState();
+        }
         return null;
     }
 
     @Override
     public IMStates onMouseMove() {
-        IMEventHandler = IMEventHandler.onMouseMove();
+        IMEventHandler newEventHandler = IMEventHandler.onMouseMove();
+        if (newEventHandler != IMEventHandler) {
+            IMEventHandler.onLeaveState();
+            IMEventHandler = newEventHandler;
+            IMEventHandler.onGetState();
+        }
         return null;
     }
 }

@@ -1,8 +1,11 @@
 package com.dhj.ingameime.control;
 
 import com.dhj.ingameime.ClientProxy;
+import com.dhj.ingameime.IngameIME_Forge;
 import com.dhj.ingameime.mixins.flux.AccessorGuiTextField;
 import sonar.fluxnetworks.client.gui.basic.GuiTextField;
+
+import java.util.Objects;
 
 public class FluxTextFieldControl<T extends GuiTextField> extends AbstractControl<GuiTextField> {
 
@@ -15,10 +18,21 @@ public class FluxTextFieldControl<T extends GuiTextField> extends AbstractContro
         return this.controlObject.getVisible();
     }
 
+//    private String text;
+//    private int x;
+//    private int y;
+
     @Override
     public int getCursorX() {
         AccessorGuiTextField accessor = (AccessorGuiTextField) this.controlObject;
-        return AbstractControl.getCursorX(accessor.getFont(), this.controlObject.getText(),
+        String text = this.controlObject.isTextInvisible ? this.controlObject.getInvisibleText(this.controlObject.getText().length()) : this.controlObject.getText();
+//        if (!Objects.equals(this.text, text) || this.x != this.controlObject.x || this.y != this.controlObject.y) {
+//            IngameIME_Forge.LOG.info("text: {}, x: {}, y: {}", text, this.controlObject.x, this.controlObject.y);
+//        }
+//        this.text = text;
+//        this.x = this.controlObject.x;
+//        this.y = this.controlObject.y;
+        return AbstractControl.getCursorX(accessor.getFont(), text,
                 this.controlObject.x + 4, this.controlObject.getWidth(),
                 accessor.getLineScrollOffset(), this.controlObject.getCursorPosition(),
                 this.controlObject.getEnableBackgroundDrawing());
