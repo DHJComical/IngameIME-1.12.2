@@ -1,6 +1,5 @@
 package com.dhj.ingameime;
 
-import com.dhj.ingameime.control.NoControl;
 import ingameime.*;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.fml.common.Loader;

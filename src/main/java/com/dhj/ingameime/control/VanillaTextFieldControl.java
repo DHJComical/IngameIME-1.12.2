@@ -4,8 +4,6 @@ import com.dhj.ingameime.ClientProxy;
 import com.dhj.ingameime.mixins.vanilla.AccessorGuiTextField;
 import net.minecraft.client.gui.GuiTextField;
 
-import static com.dhj.ingameime.IngameIME_Forge.LOG;
-
 public class VanillaTextFieldControl<T extends GuiTextField> extends AbstractControl<GuiTextField> {
 
     protected VanillaTextFieldControl(T control) {
@@ -33,6 +31,7 @@ public class VanillaTextFieldControl<T extends GuiTextField> extends AbstractCon
 
     /**
      * Try to set the GuiTextField object focus.
+     *
      * @param object The field to be set
      * @return Success or not
      */

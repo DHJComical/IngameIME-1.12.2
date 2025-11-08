@@ -1,6 +1,5 @@
 package com.dhj.ingameime.control;
 
-import com.dhj.ingameime.IMStates;
 import com.dhj.ingameime.mixins.vanilla.AccessorGuiScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;

@@ -1,7 +1,6 @@
 package com.dhj.ingameime.control;
 
 import com.dhj.ingameime.ClientProxy;
-import com.dhj.ingameime.IMStates;
 import com.dhj.ingameime.JEICompat;
 import com.dhj.ingameime.mixins.vanilla.AccessorGuiTextField;
 import mezz.jei.input.GuiTextFieldFilter;
@@ -41,6 +40,7 @@ public class JEITextFieldControl extends VanillaTextFieldControl<GuiTextFieldFil
 
     /**
      * Try to set the GuiTextField object focus.
+     *
      * @param object The field to be set
      * @return Success or not
      */

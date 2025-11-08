@@ -31,6 +31,7 @@ public class FluxTextFieldControl<T extends GuiTextField> extends AbstractContro
 
     /**
      * Try to set the GuiTextField object focus.
+     *
      * @param object The field to be set
      */
     public static void onFocusChange(GuiTextField object, boolean focused) {
