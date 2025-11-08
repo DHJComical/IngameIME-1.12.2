@@ -20,13 +20,12 @@ Use `InputMethod` in **Full screen** Minecraft!
 - [tttsaurus](https://github.com/tttsaurus):Helped to fix the bug of InGameInfoXML 
 - [Andrea Frederica](https://github.com/AndreaFrederica):Patched a possible unknown crash issue with LoliASM(maybe
 - [Live-Block](https://github.com/Live-Block):Provides 1.17 UI and cursor following port
+- [RuiXuqi](https://github.com/RuiXuqi):More dynamic cursor tracking and project refactoring
 - There will be more in the future :)
 
 ## Bug
-- Unable to enter in the search box of JEI/HEI(Fixed in 0.0.7)
-- Unable to enter text in Xaero's Minimap interface(Fixed in 0.0.9)
-- Can't type text into Minecraft signs(Fixed in 0.1.0)
 - Mixin errors will occur when used with [RandomPatches](https://www.curseforge.com/minecraft/mc-mods/randompatches-forge) (please use [Universal Tweaks](https://www.curseforge.com/minecraft/mc-mods/universal-tweaks) instead of this mod's functionality, or set patchMinecraftClass=false in config/randompatches.cfg
+- Input method position offset in [Flux Network](https://github.com/SonarSonic/Flux-Networks)
 
 ## Supported Platforms
 
