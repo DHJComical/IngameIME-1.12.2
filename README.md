@@ -1,6 +1,6 @@
 # IngameIME-Minecraft-1.12.2
 
-![Icon](src/main/resources/icon.png)
+![Icon](docs/IngameIME-Icon-Vintage.png)
 
 Use `InputMethod` in **Full screen** Minecraft!
 

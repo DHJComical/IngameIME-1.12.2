@@ -33,7 +33,6 @@ public class InputContext {
     return ptr;
   }
 
-  @SuppressWarnings("deprecation")
   protected void finalize() {
     delete();
   }

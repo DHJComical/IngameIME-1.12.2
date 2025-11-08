@@ -33,7 +33,6 @@ public class CommitCallbackImpl {
     return ptr;
   }
 
-  @SuppressWarnings("deprecation")
   protected void finalize() {
     delete();
   }
