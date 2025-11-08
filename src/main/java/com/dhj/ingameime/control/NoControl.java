@@ -11,6 +11,11 @@ public class NoControl implements IControl {
     private int x;
     private int y;
 
+    private NoControl() {
+        this.x = 0;
+        this.y = 0;
+    }
+
     @Override
     public Object getControlObject() {
         return null;
@@ -43,6 +48,6 @@ public class NoControl implements IControl {
     }
 
     public void setCursorY(int y) {
-        this.y= y;
+        this.y = y;
     }
 }

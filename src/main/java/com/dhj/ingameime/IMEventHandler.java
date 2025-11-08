@@ -47,10 +47,12 @@ public interface IMEventHandler {
     /**
      * Called before the state is changed from itself to another.
      */
-    default void onLeaveState() {}
+    default void onLeaveState() {
+    }
 
     /**
      * Called after the state is changed to itself from another.
      */
-    default void onGetState() {}
+    default void onGetState() {
+    }
 }

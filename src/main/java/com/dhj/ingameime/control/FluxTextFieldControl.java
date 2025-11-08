@@ -1,11 +1,8 @@
 package com.dhj.ingameime.control;
 
 import com.dhj.ingameime.ClientProxy;
-import com.dhj.ingameime.IngameIME_Forge;
 import com.dhj.ingameime.mixins.flux.AccessorGuiTextField;
 import sonar.fluxnetworks.client.gui.basic.GuiTextField;
-
-import java.util.Objects;
 
 public class FluxTextFieldControl<T extends GuiTextField> extends AbstractControl<GuiTextField> {
 
