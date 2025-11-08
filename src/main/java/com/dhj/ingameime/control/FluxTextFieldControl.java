@@ -34,7 +34,7 @@ public class FluxTextFieldControl<T extends GuiTextField> extends AbstractContro
 //        this.y = this.controlObject.y;
         return AbstractControl.getCursorX(accessor.getFont(), text,
                 this.controlObject.x + 4, this.controlObject.getWidth(),
-                accessor.getLineScrollOffset(), this.controlObject.getCursorPosition(),
+                accessor.getLineScrollOffset(), this.controlObject.getCursorPosition(), this.controlObject.getSelectionEnd(),
                 this.controlObject.getEnableBackgroundDrawing());
     }
 

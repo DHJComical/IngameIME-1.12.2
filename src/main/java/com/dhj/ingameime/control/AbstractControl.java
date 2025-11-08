@@ -41,13 +41,19 @@ public abstract class AbstractControl<T> implements IControl {
     /**
      * Get cursor X like vanilla text field.
      */
-    protected static int getCursorX(@Nonnull FontRenderer font, @Nonnull String text, int x, int width, int lineScrollOffset, int cursorPosition, boolean enableBackgroundDrawing) {
-        int cursorPosRelative = cursorPosition - lineScrollOffset;
+    protected static int getCursorX(@Nonnull FontRenderer font, @Nonnull String text, int x, int width, int lineScrollOffset, int cursorPosition, int selectionEnd, boolean enableBackgroundDrawing) {
         String visibleText = font.trimStringToWidth(text.substring(lineScrollOffset), width);
+
+        int cursorPosRelative = cursorPosition - lineScrollOffset;
+        int selectionEndRelative = selectionEnd - lineScrollOffset;
         int currentDrawX = enableBackgroundDrawing ? x + 4 : x;
 
+        if (selectionEndRelative > visibleText.length()) {
+            selectionEndRelative = visibleText.length();
+        }
+
         if (!visibleText.isEmpty()) {
-            if (cursorPosRelative > visibleText.length()) return currentDrawX; // Perform when Ctrl + A
+            if (selectionEndRelative != cursorPosRelative) return currentDrawX; // Perform when Ctrl + A
             String rawTextBeforeCursor = visibleText.substring(0, cursorPosRelative);
             currentDrawX += font.getStringWidth(rawTextBeforeCursor);
         }
