@@ -4,17 +4,12 @@ import mezz.jei.api.IJeiRuntime;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JEIPlugin;
 
+import javax.annotation.Nonnull;
+
 @JEIPlugin
 public class JEICompat implements IModPlugin {
 
     private static IJeiRuntime jeiRuntime;
-
-    public static String getJEIFilterText() {
-        if (jeiRuntime != null) {
-            return jeiRuntime.getIngredientFilter().getFilterText();
-        }
-        return "";
-    }
 
     public static void setJEIFilterText(String text) {
         if (jeiRuntime != null) {
@@ -23,7 +18,7 @@ public class JEICompat implements IModPlugin {
     }
 
     @Override
-    public void onRuntimeAvailable(IJeiRuntime runtime) {
+    public void onRuntimeAvailable(@Nonnull IJeiRuntime runtime) {
         JEICompat.jeiRuntime = runtime;
     }
 }
