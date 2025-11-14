@@ -23,6 +23,10 @@ public class ClientProxy extends CommonProxy implements IMEventHandler {
     private static IMEventHandler IMEventHandler = IMStates.Disabled;
     private static boolean IsKeyDown = false;
 
+    public ClientProxy() {
+        INSTANCE = this;
+    }
+
     @SubscribeEvent
     public void onRenderScreen(GuiScreenEvent.DrawScreenEvent.Post event) {
         if (IMStates.getActiveControl().isVisible()) {
@@ -54,7 +58,6 @@ public class ClientProxy extends CommonProxy implements IMEventHandler {
     }
 
     public void preInit(@Nonnull FMLPreInitializationEvent event) {
-        INSTANCE = this;
         Config.synchronizeConfiguration(event.getSuggestedConfigurationFile());
         ClientRegistry.registerKeyBinding(KeyBind);
         Internal.loadLibrary();

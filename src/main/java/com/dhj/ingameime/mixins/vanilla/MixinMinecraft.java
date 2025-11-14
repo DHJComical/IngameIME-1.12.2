@@ -29,14 +29,13 @@ public class MixinMinecraft {
     }
 
     @Inject(method = "displayGuiScreen", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiScreen;onGuiClosed()V"))
-    private void onGuiScreenClosed(GuiScreen guiScreenIn, CallbackInfo ci) {
-        ClientProxy.INSTANCE.onScreenClose();
+    private void onGuiScreenClosed(GuiScreen screen, CallbackInfo ci) {
+        if (ClientProxy.INSTANCE != null) ClientProxy.INSTANCE.onScreenClose();
     }
 
     @Inject(method = "displayGuiScreen", at = @At(value = "RETURN"))
     private void onGuiScreenDisplayed(GuiScreen screen, CallbackInfo ci) {
-        if (screen != null) {
+        if (ClientProxy.INSTANCE != null && screen != null)
             ClientProxy.INSTANCE.onScreenOpen(screen);
-        }
     }
 }
