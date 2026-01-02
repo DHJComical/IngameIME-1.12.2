@@ -42,15 +42,77 @@ public class Internal {
         else LOG.info("Library has loaded, skip loading of [{}]", libName);
     }
 
+    private static long callGlfwGetWin32Window(long glfwWindow) {
+        // Cleanroom uses org.lwjgl3 package for their LWJGL3 fork
+        // Standard LWJGL3 uses org.lwjgl package
+        try {
+            String[] possibleClasses = {
+                    // Cleanroom's fork (org.lwjgl3.*)
+                    "org.lwjgl3.glfw.GLFWNativeWin32",
+                    "org.lwjgl3.system.windows.GLFWNativeWin32",
+                    // Standard LWJGL3 (org.lwjgl.*)
+                    "org.lwjgl.glfw.GLFWNativeWin32",
+                    "org.lwjgl.system.windows.GLFWNativeWin32"
+            };
+            for (String className : possibleClasses) {
+                try {
+                    Class<?> nativeClass = Class.forName(className);
+                    LOG.info("Found GLFWNativeWin32 class: {}", className);
+                    try {
+                        Method getWin32Window = nativeClass.getMethod("glfwGetWin32Window", long.class);
+                        long hwnd = (long) getWin32Window.invoke(null, glfwWindow);
+
+                        if (hwnd != 0) {
+                            LOG.info("Successfully got Win32 HWND 0x{} via {}",
+                                    Long.toHexString(hwnd), className);
+                            return hwnd;
+                        } else {
+                            LOG.warn("{}.glfwGetWin32Window returned 0", className);
+                        }
+                    } catch (NoSuchMethodException e) {
+                        LOG.debug("Method glfwGetWin32Window not found in {}", className);
+                    }
+                } catch (ClassNotFoundException e) {
+                    LOG.debug("Class not found: {}", className);
+                }
+            }
+            LOG.warn("Could not find any GLFWNativeWin32 class to convert GLFW window to HWND");
+            return 0;
+        } catch (Throwable e) {
+            LOG.error("Exception while calling glfwGetWin32Window: {} - {}",
+                    e.getClass().getSimpleName(), e.getMessage());
+            e.printStackTrace();
+            return 0;
+        }
+    }
+
     private static long getWindowHandle_LWJGL3() {
         try {
+            // Check if we have Display.getWindow() method (LWJGL3 indicator)
             Method getWindow = Display.class.getMethod("getWindow");
-            Class<?> NativeWin32 = Class.forName("org.lwjgl.glfw.GLFWNativeWin32");
             long glfwWindow = (long) getWindow.invoke(null);
-            Method glfwGetWin32Window = NativeWin32.getMethod("glfwGetWin32Window", long.class);
-            return (long) glfwGetWin32Window.invoke(null, glfwWindow);
+
+            if (glfwWindow == 0) {
+                LOG.debug("GLFW window pointer is 0");
+                return 0;
+            }
+
+            LOG.info("Got GLFW window pointer: 0x{}", Long.toHexString(glfwWindow));
+
+            // Try to convert GLFW window to Win32 HWND
+            long hwnd = callGlfwGetWin32Window(glfwWindow);
+            if (hwnd != 0) {
+                return hwnd;
+            }
+
+            LOG.warn("Could not convert GLFW window to Win32 HWND via native methods");
+            return 0;
+        } catch (NoSuchMethodException e) {
+            // Display.getWindow() doesn't exist, not LWJGL3
+            LOG.debug("Display.getWindow() method not found");
+            return 0;
         } catch (Throwable e) {
-            LOG.error("Failed to get window handle", e);
+            LOG.warn("Failed to get window handle via LWJGL3: {} - {}", e.getClass().getSimpleName(), e.getMessage());
             return 0;
         }
     }
@@ -60,14 +122,116 @@ public class Internal {
             Method getImplementation = Display.class.getDeclaredMethod("getImplementation");
             getImplementation.setAccessible(true);
             Object impl = getImplementation.invoke(null);
-            Class<?> clsWindowsDisplay = Class.forName("org.lwjgl.opengl.WindowsDisplay");
-            Method getHwnd = clsWindowsDisplay.getDeclaredMethod("getHwnd");
-            getHwnd.setAccessible(true);
-            return (Long) getHwnd.invoke(impl);
+
+            if (impl == null) {
+                LOG.debug("Display.getImplementation() returned null");
+                return 0;
+            }
+
+            LOG.info("Display implementation class: {}", impl.getClass().getName());
+
+            String[] possibleClasses = {
+                    "org.lwjgl.opengl.WindowsDisplay",
+                    "org.lwjgl.opengl.Win32Display",
+                    "org.lwjgl.opengl.Display$WindowsDisplay"
+            };
+
+            for (String className : possibleClasses) {
+                try {
+                    Class<?> clsWindowsDisplay = Class.forName(className);
+                    if (clsWindowsDisplay.isInstance(impl)) {
+                        LOG.info("Implementation is instance of {}", className);
+                        Method getHwnd = clsWindowsDisplay.getDeclaredMethod("getHwnd");
+                        getHwnd.setAccessible(true);
+                        long hwnd = (Long) getHwnd.invoke(impl);
+                        if (hwnd != 0) {
+                            LOG.info("Successfully obtained hwnd 0x{} using class: {}", Long.toHexString(hwnd), className);
+                            return hwnd;
+                        } else {
+                            LOG.warn("getHwnd() returned 0 for class {}", className);
+                        }
+                    }
+                } catch (ClassNotFoundException e) {
+                    LOG.debug("Class not found: {}", className);
+                }
+            }
+
+            // Try to find getHwnd method directly on the implementation
+            try {
+                Method getHwnd = impl.getClass().getDeclaredMethod("getHwnd");
+                getHwnd.setAccessible(true);
+                long hwnd = (Long) getHwnd.invoke(impl);
+                if (hwnd != 0) {
+                    LOG.info("Successfully obtained hwnd 0x{} directly from implementation", Long.toHexString(hwnd));
+                    return hwnd;
+                }
+            } catch (NoSuchMethodException e) {
+                LOG.debug("getHwnd() method not found in implementation class");
+            }
+
+            // Try to get hwnd directly from fields
+            try {
+                java.lang.reflect.Field hwndField = impl.getClass().getDeclaredField("hwnd");
+                hwndField.setAccessible(true);
+                Object hwnd = hwndField.get(impl);
+                if (hwnd instanceof Long && (Long)hwnd != 0) {
+                    LOG.info("Successfully obtained hwnd 0x{} from field", Long.toHexString((Long)hwnd));
+                    return (Long) hwnd;
+                }
+            } catch (NoSuchFieldException e) {
+                LOG.debug("hwnd field not found in implementation class");
+            }
+
+            return 0;
+        } catch (NoSuchMethodException e) {
+            // getImplementation doesn't exist, not LWJGL2
+            LOG.debug("Display.getImplementation() method not found");
+            return 0;
         } catch (Throwable e) {
-            LOG.error("Failed to get window handle", e);
+            LOG.warn("Failed to get window handle via LWJGL2: {} - {}", e.getClass().getSimpleName(), e.getMessage());
             return 0;
         }
+    }
+
+    private static long getWindowHandle() {
+        long hWnd = 0;
+        boolean hasGetWindow = false;
+        boolean hasGetImplementation = false;
+
+        try {
+            Display.class.getMethod("getWindow");
+            hasGetWindow = true;
+        } catch (NoSuchMethodException ignored) {}
+
+        try {
+            Display.class.getDeclaredMethod("getImplementation");
+            hasGetImplementation = true;
+        } catch (NoSuchMethodException ignored) {}
+        LOG.info("LWJGL method detection - getWindow: {}, getImplementation: {}", hasGetWindow, hasGetImplementation);
+
+        // Try LWJGL3 first if available
+        if (hasGetWindow) {
+            LOG.info("Attempting LWJGL3 method...");
+            hWnd = getWindowHandle_LWJGL3();
+        }
+
+        // If LWJGL3 failed and LWJGL2 is available, try LWJGL2
+        if (hWnd == 0 && hasGetImplementation) {
+            LOG.info("LWJGL3 failed or not available, attempting LWJGL2 method...");
+            hWnd = getWindowHandle_LWJGL2();
+        }
+
+        if (hWnd == 0) {
+            if (!hasGetWindow && !hasGetImplementation) {
+                LOG.error("Cannot detect LWJGL version - neither getWindow() nor getImplementation() found");
+            } else {
+                LOG.error("Failed to obtain window handle from all available LWJGL methods");
+            }
+        } else {
+            LOG.info("Successfully obtained window handle: 0x{}", Long.toHexString(hWnd));
+        }
+
+        return hWnd;
     }
 
     public static void destroyInputCtx() {
@@ -90,7 +254,11 @@ public class Internal {
 
         LOG.info("Using IngameIME-Native: {}", InputContext.getVersion());
 
-        long hWnd = Loader.isModLoaded("cleanroom") ? getWindowHandle_LWJGL3() : getWindowHandle_LWJGL2();
+        if (!Display.isCreated()) {
+            LOG.warn("Display is not created yet, deferring InputContext creation");
+            return;
+        }
+        long hWnd = getWindowHandle();
         if (hWnd != 0) {
             if (Minecraft.getMinecraft().isFullScreen()) {
                 Config.UiLess_Windows = true;
@@ -197,6 +365,7 @@ public class Internal {
         if (InputCtx == null) {
             if (activated) {
                 LOG.warn("InputContext is null. Attempting to recreate it...");
+                createInputCtx();
                 if (InputCtx == null) {
                     LOG.error("Failed to recreate InputContext. IME will be unavailable.");
                     return;
