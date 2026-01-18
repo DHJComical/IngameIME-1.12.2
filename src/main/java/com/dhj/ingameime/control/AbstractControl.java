@@ -7,11 +7,9 @@ import cpw.mods.fml.common.Optional;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.inventory.GuiContainer;
 import org.lwjgl.input.Keyboard;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.awt.*;
 import java.io.IOException;
 
@@ -60,11 +58,17 @@ public abstract class AbstractControl<T> implements IControl {
      * Get cursor position like vanilla text field.
      */
     protected static @Nonnull Point getCursorPos(
-            @Nonnull FontRenderer font, @Nonnull String text,
-            int x, int y, int width, int height,
-            int lineScrollOffset, int cursorPosition, int selectionEnd,
-            boolean enableBackgroundDrawing
+        @Nonnull FontRenderer font, @Nonnull String text,
+        int x, int y, int width, int height,
+        int lineScrollOffset, int cursorPosition, int selectionEnd,
+        boolean enableBackgroundDrawing
     ) {
+        if (font == null) {
+            int cursorY = (enableBackgroundDrawing ? y + (height - 8) / 2 : y) - 1;
+            int currentDrawX = enableBackgroundDrawing ? x + 4 : x;
+            return new Point(currentDrawX - 1, cursorY);
+        }
+
         String visibleText = font.trimStringToWidth(text.substring(lineScrollOffset), width);
         int cursorY = (enableBackgroundDrawing ? y + (height - 8) / 2 : y) - 1;
 
