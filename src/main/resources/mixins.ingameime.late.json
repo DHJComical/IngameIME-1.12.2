@@ -1,0 +1,8 @@
+{
+  "required": false,
+  "minVersion": "0.8.5-GTNH",
+  "package": "com.dhj.ingameime.mixins",
+  "refmap": "mixins.ingameime.refmap.json",
+  "target": "@env(DEFAULT)",
+  "compatibilityLevel": "JAVA_8"
+}
