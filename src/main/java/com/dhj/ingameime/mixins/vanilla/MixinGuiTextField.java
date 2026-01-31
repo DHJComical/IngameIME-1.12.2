@@ -4,6 +4,7 @@ import com.dhj.ingameime.IngameIME_Forge;
 import com.dhj.ingameime.control.VanillaTextFieldControl;
 import net.minecraft.client.gui.GuiTextField;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -13,7 +14,6 @@ public abstract class MixinGuiTextField {
     @Inject(method = "setFocused(Z)V", at = @At("HEAD"))
     private void onSetFocus(boolean isFocusedIn, CallbackInfo ci) {
         GuiTextField self = (GuiTextField) (Object) this;
-
         try {
             VanillaTextFieldControl.onFocusChange(self, isFocusedIn);
         } catch (Throwable t) {

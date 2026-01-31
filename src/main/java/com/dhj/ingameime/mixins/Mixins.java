@@ -17,6 +17,13 @@ public enum Mixins implements IMixins {
         .addClientMixins("MixinGuiTextField")
         .addClientMixins("AccessorGuiTextField")
         .addClientMixins("AccessorGuiScreen")
+    ),
+
+    BETTERQUESTING(new MixinBuilder()
+        .setPhase(Phase.LATE)
+        .addRequiredMod(TargetMods.BETTERQUESTING)
+        .addClientMixins("betterquesting.MixinPanelTextField")
+        .addClientMixins("betterquesting.AccessorPanelTextField")
     );
 
     private final MixinBuilder builder;
