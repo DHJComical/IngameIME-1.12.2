@@ -2,7 +2,6 @@ package com.dhj.ingameime;
 
 import ingameime.*;
 import net.minecraft.client.Minecraft;
-import net.minecraftforge.fml.common.Loader;
 import org.lwjgl.LWJGLUtil;
 import org.lwjgl.opengl.Display;
 
