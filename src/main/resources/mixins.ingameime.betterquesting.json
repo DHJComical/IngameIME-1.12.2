@@ -1,0 +1,15 @@
+{
+  "package": "com.dhj.ingameime.mixins.betterquesting",
+  "required": true,
+  "refmap": "mixins.ingameime.refmap.json",
+  "target": "@env(DEFAULT)",
+  "minVersion": "0.8.5",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [],
+  "server": [],
+  "client": [
+    "AccessorBQUPanelTextField",
+    "MixinBQUPanelTextField",
+    "MixinBQUAutoFocus"
+  ]
+}

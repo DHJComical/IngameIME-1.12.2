@@ -17,6 +17,9 @@ public class MixinLate implements ILateMixinLoader {
         if (Loader.isModLoaded("ftblib")) {
             mixins.add("mixins.ingameime.ftblib.json");
         }
+        if (Loader.isModLoaded("betterquesting")) {
+            mixins.add("mixins.ingameime.betterquesting.json");
+        }
         return mixins;
     }
 }

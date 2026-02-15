@@ -48,6 +48,7 @@ dependencies {
     implementation 'mezz:jei:4.29.8'
     implementation rfg.deobf('curse.maven:flux-networks-248020:3178199')
     implementation rfg.deobf('curse.maven:ftb-lib-237167:2985811')
+    implementation rfg.deobf('curse.maven:better-questing-unofficial-629629:7421294')
     compileOnly 'org.lwjgl:lwjgl-glfw:3.3.1'
     compileOnly 'org.lwjgl:lwjgl-glfw:3.3.1:natives-windows'
     // Example - Dependency descriptor:
