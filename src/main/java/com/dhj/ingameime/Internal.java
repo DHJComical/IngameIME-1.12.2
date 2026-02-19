@@ -80,7 +80,7 @@ public class Internal {
         } catch (Throwable e) {
             LOG.error("Exception while calling glfwGetWin32Window: {} - {}",
                     e.getClass().getSimpleName(), e.getMessage());
-            e.printStackTrace();
+            e.getStackTrace();
             return 0;
         }
     }
@@ -386,26 +386,26 @@ public class Internal {
             LOG.error("Failed to set IME active state. This indicates the InputContext may be stale. Attempting to recover.", t);
 
             try {
-                //LOG.info("Destroying stale InputContext...");
+                LOG.debug("Destroying stale InputContext...");
                 destroyInputCtx();
 
-                //LOG.info("Recreating new InputContext...");
+                LOG.debug("Recreating new InputContext...");
                 createInputCtx();
 
                 if (InputCtx != null) {
-                    //LOG.info("Recovery successful. Retrying setActivated...");
+                    LOG.info("Recovery successful. Retrying setActivated...");
                     try {
                         InputCtx.setActivated(activated);
-                        //LOG.info("IM active state after recovery: {}", activated);
+                        LOG.debug("IM active state after recovery: {}", activated);
                     } catch (Throwable retryError) {
-                        //LOG.error("Failed to set active state even after recovery.", retryError);
+                        LOG.error("Failed to set active state even after recovery.", retryError);
                     }
                 }
-                //else {
-                //LOG.error("Recovery failed. Could not recreate InputContext.");
-                //}
+                else {
+                LOG.debug("Recovery failed. Could not recreate InputContext.");
+                }
             } catch (Throwable recoveryError) {
-                LOG.error("A critical error occurred during the recovery process itself.", recoveryError);
+                LOG.debug("A critical error occurred during the recovery process itself.", recoveryError);
             }
         }
     }
