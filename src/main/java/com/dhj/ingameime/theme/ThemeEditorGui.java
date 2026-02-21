@@ -64,7 +64,8 @@ public class ThemeEditorGui extends GuiScreen {
         if (nameInputGui.isConfirmed()) {
             String themeName = nameInputGui.getThemeName();
             if (!themeName.isEmpty()) {
-                String newThemeId = "custom_" + System.currentTimeMillis();
+                // 使用主题名称生成安全的主题ID
+                String newThemeId = generateThemeIdFromName(themeName);
                 Theme newTheme = Theme.createCustomTheme(newThemeId, themeName);
                 themeManager.saveCustomTheme(newTheme);
                 selectedThemeId = newThemeId;
@@ -518,5 +519,31 @@ public class ThemeEditorGui extends GuiScreen {
         if (txtPadding != null) txtPadding.updateCursorCounter();
         if (txtCandidatePadding != null) txtCandidatePadding.updateCursorCounter();
         if (txtBorderWidth != null) txtBorderWidth.updateCursorCounter();
+    }
+    
+    /**
+     * 从主题名称生成安全的主题ID
+     */
+    private String generateThemeIdFromName(String themeName) {
+        if (themeName == null || themeName.isEmpty()) {
+            return "custom_theme";
+        }
+        
+        // 转换为小写，替换空格为下划线，移除非法字符
+        String safeId = themeName.toLowerCase()
+            .replaceAll("\\s+", "_")
+            .replaceAll("[^a-z0-9_]", "");
+        
+        // 如果ID为空或太短，添加前缀
+        if (safeId.isEmpty() || safeId.length() < 2) {
+            safeId = "custom_theme";
+        }
+        
+        // 确保ID以字母开头
+        if (!Character.isLetter(safeId.charAt(0))) {
+            safeId = "theme_" + safeId;
+        }
+        
+        return safeId;
     }
 }

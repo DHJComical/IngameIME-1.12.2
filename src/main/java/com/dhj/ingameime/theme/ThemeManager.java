@@ -108,6 +108,7 @@ public class ThemeManager {
     }
     
     private void saveThemeToFile(Theme theme) {
+        // 使用主题ID作为文件名
         File themeFile = new File(themesDir, theme.getId() + ".json");
         try (FileWriter writer = new FileWriter(themeFile)) {
             gson.toJson(theme, writer);
