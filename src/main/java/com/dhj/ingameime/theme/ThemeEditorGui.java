@@ -454,8 +454,8 @@ public class ThemeEditorGui extends GuiScreen {
         for (int i = 0; i < colorLabels.length; i++) {
             try {
                 int color = parseColor(colorFields[i].getText(), 0x00000000);
-                drawRect(previewX, previewY, previewX + previewSize, previewY + previewSize, color);
                 drawRect(previewX - 1, previewY - 1, previewX + previewSize + 1, previewY + previewSize + 1, 0xFF000000);
+                drawRect(previewX, previewY, previewX + previewSize, previewY + previewSize, color);
             } catch (Exception ignored) {
             }
             previewY += 25;
