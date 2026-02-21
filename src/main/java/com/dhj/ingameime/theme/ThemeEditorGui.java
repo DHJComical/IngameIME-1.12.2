@@ -3,7 +3,6 @@ package com.dhj.ingameime.theme;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiTextField;
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.resources.I18n;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
@@ -338,20 +337,15 @@ public class ThemeEditorGui extends GuiScreen {
         
         // 检查点击是否在滚动区域内（排除底部按钮区域）
         if (mouseY < height - bottomButtonAreaHeight && mouseY > scrollBarY) {
-            // 调整鼠标Y坐标以考虑滚动偏移
-            int adjustedMouseY = mouseY + scrollOffset;
-            
-            txtThemeName.mouseClicked(mouseX, adjustedMouseY, mouseButton);
+            txtThemeName.mouseClicked(mouseX, mouseY, mouseButton);
             for (GuiTextField field : colorFields) {
                 if (field != null) {
-                    field.mouseClicked(mouseX, adjustedMouseY, mouseButton);
+                    field.mouseClicked(mouseX, mouseY, mouseButton);
                 }
             }
-            
-            // 处理padding相关输入框的点击
-            if (txtPadding != null) txtPadding.mouseClicked(mouseX, adjustedMouseY, mouseButton);
-            if (txtCandidatePadding != null) txtCandidatePadding.mouseClicked(mouseX, adjustedMouseY, mouseButton);
-            if (txtBorderWidth != null) txtBorderWidth.mouseClicked(mouseX, adjustedMouseY, mouseButton);
+            if (txtPadding != null) txtPadding.mouseClicked(mouseX, mouseY, mouseButton);
+            if (txtCandidatePadding != null) txtCandidatePadding.mouseClicked(mouseX, mouseY, mouseButton);
+            if (txtBorderWidth != null) txtBorderWidth.mouseClicked(mouseX, mouseY, mouseButton);
         }
     }
     
@@ -392,101 +386,108 @@ public class ThemeEditorGui extends GuiScreen {
         if (txtCandidatePadding != null) txtCandidatePadding.textboxKeyTyped(typedChar, keyCode);
         if (txtBorderWidth != null) txtBorderWidth.textboxKeyTyped(typedChar, keyCode);
     }
-    
+
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         drawDefaultBackground();
-        
-        // 底部按钮区域高度（返回和应用按钮在 height - 29，高度20，留一些间距）
-        int bottomButtonAreaHeight = 45;
-        // 顶部按钮区域高度（标题+顶部按钮）
 
-        // 计算滚动参数 - 滚动区域在顶部按钮下方和底部按钮上方之间
+        int bottomButtonAreaHeight = 45;
         int scrollAreaTop = 80;
         int scrollAreaBottom = height - bottomButtonAreaHeight;
         viewportHeight = scrollAreaBottom - scrollAreaTop;
-        contentHeight = 350; // 内容总高度
+        contentHeight = 350;
         maxScrollOffset = Math.max(0, contentHeight - viewportHeight);
         scrollOffset = Math.min(scrollOffset, maxScrollOffset);
-        
-        // 标题（不滚动）
+
+        // 绘制固定标题
         drawCenteredString(fontRenderer, I18n.format("ingameime.theme.editor.title"), width / 2, 10, 0xFFFFFF);
-        
-        // 当前主题标签（不滚动）
         fontRenderer.drawString(I18n.format("ingameime.theme.editor.current") + ": " + selectedThemeId, width / 2 - 100, 35, 0xFFFFFF);
-        
-        // 绘制顶部分割线（在固定区域和滚动区域之间）
         drawRect(20, scrollAreaTop - 2, width - 20, scrollAreaTop - 1, 0xFF555555);
-        
-        // 使用GL裁剪 - 限制绘制区域在滚动区域内
-        GlStateManager.pushMatrix();
+
+        // 开启裁剪 (Scissor)
         GL11.glEnable(GL11.GL_SCISSOR_TEST);
+        int scaleFactor = new net.minecraft.client.gui.ScaledResolution(mc).getScaleFactor();
         GL11.glScissor(
-            0, 
-            (height - scrollAreaBottom) * mc.displayHeight / height, 
-            width * mc.displayWidth / width, 
-            viewportHeight * mc.displayHeight / height
+                0,
+                (height - scrollAreaBottom) * scaleFactor,
+                width * scaleFactor,
+                viewportHeight * scaleFactor
         );
-        GlStateManager.translate(0, -scrollOffset, 0);
-        
-        // 绘制可滚动内容
+
         int x = width / 2 - 150;
-        int y = colorFieldsStartY + 40;
-        
-        // 绘制颜色标签
-        for (String colorLabel : colorLabels) {
-            fontRenderer.drawString(colorLabel, x, y + 5, 0xFFFFFF);
-            y += 25;
-        }
-        
-        // 绘制其他标签
-        y += 10;
-        fontRenderer.drawString(I18n.format("ingameime.theme.editor.padding"), x, y + 5, 0xFFFFFF);
-        y += 25;
-        fontRenderer.drawString(I18n.format("ingameime.theme.editor.candidate_padding"), x, y + 5, 0xFFFFFF);
-        y += 25;
-        fontRenderer.drawString(I18n.format("ingameime.theme.editor.border_width"), x, y + 5, 0xFFFFFF);
-        
-        // 绘制输入框（考虑滚动）
+
+        // 更新并绘制 主题名称 输入框
+        // 原始Y是100，现在减去滚动偏移
+        txtThemeName.y = 100 - scrollOffset;
         txtThemeName.drawTextBox();
-        for (GuiTextField field : colorFields) {
-            if (field != null) {
-                field.drawTextBox();
-            }
-        }
-        
-        // 绘制padding相关输入框
-        if (txtPadding != null) txtPadding.drawTextBox();
-        if (txtCandidatePadding != null) txtCandidatePadding.drawTextBox();
-        if (txtBorderWidth != null) txtBorderWidth.drawTextBox();
-        
-        // 绘制颜色预览
+
+        // 更新并绘制 颜色列表
+        int startY = colorFieldsStartY + 40;
+        // 计算当前每一行的起始Y (包含滚动偏移)
+        int currentY = startY - scrollOffset;
+
+        // 预览框X坐标
         int previewX = width / 2 + 100;
-        int previewY = colorFieldsStartY + 40;
         int previewSize = 20;
-        
+
         for (int i = 0; i < colorLabels.length; i++) {
-            try {
-                int color = parseColor(colorFields[i].getText(), 0x00000000);
-                drawRect(previewX - 1, previewY - 1, previewX + previewSize + 1, previewY + previewSize + 1, 0xFF000000);
-                drawRect(previewX, previewY, previewX + previewSize, previewY + previewSize, color);
-            } catch (Exception ignored) {
+            // 绘制标签
+            fontRenderer.drawString(colorLabels[i], x, currentY + 5, 0xFFFFFF);
+
+            if (colorFields[i] != null) {
+                colorFields[i].y = currentY;
+                colorFields[i].drawTextBox();
             }
-            previewY += 25;
+
+            try {
+                int color = 0;
+                if (colorFields[i] != null) {
+                    color = parseColor(colorFields[i].getText(), 0x00000000);
+                }
+                drawRect(previewX - 1, currentY - 1, previewX + previewSize + 1, currentY + previewSize + 1, 0xFF000000);
+                drawRect(previewX, currentY, previewX + previewSize, currentY + previewSize, color);
+            } catch (Exception ignored) {}
+
+            // 下一行
+            currentY += 25;
         }
-        
+
+        // 更新并绘制 Padding 等其他字段
+        currentY += 10;
+        fontRenderer.drawString(I18n.format("ingameime.theme.editor.padding"), x, currentY + 5, 0xFFFFFF);
+        if (txtPadding != null) {
+            txtPadding.y = currentY;
+            txtPadding.drawTextBox();
+        }
+
+        currentY += 25;
+        fontRenderer.drawString(I18n.format("ingameime.theme.editor.candidate_padding"), x, currentY + 5, 0xFFFFFF);
+        if (txtCandidatePadding != null) {
+            txtCandidatePadding.y = currentY;
+            txtCandidatePadding.drawTextBox();
+        }
+
+        currentY += 25;
+        fontRenderer.drawString(I18n.format("ingameime.theme.editor.border_width"), x, currentY + 5, 0xFFFFFF);
+        if (txtBorderWidth != null) {
+            txtBorderWidth.y = currentY;
+            txtBorderWidth.drawTextBox();
+        }
+
+        // 关闭裁剪
         GL11.glDisable(GL11.GL_SCISSOR_TEST);
-        GlStateManager.popMatrix();
-        
-        // 绘制底部分割线（在滚动区域和底部按钮区域之间）
+
+        // 绘制底部分割线
         drawRect(20, scrollAreaBottom + 1, width - 20, scrollAreaBottom + 2, 0xFF555555);
-        
-        // 绘制滚动条（在滚动区域右侧）
+
+        // 绘制滚动条
         if (maxScrollOffset > 0) {
             drawScrollBar(scrollAreaTop, viewportHeight);
         }
-        
-        super.drawScreen(mouseX, mouseY, partialTicks);
+
+        for (net.minecraft.client.gui.GuiButton button : buttonList) {
+            button.drawButton(mc, mouseX, mouseY, partialTicks);
+        }
     }
     
     private void drawScrollBar(int scrollBarY, int scrollBarHeight) {
