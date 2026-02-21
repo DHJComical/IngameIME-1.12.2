@@ -3,8 +3,10 @@ package com.dhj.ingameime.theme;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiTextField;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.resources.I18n;
 import net.minecraftforge.fml.client.config.GuiConfig;
+import org.lwjgl.input.Mouse;
 
 import java.io.IOException;
 import java.util.Map;
@@ -42,6 +44,15 @@ public class ThemeEditorGui extends GuiScreen {
     private java.util.List<String> themeIds = new java.util.ArrayList<>();
     private int themeSelectionIndex = 0;
     private ThemeNameInputGui nameInputGui;
+    
+    // 滚动相关
+    private int scrollOffset = 0;
+    private int maxScrollOffset = 0;
+    private int contentHeight = 400; // 内容总高度
+    private int viewportHeight = 200; // 可视区域高度
+    private boolean isScrolling = false;
+    private int scrollBarDragStartY = 0; // 拖动开始时的鼠标Y坐标
+    private int scrollBarDragStartOffset = 0; // 拖动开始时的滚动偏移
     
     public ThemeEditorGui(GuiScreen parent) {
         this.parent = parent;
@@ -286,11 +297,60 @@ public class ThemeEditorGui extends GuiScreen {
     protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
         super.mouseClicked(mouseX, mouseY, mouseButton);
         
-        txtThemeName.mouseClicked(mouseX, mouseY, mouseButton);
+        // 检查是否点击了滚动条
+        if (maxScrollOffset > 0 && mouseButton == 0) {
+            int scrollBarX = width - 20;
+            int scrollBarY = 80;
+            int scrollBarHeight = viewportHeight;
+            int thumbHeight = Math.max(20, (int) ((float) viewportHeight / contentHeight * scrollBarHeight));
+            int thumbY = scrollBarY + (int) ((float) scrollOffset / maxScrollOffset * (scrollBarHeight - thumbHeight));
+            
+            // 检查是否点击了滚动条滑块
+            if (mouseX >= scrollBarX && mouseX <= scrollBarX + 6 &&
+                mouseY >= thumbY && mouseY <= thumbY + thumbHeight) {
+                isScrolling = true;
+                scrollBarDragStartY = mouseY;
+                scrollBarDragStartOffset = scrollOffset;
+            }
+            // 检查是否点击了滚动条背景（跳转到该位置）
+            else if (mouseX >= scrollBarX && mouseX <= scrollBarX + 6 &&
+                     mouseY >= scrollBarY && mouseY <= scrollBarY + scrollBarHeight) {
+                // 计算点击位置对应的滚动偏移
+                float ratio = (float) (mouseY - scrollBarY) / scrollBarHeight;
+                scrollOffset = (int) (ratio * maxScrollOffset);
+                scrollOffset = Math.max(0, Math.min(scrollOffset, maxScrollOffset));
+            }
+        }
+        
+        // 调整鼠标Y坐标以考虑滚动偏移
+        int adjustedMouseY = mouseY + scrollOffset;
+        
+        txtThemeName.mouseClicked(mouseX, adjustedMouseY, mouseButton);
         for (GuiTextField field : colorFields) {
             if (field != null) {
-                field.mouseClicked(mouseX, mouseY, mouseButton);
+                field.mouseClicked(mouseX, adjustedMouseY, mouseButton);
             }
+        }
+    }
+    
+    @Override
+    protected void mouseReleased(int mouseX, int mouseY, int state) {
+        super.mouseReleased(mouseX, mouseY, state);
+        isScrolling = false;
+    }
+    
+    @Override
+    protected void mouseClickMove(int mouseX, int mouseY, int clickedMouseButton, long timeSinceLastClick) {
+        super.mouseClickMove(mouseX, mouseY, clickedMouseButton, timeSinceLastClick);
+        
+        // 处理滚动条拖动
+        if (isScrolling && clickedMouseButton == 0) {
+            int scrollBarHeight = viewportHeight;
+            int thumbHeight = Math.max(20, (int) ((float) viewportHeight / contentHeight * scrollBarHeight));
+            int dragDelta = mouseY - scrollBarDragStartY;
+            float dragRatio = (float) dragDelta / (scrollBarHeight - thumbHeight);
+            scrollOffset = scrollBarDragStartOffset + (int) (dragRatio * maxScrollOffset);
+            scrollOffset = Math.max(0, Math.min(scrollOffset, maxScrollOffset));
         }
     }
     
@@ -310,17 +370,34 @@ public class ThemeEditorGui extends GuiScreen {
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         drawDefaultBackground();
         
-        // 标题
+        // 计算滚动参数
+        viewportHeight = height - 100; // 可视区域高度（减去顶部和底部按钮空间）
+        contentHeight = 350; // 内容总高度
+        maxScrollOffset = Math.max(0, contentHeight - viewportHeight);
+        scrollOffset = Math.min(scrollOffset, maxScrollOffset);
+        
+        // 启用裁剪区域，只绘制可视区域
+        int clipX = 0;
+        int clipY = 80; // 从标题下方开始
+        int clipWidth = width;
+        int clipHeight = viewportHeight;
+        
+        // 标题（不滚动）
         drawCenteredString(fontRenderer, I18n.format("ingameime.theme.editor.title"), width / 2, 10, 0xFFFFFF);
         
-        // 当前主题标签
+        // 当前主题标签（不滚动）
         fontRenderer.drawString(I18n.format("ingameime.theme.editor.current") + ": " + selectedThemeId, width / 2 - 100, 35, 0xFFFFFF);
         
-        // 绘制颜色标签
+        // 使用GL裁剪
+        net.minecraft.client.renderer.GlStateManager.pushMatrix();
+        net.minecraft.client.renderer.GlStateManager.translate(0, -scrollOffset, 0);
+        
+        // 绘制可滚动内容
         int labelWidth = 80;
         int x = width / 2 - 150;
         int y = colorFieldsStartY + 40;
         
+        // 绘制颜色标签
         for (int i = 0; i < colorLabels.length; i++) {
             fontRenderer.drawString(colorLabels[i], x, y + 5, 0xFFFFFF);
             y += 25;
@@ -334,7 +411,7 @@ public class ThemeEditorGui extends GuiScreen {
         y += 25;
         fontRenderer.drawString(I18n.format("ingameime.theme.editor.border_width"), x, y + 5, 0xFFFFFF);
         
-        // 绘制输入框
+        // 绘制输入框（考虑滚动）
         txtThemeName.drawTextBox();
         for (GuiTextField field : colorFields) {
             if (field != null) {
@@ -357,7 +434,39 @@ public class ThemeEditorGui extends GuiScreen {
             previewY += 25;
         }
         
+        GlStateManager.popMatrix();
+        
+        // 绘制滚动条
+        if (maxScrollOffset > 0) {
+            drawScrollBar();
+        }
+        
         super.drawScreen(mouseX, mouseY, partialTicks);
+    }
+    
+    private void drawScrollBar() {
+        int scrollBarX = width - 20;
+        int scrollBarY = 80;
+        int scrollBarHeight = viewportHeight;
+        int thumbHeight = Math.max(20, (int) ((float) viewportHeight / contentHeight * scrollBarHeight));
+        int thumbY = scrollBarY + (int) ((float) scrollOffset / maxScrollOffset * (scrollBarHeight - thumbHeight));
+        
+        // 绘制滚动条背景
+        drawRect(scrollBarX, scrollBarY, scrollBarX + 6, scrollBarY + scrollBarHeight, 0x80333333);
+        
+        // 绘制滚动条滑块
+        drawRect(scrollBarX, thumbY, scrollBarX + 6, thumbY + thumbHeight, 0xFFAAAAAA);
+    }
+    
+    @Override
+    public void handleMouseInput() throws IOException {
+        super.handleMouseInput();
+        
+        int scroll = Mouse.getEventDWheel();
+        if (scroll != 0) {
+            scroll = scroll > 0 ? -20 : 20; // 反转方向，每次滚动20像素
+            scrollOffset = Math.max(0, Math.min(scrollOffset + scroll, maxScrollOffset));
+        }
     }
     
     @Override
