@@ -68,7 +68,7 @@ public class Widget extends Gui implements ThemeManager.ThemeChangeListener {
 
         if (X + totalWidth > displayWidth) X = Math.max(0, displayWidth - totalWidth);
         if (Y + totalHeight > displayHeight) {
-            int yAbove = offsetY - totalHeight;
+            int yAbove = offsetY - totalHeight - 2;
             if (yAbove >= 0) {
                 Y = yAbove;
             } else {
