@@ -1,8 +1,6 @@
 package com.dhj.ingameime.config;
 
 import com.dhj.ingameime.Tags;
-import com.dhj.ingameime.theme.ThemeManager;
-import com.dhj.ingameime.theme.ThemeType;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
 
@@ -14,9 +12,6 @@ public class Config {
     private static final String PREFIX = Tags.MOD_ID + ".config.";
 
     private static Configuration config;
-    
-    // 主题变更监听器
-    private static ThemeChangeListener themeChangeListener;
 
     public static String API_Windows = "TextServiceFramework";
     public static boolean UiLess_Windows = true;
@@ -27,9 +22,6 @@ public class Config {
     public static String NativeModeText = "中";
 
     public static boolean DebugLog = false;
-    
-    // 主题配置
-    public static ThemeType CurrentTheme = ThemeType.DEFAULT;
 
     public static void init(File configFile) {
         if (config == null) {
@@ -85,25 +77,6 @@ public class Config {
                 DebugLog,
                 "Config if print debug log."
         ).setLanguageKey(PREFIX + CATEGORIES[4] + ".debug_log").getBoolean();
-        
-        // 主题配置 - 保存旧值用于比较
-        ThemeType oldTheme = CurrentTheme;
-        
-        Property themeProp = config.get(
-                CATEGORIES[5],
-                "currentTheme",
-                CurrentTheme.getId(),
-                "Select the current theme.\nAvailable: default, dark, light, custom"
-        ).setLanguageKey(PREFIX + CATEGORIES[5] + ".current_theme").setValidValues(ThemeType.getIds());
-        
-        String themeId = themeProp.getString();
-        CurrentTheme = ThemeType.fromId(themeId);
-        themeProp.set(CurrentTheme.getId());
-
-        // 如果主题发生变化，通知监听器
-        if (oldTheme != CurrentTheme && themeChangeListener != null) {
-            themeChangeListener.onThemeChanged(CurrentTheme);
-        }
 
         if (config.hasChanged()) {
             config.save();
@@ -112,45 +85,5 @@ public class Config {
 
     public static Configuration getConfig() {
         return config;
-    }
-    
-    /**
-     * 设置当前主题
-     */
-    public static void setCurrentTheme(ThemeType themeType) {
-        ThemeType oldTheme = CurrentTheme;
-        CurrentTheme = themeType;
-        if (config != null) {
-            config.get(CATEGORIES[5], "currentTheme", CurrentTheme.getId()).set(themeType.getId());
-            if (config.hasChanged()) {
-                config.save();
-            }
-        }
-        
-        // 如果主题发生变化，通知监听器
-        if (oldTheme != themeType && themeChangeListener != null) {
-            themeChangeListener.onThemeChanged(themeType);
-        }
-    }
-    
-    /**
-     * 获取当前主题ID
-     */
-    public static String getCurrentThemeId() {
-        return CurrentTheme.getId();
-    }
-    
-    /**
-     * 设置主题变更监听器
-     */
-    public static void setThemeChangeListener(ThemeChangeListener listener) {
-        themeChangeListener = listener;
-    }
-    
-    /**
-     * 主题变更监听器接口
-     */
-    public interface ThemeChangeListener {
-        void onThemeChanged(ThemeType newTheme);
     }
 }

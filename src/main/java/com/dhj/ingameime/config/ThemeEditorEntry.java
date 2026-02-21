@@ -1,6 +1,9 @@
 package com.dhj.ingameime.config;
 
 import com.dhj.ingameime.theme.ThemeEditorGui;
+import com.dhj.ingameime.theme.ThemeManager;
+import com.dhj.ingameime.theme.Theme;
+import net.minecraft.client.resources.I18n;
 import net.minecraftforge.fml.client.config.GuiConfig;
 import net.minecraftforge.fml.client.config.GuiConfigEntries;
 import net.minecraftforge.fml.client.config.IConfigElement;
@@ -9,10 +12,28 @@ import net.minecraftforge.fml.client.config.GuiConfigEntries.ButtonEntry;
 /**
  * 主题编辑器配置条目
  */
-public class ThemeEditorEntry extends ButtonEntry {
+public class ThemeEditorEntry extends ButtonEntry implements ThemeManager.ThemeChangeListener {
     public ThemeEditorEntry(GuiConfig owningScreen, GuiConfigEntries owningEntryList, IConfigElement configElement) {
         super(owningScreen, owningEntryList, configElement);
-        this.btnValue.displayString = "打开主题编辑器";
+        ThemeManager.getInstance().addThemeChangeListener(this);
+        updateButtonText();
+    }
+    
+    private void updateButtonText() {
+        ThemeManager themeManager = ThemeManager.getInstance();
+        Theme currentTheme = themeManager.getCurrentTheme();
+        if (currentTheme != null) {
+            // 使用翻译键，支持主题名称参数
+            this.btnValue.displayString = I18n.format(
+                "ingameime.config.theme.current_theme_button",
+                currentTheme.getName()
+            );
+        } else {
+            // 使用翻译键
+            this.btnValue.displayString = I18n.format(
+                "ingameime.config.theme.editor_button"
+            );
+        }
     }
     
     @Override
@@ -39,7 +60,12 @@ public class ThemeEditorEntry extends ButtonEntry {
     
     @Override
     public void updateValueButtonText() {
-        this.btnValue.displayString = "打开主题编辑器";
+        updateButtonText();
+    }
+    
+    @Override
+    public void onThemeChanged(Theme newTheme) {
+        updateButtonText();
     }
     
     @Override

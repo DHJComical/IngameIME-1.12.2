@@ -1,12 +1,9 @@
 package com.dhj.ingameime.theme;
 
 import com.dhj.ingameime.IngameIME_Forge;
-import com.dhj.ingameime.config.Config;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
-import net.minecraftforge.common.config.Configuration;
-import net.minecraftforge.common.config.Property;
 
 import java.io.File;
 import java.io.FileReader;
@@ -21,9 +18,7 @@ import java.util.Map;
  * 主题管理器，负责加载、管理和应用主题
  */
 public class ThemeManager {
-    private static final String THEME_CATEGORY = "theme";
-    private static final String PREFIX = "ingameime.config.theme.";
-    
+
     private static ThemeManager instance;
     private Theme currentTheme;
     private final Map<String, Theme> themes = new HashMap<>();
@@ -52,16 +47,7 @@ public class ThemeManager {
         ensureThemesDirectory();
         loadDefaultThemes();
         loadCustomThemes();
-        loadConfig();
-        
-        // 注册为Config的主题变更监听器
-        com.dhj.ingameime.config.Config.setThemeChangeListener(new com.dhj.ingameime.config.Config.ThemeChangeListener() {
-            @Override
-            public void onThemeChanged(ThemeType newTheme) {
-                // 当Config中的主题变更时，立即应用新主题
-                applyThemeFromConfig(newTheme);
-            }
-        });
+        loadCurrentTheme();
     }
     
     public static ThemeManager getInstance() {
@@ -130,11 +116,15 @@ public class ThemeManager {
         }
     }
     
-    private void loadConfig() {
-        // 使用Config类中的当前主题配置
-        String themeId = com.dhj.ingameime.config.Config.getCurrentThemeId();
+    private void loadCurrentTheme() {
+        // 默认使用default主题
+        String themeId = "default";
         
-        // 尝试加载自定义主题
+        // 检查是否有上次使用的主题
+        // 这里可以添加逻辑来记住上次使用的主题，比如从临时文件读取
+        // 暂时先使用default主题
+        
+        // 尝试加载主题
         if (!themes.containsKey(themeId)) {
             File customThemeFile = new File(themesDir, themeId + ".json");
             if (customThemeFile.exists()) {
@@ -158,9 +148,6 @@ public class ThemeManager {
         if (currentTheme == null) {
             currentTheme = DEFAULT_THEME;
         }
-        
-        // 确保Config中的主题ID与当前主题一致
-        com.dhj.ingameime.config.Config.setCurrentTheme(ThemeType.fromId(themeId));
     }
     
     public Theme getCurrentTheme() {
@@ -177,7 +164,6 @@ public class ThemeManager {
     public void setTheme(String themeId) {
         if (themes.containsKey(themeId)) {
             currentTheme = themes.get(themeId);
-            saveCurrentThemeToConfig();
         } else {
             // 尝试加载自定义主题
             File customThemeFile = new File(themesDir, themeId + ".json");
@@ -187,18 +173,12 @@ public class ThemeManager {
                     if (customTheme != null) {
                         themes.put(themeId, customTheme);
                         currentTheme = customTheme;
-                        saveCurrentThemeToConfig();
                     }
                 } catch (IOException | JsonSyntaxException e) {
                     IngameIME_Forge.logDebugInfo("无法加载自定义主题: " + themeId);
                 }
             }
         }
-    }
-    
-    private void saveCurrentThemeToConfig() {
-        // 使用新的Config API保存当前主题
-        Config.setCurrentTheme(ThemeType.fromId(currentTheme.getId()));
     }
     
     public Map<String, Theme> getAvailableThemes() {
@@ -209,7 +189,7 @@ public class ThemeManager {
         themes.clear();
         loadDefaultThemes();
         loadCustomThemes();
-        loadConfig();
+        loadCurrentTheme();
     }
     
     private void loadCustomThemes() {
@@ -289,51 +269,4 @@ public class ThemeManager {
         }
     }
     
-    /**
-     * 从Config应用主题变更
-     */
-    private void applyThemeFromConfig(ThemeType themeType) {
-        String themeId = themeType.getId();
-        
-        // 如果主题类型是CUSTOM，需要特殊处理
-        if (themeType == ThemeType.CUSTOM) {
-            // 对于自定义主题，需要检查是否存在对应的主题文件
-            File customThemeFile = new File(themesDir, themeId + ".json");
-            if (!customThemeFile.exists()) {
-                // 如果自定义主题文件不存在，回退到默认主题
-                themeId = "default";
-            }
-        }
-        
-        // 应用主题
-        if (themes.containsKey(themeId)) {
-            Theme oldTheme = currentTheme;
-            currentTheme = themes.get(themeId);
-            
-            // 如果主题发生变化，通知监听器
-            if (currentTheme != oldTheme) {
-                notifyThemeChanged();
-            }
-        } else {
-            // 如果主题不存在，尝试加载
-            File themeFile = new File(themesDir, themeId + ".json");
-            if (themeFile.exists()) {
-                try (FileReader reader = new FileReader(themeFile)) {
-                    Theme theme = gson.fromJson(reader, Theme.class);
-                    if (theme != null) {
-                        themes.put(themeId, theme);
-                        Theme oldTheme = currentTheme;
-                        currentTheme = theme;
-                        
-                        // 如果主题发生变化，通知监听器
-                        if (currentTheme != oldTheme) {
-                            notifyThemeChanged();
-                        }
-                    }
-                } catch (IOException | JsonSyntaxException e) {
-                    System.err.println("无法加载主题文件: " + themeId);
-                }
-            }
-        }
-    }
 }
