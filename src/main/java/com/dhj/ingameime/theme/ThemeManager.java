@@ -23,6 +23,7 @@ public class ThemeManager {
     private Theme currentTheme;
     private final Map<String, Theme> themes = new HashMap<>();
     private final File themesDir;
+    private final File lastThemeFile;
     private final Gson gson;
     private final List<ThemeChangeListener> listeners = new ArrayList<>();
     
@@ -43,6 +44,7 @@ public class ThemeManager {
     
     private ThemeManager() {
         this.themesDir = new File("config/ingameime/themes");
+        this.lastThemeFile = new File(themesDir, "last_theme.txt");
         this.gson = new GsonBuilder().setPrettyPrinting().create();
         ensureThemesDirectory();
         loadDefaultThemes();
@@ -107,12 +109,10 @@ public class ThemeManager {
     
     private void saveThemeToFile(Theme theme) {
         File themeFile = new File(themesDir, theme.getId() + ".json");
-        if (!themeFile.exists()) {
-            try (FileWriter writer = new FileWriter(themeFile)) {
-                gson.toJson(theme, writer);
-            } catch (IOException e) {
-                System.err.println("无法保存主题文件: " + themeFile.getName());
-            }
+        try (FileWriter writer = new FileWriter(themeFile)) {
+            gson.toJson(theme, writer);
+        } catch (IOException e) {
+            System.err.println("无法保存主题文件: " + themeFile.getName());
         }
     }
     
@@ -120,9 +120,11 @@ public class ThemeManager {
         // 默认使用default主题
         String themeId = "default";
         
-        // 检查是否有上次使用的主题
-        // 这里可以添加逻辑来记住上次使用的主题，比如从临时文件读取
-        // 暂时先使用default主题
+        // 尝试加载上次使用的主题
+        String lastThemeId = loadLastThemeId();
+        if (lastThemeId != null && !lastThemeId.isEmpty()) {
+            themeId = lastThemeId;
+        }
         
         // 尝试加载主题
         if (!themes.containsKey(themeId)) {
@@ -150,6 +152,35 @@ public class ThemeManager {
         }
     }
     
+    /**
+     * 加载上次使用的主题ID
+     */
+    private String loadLastThemeId() {
+        if (lastThemeFile.exists()) {
+            try (FileReader reader = new FileReader(lastThemeFile)) {
+                char[] buffer = new char[1024];
+                int length = reader.read(buffer);
+                if (length > 0) {
+                    return new String(buffer, 0, length).trim();
+                }
+            } catch (IOException e) {
+                // 忽略错误，返回null
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * 保存当前主题ID为上次使用的主题
+     */
+    private void saveLastThemeId(String themeId) {
+        try (FileWriter writer = new FileWriter(lastThemeFile)) {
+            writer.write(themeId);
+        } catch (IOException e) {
+            System.err.println("无法保存上次使用的主题ID: " + e.getMessage());
+        }
+    }
+    
     public Theme getCurrentTheme() {
         return currentTheme;
     }
@@ -164,6 +195,8 @@ public class ThemeManager {
     public void setTheme(String themeId) {
         if (themes.containsKey(themeId)) {
             currentTheme = themes.get(themeId);
+            // 保存为上次使用的主题
+            saveLastThemeId(themeId);
         } else {
             // 尝试加载自定义主题
             File customThemeFile = new File(themesDir, themeId + ".json");
@@ -173,6 +206,8 @@ public class ThemeManager {
                     if (customTheme != null) {
                         themes.put(themeId, customTheme);
                         currentTheme = customTheme;
+                        // 保存为上次使用的主题
+                        saveLastThemeId(themeId);
                     }
                 } catch (IOException | JsonSyntaxException e) {
                     IngameIME_Forge.logDebugInfo("无法加载自定义主题: " + themeId);

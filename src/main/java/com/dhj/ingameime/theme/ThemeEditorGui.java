@@ -222,8 +222,14 @@ public class ThemeEditorGui extends GuiScreen {
                 borderColor
             );
             
+            // 保存主题
             themeManager.saveCustomTheme(theme);
+            
+            // 应用主题并通知监听器
             themeManager.setThemeAndNotify(selectedThemeId);
+            
+            // 重新加载主题列表
+            loadThemeList();
             
         } catch (NumberFormatException e) {
             // 颜色格式错误，忽略
