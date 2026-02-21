@@ -54,6 +54,11 @@ public class ThemeEditorGui extends GuiScreen {
         this.parent = parent;
         this.themeManager = ThemeManager.getInstance();
         this.nameInputGui = new ThemeNameInputGui(this);
+
+        Theme current = themeManager.getCurrentTheme();
+        if (current != null) {
+            this.selectedThemeId = current.getId();
+        }
     }
     
     @Override
