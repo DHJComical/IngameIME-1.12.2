@@ -93,7 +93,7 @@ public class Config {
                 CATEGORIES[5],
                 "currentTheme",
                 CurrentTheme.getId(),
-                "当前使用的主题。\n可选值: default(默认主题), dark(深色主题), light(浅色主题), custom(自定义主题)"
+                "Select the current theme.\nAvailable: default, dark, light, custom"
         ).setLanguageKey(PREFIX + CATEGORIES[5] + ".current_theme").setValidValues(ThemeType.getIds());
         
         String themeId = themeProp.getString();

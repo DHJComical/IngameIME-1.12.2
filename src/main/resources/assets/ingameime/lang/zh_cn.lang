@@ -13,3 +13,30 @@ ingameime.config.modetext.native_mode=本地模式文字
 ingameime.config.modetext.native_mode.tooltip=在本地模式时显示的文字。
 ingameime.config.debug.debug_log=调试日志
 ingameime.config.debug.debug_log.tooltip=配置是否打印调试日志。
+
+# 主题配置
+ingameime.config.theme.current_theme.tooltip=选择当前使用的主题。
+ingameime.theme.default=默认主题
+ingameime.theme.dark=深色主题
+ingameime.theme.light=浅色主题
+ingameime.theme.custom=自定义主题
+
+# 主题编辑器
+ingameime.theme.editor.title=主题编辑器
+ingameime.theme.editor.current=当前主题
+ingameime.theme.editor.apply=应用主题
+ingameime.theme.editor.create=创建新主题
+ingameime.theme.editor.delete=删除主题
+ingameime.theme.editor.select=选择主题
+ingameime.theme.editor.text_color=文字颜色
+ingameime.theme.editor.background_color=背景颜色
+ingameime.theme.editor.index_color=索引颜色
+ingameime.theme.editor.selected_bg=选中背景
+ingameime.theme.editor.cursor_color=光标颜色
+ingameime.theme.editor.border_color=边框颜色
+ingameime.theme.editor.padding=内边距
+ingameime.theme.editor.candidate_padding=候选框内边距
+ingameime.theme.editor.border_width=边框宽度
+ingameime.theme.editor.custom_name=自定义主题
+ingameime.theme.editor.input_title=输入主题名称
+ingameime.theme.editor.input_hint=请输入新主题的名称

@@ -4,25 +4,31 @@ package com.dhj.ingameime.theme;
  * 主题类型枚举
  */
 public enum ThemeType {
-    DEFAULT("default", "默认主题"),
-    DARK("dark", "深色主题"),
-    LIGHT("light", "浅色主题"),
-    CUSTOM("custom", "自定义主题");
+    DEFAULT("default"),
+    DARK("dark"),
+    LIGHT("light"),
+    CUSTOM("custom");
     
     private final String id;
-    private final String displayName;
     
-    ThemeType(String id, String displayName) {
+    ThemeType(String id) {
         this.id = id;
-        this.displayName = displayName;
     }
     
     public String getId() {
         return id;
     }
     
+    /**
+     * 获取显示名称（从ThemeManager获取）
+     */
     public String getDisplayName() {
-        return displayName;
+        Theme theme = ThemeManager.getInstance().getTheme(id);
+        if (theme != null) {
+            return theme.getName();
+        }
+        // 如果主题未加载，返回ID作为后备
+        return id;
     }
     
     /**
@@ -76,6 +82,6 @@ public enum ThemeType {
     
     @Override
     public String toString() {
-        return displayName;
+        return getDisplayName();
     }
 }

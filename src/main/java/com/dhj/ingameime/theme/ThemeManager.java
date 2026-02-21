@@ -1,5 +1,7 @@
 package com.dhj.ingameime.theme;
 
+import com.dhj.ingameime.IngameIME_Forge;
+import com.dhj.ingameime.config.Config;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
@@ -32,16 +34,16 @@ public class ThemeManager {
     // 默认主题
     private static final Theme DEFAULT_THEME = new Theme(
         "default",
-        "默认主题",
-        0xFF000000,  // 文字颜色
-        0xEBEBEBEB,  // 背景颜色
-        0xFF555555,  // 索引颜色
-        0xEBEBEBEB,  // 选中项背景
-        0xFF000000,  // 光标颜色
-        3,           // 内边距
-        5,           // 候选框内边距
-        1,           // 边框宽度
-        0x80000000   // 边框颜色
+        "Default Theme",
+        0xFF000000,  // text color
+        0xEBEBEBEB,  // background color
+        0xFF555555,  // index color
+        0xEBEBEBEB,  // selected item background
+        0xFF000000,  // cursor color
+        3,           // padding
+        5,           // candidate box padding
+        1,           // border width
+        0x80000000   // border color
     );
     
     private ThemeManager() {
@@ -79,35 +81,35 @@ public class ThemeManager {
         // 添加默认主题
         themes.put("default", DEFAULT_THEME);
         
-        // 添加深色主题
+        // Add dark theme
         Theme darkTheme = new Theme(
             "dark",
-            "深色主题",
-            0xFFFFFFFF,  // 文字颜色
-            0x80333333,  // 背景颜色
-            0xFFAAAAAA,  // 索引颜色
-            0x80666666,  // 选中项背景
-            0xFFFFFFFF,  // 光标颜色
-            3,           // 内边距
-            5,           // 候选框内边距
-            1,           // 边框宽度
-            0x80FFFFFF   // 边框颜色
+            "Dark Theme",
+            0xFFFFFFFF,  // text color
+            0x80333333,  // background color
+            0xFFAAAAAA,  // index color
+            0x80666666,  // selected item background
+            0xFFFFFFFF,  // cursor color
+            3,           // padding
+            5,           // candidate box padding
+            1,           // border width
+            0x80FFFFFF   // border color
         );
         themes.put("dark", darkTheme);
         
-        // 添加浅色主题
+        // Add light theme
         Theme lightTheme = new Theme(
             "light",
-            "浅色主题",
-            0xFF000000,  // 文字颜色
-            0xF0FFFFFF,  // 背景颜色
-            0xFF666666,  // 索引颜色
-            0xF0DDDDDD,  // 选中项背景
-            0xFF000000,  // 光标颜色
-            3,           // 内边距
-            5,           // 候选框内边距
-            1,           // 边框宽度
-            0x80000000   // 边框颜色
+            "Light Theme",
+            0xFF000000,  // text color
+            0xF0FFFFFF,  // background color
+            0xFF666666,  // index color
+            0xF0DDDDDD,  // selected item background
+            0xFF000000,  // cursor color
+            3,           // padding
+            5,           // candidate box padding
+            1,           // border width
+            0x80000000   // border color
         );
         themes.put("light", lightTheme);
         
@@ -144,7 +146,7 @@ public class ThemeManager {
                         themeId = "default";
                     }
                 } catch (IOException | JsonSyntaxException e) {
-                    System.err.println("无法加载自定义主题: " + themeId);
+                    IngameIME_Forge.logDebugInfo("无法加载自定义主题: " + themeId);
                     themeId = "default";
                 }
             } else {
@@ -165,6 +167,13 @@ public class ThemeManager {
         return currentTheme;
     }
     
+    /**
+     * 根据ID获取主题
+     */
+    public Theme getTheme(String themeId) {
+        return themes.get(themeId);
+    }
+    
     public void setTheme(String themeId) {
         if (themes.containsKey(themeId)) {
             currentTheme = themes.get(themeId);
@@ -181,7 +190,7 @@ public class ThemeManager {
                         saveCurrentThemeToConfig();
                     }
                 } catch (IOException | JsonSyntaxException e) {
-                    System.err.println("无法加载自定义主题: " + themeId);
+                    IngameIME_Forge.logDebugInfo("无法加载自定义主题: " + themeId);
                 }
             }
         }
@@ -189,7 +198,7 @@ public class ThemeManager {
     
     private void saveCurrentThemeToConfig() {
         // 使用新的Config API保存当前主题
-        com.dhj.ingameime.config.Config.setCurrentTheme(ThemeType.fromId(currentTheme.getId()));
+        Config.setCurrentTheme(ThemeType.fromId(currentTheme.getId()));
     }
     
     public Map<String, Theme> getAvailableThemes() {
@@ -215,7 +224,7 @@ public class ThemeManager {
                             themes.put(themeId, theme);
                         }
                     } catch (IOException | JsonSyntaxException e) {
-                        System.err.println("无法加载主题文件: " + themeFile.getName());
+                        IngameIME_Forge.logDebugInfo("无法加载主题文件: " + themeFile.getName());
                     }
                 }
             }
