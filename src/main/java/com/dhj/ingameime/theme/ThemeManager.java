@@ -3,7 +3,6 @@ package com.dhj.ingameime.theme;
 import com.dhj.ingameime.IngameIME_Forge;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonSyntaxException;
 
 import java.io.File;
 import java.io.FileReader;
@@ -28,7 +27,7 @@ public class ThemeManager {
     private final List<ThemeChangeListener> listeners = new ArrayList<>();
     
     // 默认主题
-    private static final Theme DEFAULT_THEME = new Theme(
+    private static final Theme DEFAULT_THEME_BACKUP = new Theme(
         "default",
         "Default Theme",
         0xFF000000,  // text color
@@ -37,7 +36,7 @@ public class ThemeManager {
         0xEBEBEBEB,  // selected item background
         0xFF000000,  // cursor color
         3,           // padding
-        5,           // candidate box padding
+        3,           // candidate box padding
         1,           // border width
         0x80000000   // border color
     );
@@ -64,92 +63,98 @@ public class ThemeManager {
             themesDir.mkdirs();
         }
     }
-    
+
+    /**
+     * 加载标准主题 (Default, Dark, Light)
+     * 逻辑修改：优先检查磁盘是否有 JSON，如果有则读取，没有才使用硬编码并生成文件。
+     */
     private void loadDefaultThemes() {
-        // 添加默认主题
-        themes.put("default", DEFAULT_THEME);
-        
-        // Add dark theme
-        Theme darkTheme = new Theme(
-            "dark",
-            "Dark Theme",
-            0xFFFFFFFF,  // text color
-            0x80333333,  // background color
-            0xFFAAAAAA,  // index color
-            0x80666666,  // selected item background
-            0xFFFFFFFF,  // cursor color
-            3,           // padding
-            5,           // candidate box padding
-            1,           // border width
-            0x80FFFFFF   // border color
+        // --- Default Theme ---
+        loadOrInitStandardTheme("default", DEFAULT_THEME_BACKUP);
+
+        // --- Dark Theme ---
+        Theme hardcodedDark = new Theme(
+                "dark",
+                "Dark Theme",
+                0xFFFFFFFF,
+                0x80333333,
+                0xFFAAAAAA,
+                0x80666666,
+                0xFFFFFFFF,
+                3,
+                3,
+                1,
+                0x80FFFFFF
         );
-        themes.put("dark", darkTheme);
-        
-        // Add light theme
-        Theme lightTheme = new Theme(
-            "light",
-            "Light Theme",
-            0xFF000000,  // text color
-            0xF0FFFFFF,  // background color
-            0xFF666666,  // index color
-            0xF0DDDDDD,  // selected item background
-            0xFF000000,  // cursor color
-            3,           // padding
-            5,           // candidate box padding
-            1,           // border width
-            0x80000000   // border color
+        loadOrInitStandardTheme("dark", hardcodedDark);
+
+        // --- Light Theme ---
+        Theme hardcodedLight = new Theme(
+                "light",
+                "Light Theme",
+                0xFF000000,
+                0xF0FFFFFF,
+                0xFF666666,
+                0xF0DDDDDD,
+                0xFF000000,
+                3,
+                3,
+                1,
+                0x80000000
         );
-        themes.put("light", lightTheme);
-        
-        // 保存默认主题到文件
-        saveThemeToFile(DEFAULT_THEME);
-        saveThemeToFile(darkTheme);
-        saveThemeToFile(lightTheme);
+        loadOrInitStandardTheme("light", hardcodedLight);
     }
-    
+
+    private void loadOrInitStandardTheme(String id, Theme hardcodedTheme) {
+        File file = new File(themesDir, id + ".json");
+        boolean loadedFromDisk = false;
+
+        // 尝试从磁盘读取
+        if (file.exists()) {
+            try (FileReader reader = new FileReader(file)) {
+                Theme diskTheme = gson.fromJson(reader, Theme.class);
+                if (diskTheme != null) {
+                    themes.put(id, diskTheme);
+                    loadedFromDisk = true;
+                }
+            } catch (Exception e) {
+                IngameIME_Forge.logDebugInfo("读取标准主题失败: " + id + ", 将重置为默认值。" + e.getMessage());
+            }
+        }
+
+        // 如果磁盘没有文件，或者读取失败，则使用硬编码默认值，并保存到磁盘
+        if (!loadedFromDisk) {
+            themes.put(id, hardcodedTheme);
+            saveThemeToFile(hardcodedTheme);
+        }
+    }
     private void saveThemeToFile(Theme theme) {
         // 使用主题ID作为文件名
         File themeFile = new File(themesDir, theme.getId() + ".json");
         try (FileWriter writer = new FileWriter(themeFile)) {
             gson.toJson(theme, writer);
         } catch (IOException e) {
-            System.err.println("无法保存主题文件: " + themeFile.getName());
+            IngameIME_Forge.logDebugInfo("无法保存主题文件: " + themeFile.getName());
         }
     }
-    
+
     private void loadCurrentTheme() {
-        // 默认使用default主题
         String themeId = "default";
-        
-        // 尝试加载上次使用的主题
+
         String lastThemeId = loadLastThemeId();
         if (lastThemeId != null && !lastThemeId.isEmpty()) {
             themeId = lastThemeId;
         }
-        
-        // 尝试加载主题
-        if (!themes.containsKey(themeId)) {
-            File customThemeFile = new File(themesDir, themeId + ".json");
-            if (customThemeFile.exists()) {
-                try (FileReader reader = new FileReader(customThemeFile)) {
-                    Theme customTheme = gson.fromJson(reader, Theme.class);
-                    if (customTheme != null) {
-                        themes.put(themeId, customTheme);
-                    } else {
-                        themeId = "default";
-                    }
-                } catch (IOException | JsonSyntaxException e) {
-                    IngameIME_Forge.logDebugInfo("无法加载自定义主题: " + themeId);
-                    themeId = "default";
-                }
-            } else {
-                themeId = "default";
+
+        // 如果 themes map 里已经有了 (在 loadDefaultThemes 或 loadCustomThemes 里加载了)，直接用
+        if (themes.containsKey(themeId)) {
+            currentTheme = themes.get(themeId);
+        } else {
+            // 兜底逻辑
+            currentTheme = themes.get("default");
+            if (currentTheme == null) {
+                currentTheme = DEFAULT_THEME_BACKUP;
             }
-        }
-        
-        currentTheme = themes.get(themeId);
-        if (currentTheme == null) {
-            currentTheme = DEFAULT_THEME;
         }
     }
     
@@ -178,7 +183,7 @@ public class ThemeManager {
         try (FileWriter writer = new FileWriter(lastThemeFile)) {
             writer.write(themeId);
         } catch (IOException e) {
-            System.err.println("无法保存上次使用的主题ID: " + e.getMessage());
+            IngameIME_Forge.logDebugInfo("无法保存上次使用的主题ID: " + e.getMessage());
         }
     }
     
@@ -192,14 +197,12 @@ public class ThemeManager {
     public Theme getTheme(String themeId) {
         return themes.get(themeId);
     }
-    
+
     public void setTheme(String themeId) {
         if (themes.containsKey(themeId)) {
             currentTheme = themes.get(themeId);
-            // 保存为上次使用的主题
             saveLastThemeId(themeId);
         } else {
-            // 尝试加载自定义主题
             File customThemeFile = new File(themesDir, themeId + ".json");
             if (customThemeFile.exists()) {
                 try (FileReader reader = new FileReader(customThemeFile)) {
@@ -207,10 +210,9 @@ public class ThemeManager {
                     if (customTheme != null) {
                         themes.put(themeId, customTheme);
                         currentTheme = customTheme;
-                        // 保存为上次使用的主题
                         saveLastThemeId(themeId);
                     }
-                } catch (IOException | JsonSyntaxException e) {
+                } catch (Exception e) {
                     IngameIME_Forge.logDebugInfo("无法加载自定义主题: " + themeId);
                 }
             }
@@ -227,7 +229,7 @@ public class ThemeManager {
         loadCustomThemes();
         loadCurrentTheme();
     }
-    
+
     private void loadCustomThemes() {
         File[] themeFiles = themesDir.listFiles((dir, name) -> name.endsWith(".json"));
         if (themeFiles != null) {
@@ -239,7 +241,7 @@ public class ThemeManager {
                         if (theme != null) {
                             themes.put(themeId, theme);
                         }
-                    } catch (IOException | JsonSyntaxException e) {
+                    } catch (Exception e) {
                         IngameIME_Forge.logDebugInfo("无法加载主题文件: " + themeFile.getName());
                     }
                 }
