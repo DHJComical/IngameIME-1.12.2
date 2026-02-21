@@ -5,9 +5,10 @@ import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.resources.I18n;
-import net.minecraftforge.fml.client.config.GuiConfig;
 import org.lwjgl.input.Mouse;
+import org.lwjgl.opengl.GL11;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.Map;
 
@@ -15,20 +16,15 @@ import java.util.Map;
  * 主题编辑器GUI
  */
 public class ThemeEditorGui extends GuiScreen {
-    private GuiScreen parent;
-    private ThemeManager themeManager;
-    private GuiButton btnBack;
-    private GuiButton btnApply;
-    private GuiButton btnCreateNew;
-    private GuiButton btnDelete;
-    private GuiButton btnSelectTheme;
+    private final GuiScreen parent;
+    private final ThemeManager themeManager;
     private GuiTextField txtThemeName;
     private GuiTextField txtThemeId;
     private String selectedThemeId = "default";
     
-    private int colorFieldsStartY = 100;
-    private GuiTextField[] colorFields = new GuiTextField[10];
-    private String[] colorLabels = {
+    private final int colorFieldsStartY = 100;
+    private final GuiTextField[] colorFields = new GuiTextField[10];
+    private final String[] colorLabels = {
         I18n.format("ingameime.theme.editor.text_color"),
         I18n.format("ingameime.theme.editor.background_color"), 
         I18n.format("ingameime.theme.editor.index_color"),
@@ -41,9 +37,9 @@ public class ThemeEditorGui extends GuiScreen {
     private GuiTextField txtCandidatePadding;
     private GuiTextField txtBorderWidth;
     
-    private java.util.List<String> themeIds = new java.util.ArrayList<>();
+    private final java.util.List<String> themeIds = new java.util.ArrayList<>();
     private int themeSelectionIndex = 0;
-    private ThemeNameInputGui nameInputGui;
+    private final ThemeNameInputGui nameInputGui;
     
     // 滚动相关
     private int scrollOffset = 0;
@@ -79,23 +75,23 @@ public class ThemeEditorGui extends GuiScreen {
         loadThemeList();
         
         // 添加返回按钮
-        btnBack = new GuiButton(0, width / 2 - 155, height - 29, 150, 20, I18n.format("gui.back"));
+        GuiButton btnBack = new GuiButton(0, width / 2 - 155, height - 29, 150, 20, I18n.format("gui.back"));
         buttonList.add(btnBack);
         
         // 添加应用按钮
-        btnApply = new GuiButton(1, width / 2 + 5, height - 29, 150, 20, I18n.format("ingameime.theme.editor.apply"));
+        GuiButton btnApply = new GuiButton(1, width / 2 + 5, height - 29, 150, 20, I18n.format("ingameime.theme.editor.apply"));
         buttonList.add(btnApply);
         
         // 添加创建新主题按钮
-        btnCreateNew = new GuiButton(2, width / 2 - 155, 25, 150, 20, I18n.format("ingameime.theme.editor.create"));
+        GuiButton btnCreateNew = new GuiButton(2, width / 2 - 155, 25, 150, 20, I18n.format("ingameime.theme.editor.create"));
         buttonList.add(btnCreateNew);
         
         // 添加删除主题按钮
-        btnDelete = new GuiButton(3, width / 2 + 5, 25, 150, 20, I18n.format("ingameime.theme.editor.delete"));
+        GuiButton btnDelete = new GuiButton(3, width / 2 + 5, 25, 150, 20, I18n.format("ingameime.theme.editor.delete"));
         buttonList.add(btnDelete);
         
         // 添加选择主题按钮
-        btnSelectTheme = new GuiButton(4, width / 2 - 155, 50, 150, 20, I18n.format("ingameime.theme.editor.select"));
+        GuiButton btnSelectTheme = new GuiButton(4, width / 2 - 155, 50, 150, 20, I18n.format("ingameime.theme.editor.select"));
         buttonList.add(btnSelectTheme);
         
         // 主题ID输入框
@@ -259,7 +255,7 @@ public class ThemeEditorGui extends GuiScreen {
     }
     
     @Override
-    protected void actionPerformed(GuiButton button) throws IOException {
+    protected void actionPerformed(@Nonnull GuiButton button) throws IOException {
         super.actionPerformed(button);
         
         if (button.id == 0) {
@@ -297,12 +293,16 @@ public class ThemeEditorGui extends GuiScreen {
     protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
         super.mouseClicked(mouseX, mouseY, mouseButton);
         
+        // 计算滚动区域参数（与drawScreen一致）
+        int bottomButtonAreaHeight = 45;
+        int scrollBarY = 80;
+        int scrollAreaBottom = height - bottomButtonAreaHeight;
+        int scrollBarHeight = scrollAreaBottom - scrollBarY;
+        
         // 检查是否点击了滚动条
         if (maxScrollOffset > 0 && mouseButton == 0) {
             int scrollBarX = width - 20;
-            int scrollBarY = 80;
-            int scrollBarHeight = viewportHeight;
-            int thumbHeight = Math.max(20, (int) ((float) viewportHeight / contentHeight * scrollBarHeight));
+            int thumbHeight = Math.max(20, (int) ((float) scrollBarHeight / contentHeight * scrollBarHeight));
             int thumbY = scrollBarY + (int) ((float) scrollOffset / maxScrollOffset * (scrollBarHeight - thumbHeight));
             
             // 检查是否点击了滚动条滑块
@@ -322,14 +322,22 @@ public class ThemeEditorGui extends GuiScreen {
             }
         }
         
-        // 调整鼠标Y坐标以考虑滚动偏移
-        int adjustedMouseY = mouseY + scrollOffset;
-        
-        txtThemeName.mouseClicked(mouseX, adjustedMouseY, mouseButton);
-        for (GuiTextField field : colorFields) {
-            if (field != null) {
-                field.mouseClicked(mouseX, adjustedMouseY, mouseButton);
+        // 检查点击是否在滚动区域内（排除底部按钮区域）
+        if (mouseY < height - bottomButtonAreaHeight && mouseY > scrollBarY) {
+            // 调整鼠标Y坐标以考虑滚动偏移
+            int adjustedMouseY = mouseY + scrollOffset;
+            
+            txtThemeName.mouseClicked(mouseX, adjustedMouseY, mouseButton);
+            for (GuiTextField field : colorFields) {
+                if (field != null) {
+                    field.mouseClicked(mouseX, adjustedMouseY, mouseButton);
+                }
             }
+            
+            // 处理padding相关输入框的点击
+            if (txtPadding != null) txtPadding.mouseClicked(mouseX, adjustedMouseY, mouseButton);
+            if (txtCandidatePadding != null) txtCandidatePadding.mouseClicked(mouseX, adjustedMouseY, mouseButton);
+            if (txtBorderWidth != null) txtBorderWidth.mouseClicked(mouseX, adjustedMouseY, mouseButton);
         }
     }
     
@@ -364,23 +372,28 @@ public class ThemeEditorGui extends GuiScreen {
                 field.textboxKeyTyped(typedChar, keyCode);
             }
         }
+        
+        // 处理padding相关输入框的键盘输入
+        if (txtPadding != null) txtPadding.textboxKeyTyped(typedChar, keyCode);
+        if (txtCandidatePadding != null) txtCandidatePadding.textboxKeyTyped(typedChar, keyCode);
+        if (txtBorderWidth != null) txtBorderWidth.textboxKeyTyped(typedChar, keyCode);
     }
     
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         drawDefaultBackground();
         
-        // 计算滚动参数
-        viewportHeight = height - 100; // 可视区域高度（减去顶部和底部按钮空间）
+        // 底部按钮区域高度（返回和应用按钮在 height - 29，高度20，留一些间距）
+        int bottomButtonAreaHeight = 45;
+        // 顶部按钮区域高度（标题+顶部按钮）
+
+        // 计算滚动参数 - 滚动区域在顶部按钮下方和底部按钮上方之间
+        int scrollAreaTop = 80;
+        int scrollAreaBottom = height - bottomButtonAreaHeight;
+        viewportHeight = scrollAreaBottom - scrollAreaTop;
         contentHeight = 350; // 内容总高度
         maxScrollOffset = Math.max(0, contentHeight - viewportHeight);
         scrollOffset = Math.min(scrollOffset, maxScrollOffset);
-        
-        // 启用裁剪区域，只绘制可视区域
-        int clipX = 0;
-        int clipY = 80; // 从标题下方开始
-        int clipWidth = width;
-        int clipHeight = viewportHeight;
         
         // 标题（不滚动）
         drawCenteredString(fontRenderer, I18n.format("ingameime.theme.editor.title"), width / 2, 10, 0xFFFFFF);
@@ -388,18 +401,27 @@ public class ThemeEditorGui extends GuiScreen {
         // 当前主题标签（不滚动）
         fontRenderer.drawString(I18n.format("ingameime.theme.editor.current") + ": " + selectedThemeId, width / 2 - 100, 35, 0xFFFFFF);
         
-        // 使用GL裁剪
-        net.minecraft.client.renderer.GlStateManager.pushMatrix();
-        net.minecraft.client.renderer.GlStateManager.translate(0, -scrollOffset, 0);
+        // 绘制顶部分割线（在固定区域和滚动区域之间）
+        drawRect(20, scrollAreaTop - 2, width - 20, scrollAreaTop - 1, 0xFF555555);
+        
+        // 使用GL裁剪 - 限制绘制区域在滚动区域内
+        GlStateManager.pushMatrix();
+        GL11.glEnable(GL11.GL_SCISSOR_TEST);
+        GL11.glScissor(
+            0, 
+            (height - scrollAreaBottom) * mc.displayHeight / height, 
+            width * mc.displayWidth / width, 
+            viewportHeight * mc.displayHeight / height
+        );
+        GlStateManager.translate(0, -scrollOffset, 0);
         
         // 绘制可滚动内容
-        int labelWidth = 80;
         int x = width / 2 - 150;
         int y = colorFieldsStartY + 40;
         
         // 绘制颜色标签
-        for (int i = 0; i < colorLabels.length; i++) {
-            fontRenderer.drawString(colorLabels[i], x, y + 5, 0xFFFFFF);
+        for (String colorLabel : colorLabels) {
+            fontRenderer.drawString(colorLabel, x, y + 5, 0xFFFFFF);
             y += 25;
         }
         
@@ -419,6 +441,11 @@ public class ThemeEditorGui extends GuiScreen {
             }
         }
         
+        // 绘制padding相关输入框
+        if (txtPadding != null) txtPadding.drawTextBox();
+        if (txtCandidatePadding != null) txtCandidatePadding.drawTextBox();
+        if (txtBorderWidth != null) txtBorderWidth.drawTextBox();
+        
         // 绘制颜色预览
         int previewX = width / 2 + 100;
         int previewY = colorFieldsStartY + 40;
@@ -434,21 +461,23 @@ public class ThemeEditorGui extends GuiScreen {
             previewY += 25;
         }
         
+        GL11.glDisable(GL11.GL_SCISSOR_TEST);
         GlStateManager.popMatrix();
         
-        // 绘制滚动条
+        // 绘制底部分割线（在滚动区域和底部按钮区域之间）
+        drawRect(20, scrollAreaBottom + 1, width - 20, scrollAreaBottom + 2, 0xFF555555);
+        
+        // 绘制滚动条（在滚动区域右侧）
         if (maxScrollOffset > 0) {
-            drawScrollBar();
+            drawScrollBar(scrollAreaTop, viewportHeight);
         }
         
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
     
-    private void drawScrollBar() {
+    private void drawScrollBar(int scrollBarY, int scrollBarHeight) {
         int scrollBarX = width - 20;
-        int scrollBarY = 80;
-        int scrollBarHeight = viewportHeight;
-        int thumbHeight = Math.max(20, (int) ((float) viewportHeight / contentHeight * scrollBarHeight));
+        int thumbHeight = Math.max(20, (int) ((float) scrollBarHeight / contentHeight * scrollBarHeight));
         int thumbY = scrollBarY + (int) ((float) scrollOffset / maxScrollOffset * (scrollBarHeight - thumbHeight));
         
         // 绘制滚动条背景
@@ -478,5 +507,10 @@ public class ThemeEditorGui extends GuiScreen {
                 field.updateCursorCounter();
             }
         }
+        
+        // 更新padding相关输入框的光标
+        if (txtPadding != null) txtPadding.updateCursorCounter();
+        if (txtCandidatePadding != null) txtCandidatePadding.updateCursorCounter();
+        if (txtBorderWidth != null) txtBorderWidth.updateCursorCounter();
     }
 }
