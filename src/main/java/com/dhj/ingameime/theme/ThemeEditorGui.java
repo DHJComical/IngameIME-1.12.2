@@ -151,7 +151,7 @@ public class ThemeEditorGui extends GuiScreen {
     private void loadCurrentTheme() {
         Theme theme = null;
         
-        // 如果有选中的主题ID（比如新创建的主题），优先加载该主题
+        // 首先尝试加载选中的主题ID
         if (selectedThemeId != null && !selectedThemeId.isEmpty()) {
             theme = themeManager.getTheme(selectedThemeId);
         }
@@ -159,10 +159,12 @@ public class ThemeEditorGui extends GuiScreen {
         // 如果没有选中的主题，加载当前应用的主题
         if (theme == null) {
             theme = themeManager.getCurrentTheme();
+            if (theme != null) {
+                selectedThemeId = theme.getId();
+            }
         }
         
         if (theme != null) {
-            selectedThemeId = theme.getId();
             loadThemeToEditor(theme);
         }
     }
@@ -286,11 +288,11 @@ public class ThemeEditorGui extends GuiScreen {
                 loadCurrentTheme();
             }
         } else if (button.id == 4) {
-            // 选择主题 - 循环选择下一个主题
+            // 选择主题 - 循环选择下一个主题（仅切换显示，不应用）
             if (!themeIds.isEmpty()) {
                 themeSelectionIndex = (themeSelectionIndex + 1) % themeIds.size();
                 selectedThemeId = themeIds.get(themeSelectionIndex);
-                themeManager.setThemeAndNotify(selectedThemeId);
+                // 仅加载到编辑器，不应用主题
                 loadCurrentTheme();
             }
         }
@@ -535,7 +537,7 @@ public class ThemeEditorGui extends GuiScreen {
             .replaceAll("[^a-z0-9_]", "");
         
         // 如果ID为空或太短，添加前缀
-        if (safeId.isEmpty() || safeId.length() < 2) {
+        if (safeId.length() < 2) {
             safeId = "custom_theme";
         }
         
