@@ -1,4 +1,4 @@
-package com.dhj.ingameime;
+package com.dhj.ingameime.config;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;

@@ -2,6 +2,8 @@ package com.dhj.ingameime.gui;
 
 import com.dhj.ingameime.ClientProxy;
 import com.dhj.ingameime.Internal;
+import com.dhj.ingameime.theme.Theme;
+import com.dhj.ingameime.theme.ThemeManager;
 import ingameime.PreEditRect;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
@@ -10,6 +12,12 @@ public class WidgetPreEdit extends Widget {
     private final int CursorWidth = 3;
     private String Content = null;
     private int Cursor = -1;
+    
+    @Override
+    protected void updateThemeColors() {
+        super.updateThemeColors();
+        // 预编辑框可以使用与Widget相同的颜色
+    }
 
     public void setContent(String content, int cursor) {
         Cursor = cursor;
@@ -60,8 +68,12 @@ public class WidgetPreEdit extends Widget {
         String beforeCursor = Content.substring(0, Cursor);
         String afterCursor = Content.substring(Cursor);
         int x = font.drawString(beforeCursor, X + Padding, Y + Padding, TextColor);
-        // Cursor
-        drawRect(x + 1, Y + Padding, x + 2, Y + Padding + Height, TextColor);
+        
+        // 使用主题中的光标颜色
+        Theme theme = ThemeManager.getInstance().getCurrentTheme();
+        int cursorColor = (theme != null) ? theme.getCursorColor() : TextColor;
+        drawRect(x + 1, Y + Padding, x + 2, Y + Padding + Height, cursorColor);
+        
         font.drawString(afterCursor, x + CursorWidth, Y + Padding, TextColor);
     }
 }

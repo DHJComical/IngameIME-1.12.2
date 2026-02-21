@@ -1,5 +1,7 @@
-package com.dhj.ingameime;
+package com.dhj.ingameime.config;
 
+import com.dhj.ingameime.Tags;
+import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraftforge.common.config.ConfigElement;
 import net.minecraftforge.common.config.Configuration;
@@ -11,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ConfigGui extends GuiConfig {
+    
     public ConfigGui(GuiScreen parent) {
         super(parent, getConfigElements(), Tags.MOD_ID, false, false, Tags.MOD_NAME);
     }
@@ -21,6 +24,13 @@ public class ConfigGui extends GuiConfig {
         for (String category : Config.CATEGORIES) {
             list.addAll(new ConfigElement(config.getCategory(category)).getChildElements());
         }
+        list.add(new ThemeEditorConfigElement());
+        
         return list;
+    }
+    
+    @Override
+    protected void actionPerformed(GuiButton button) {
+        super.actionPerformed(button);
     }
 }

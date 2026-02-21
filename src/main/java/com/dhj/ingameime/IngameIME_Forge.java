@@ -1,5 +1,6 @@
 package com.dhj.ingameime;
 
+import com.dhj.ingameime.config.Config;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
@@ -14,7 +15,7 @@ import org.apache.logging.log4j.Logger;
         acceptedMinecraftVersions = "[1.12.2]",
         acceptableRemoteVersions = "*",
         dependencies = "required-after:mixinbooter@[8.0,)",
-        guiFactory = "com.dhj.ingameime.ConfigGuiFactory"
+        guiFactory = "com.dhj.ingameime.config.ConfigGuiFactory"
 )
 public class IngameIME_Forge {
     public static final Logger LOG = LogManager.getLogger(Tags.MOD_NAME);

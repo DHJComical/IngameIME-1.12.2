@@ -1,5 +1,6 @@
 package com.dhj.ingameime;
 
+import com.dhj.ingameime.config.Config;
 import com.dhj.ingameime.control.IControl;
 import com.dhj.ingameime.control.NoControl;
 import net.minecraft.client.gui.GuiScreen;

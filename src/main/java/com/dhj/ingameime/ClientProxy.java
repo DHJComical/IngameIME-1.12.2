@@ -1,7 +1,9 @@
 package com.dhj.ingameime;
 
+import com.dhj.ingameime.config.Config;
 import com.dhj.ingameime.control.IControl;
 import com.dhj.ingameime.gui.OverlayScreen;
+import com.dhj.ingameime.theme.ThemeManager;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraftforge.client.event.GuiScreenEvent;
@@ -74,6 +76,7 @@ public class ClientProxy extends CommonProxy implements IMEventHandler {
         Internal.loadLibrary();
         Internal.createInputCtx();
         MinecraftForge.EVENT_BUS.register(this);
+        ThemeManager.getInstance();
     }
 
     @Override

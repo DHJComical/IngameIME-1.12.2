@@ -1,0 +1,13 @@
+{
+  "id": "default",
+  "name": "默认主题",
+  "textColor": -16777216,
+  "backgroundColor": -337222421,
+  "indexColor": -11184811,
+  "selectedBackgroundColor": -337222421,
+  "cursorColor": -16777216,
+  "padding": 3,
+  "candidatePadding": 5,
+  "borderWidth": 1,
+  "borderColor": -2147483648
+}

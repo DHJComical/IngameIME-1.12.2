@@ -1,5 +1,7 @@
 package com.dhj.ingameime.gui;
 
+import com.dhj.ingameime.theme.Theme;
+import com.dhj.ingameime.theme.ThemeManager;
 import net.minecraft.client.Minecraft;
 
 import java.util.List;
@@ -10,9 +12,18 @@ public class WidgetCandidateList extends Widget {
     private List<String> Candidates = null;
     private int Selected = -1;
 
-    WidgetCandidateList() {
-        Padding = 3;
+    public WidgetCandidateList() {
         DrawInline = false;
+        updateThemeColors();
+    }
+    
+    @Override
+    protected void updateThemeColors() {
+        super.updateThemeColors();
+        Theme theme = ThemeManager.getInstance().getCurrentTheme();
+        if (theme != null) {
+            Padding = theme.getCandidatePadding();
+        }
     }
 
     public void setContent(List<String> candidates, int selected) {
@@ -58,6 +69,7 @@ public class WidgetCandidateList extends Widget {
 
         super.draw();
 
+        Theme theme = ThemeManager.getInstance().getCurrentTheme();
         int drawX = X + Padding;
         int drawY = Y + Padding;
         int index = 1;
@@ -66,12 +78,12 @@ public class WidgetCandidateList extends Widget {
             drawItem.setText(s);
 
             boolean isSelected = (index - 1) == (Selected + 1);
-            if (isSelected) {
+            if (isSelected && theme != null) {
                 int entryWidth = drawItem.getTotalWidth();
-                drawRect(drawX, Y, drawX + entryWidth, Y + Height + (Padding * 2), 0xEB_EB_EB_EB);
+                drawRect(drawX, Y, drawX + entryWidth, Y + Height + (Padding * 2), theme.getSelectedBackgroundColor());
             }
 
-            drawItem.draw(drawX, drawY, TextColor);
+            drawItem.draw(drawX, drawY, TextColor, theme);
             drawX += drawItem.getTotalWidth();
         }
     }
@@ -111,7 +123,7 @@ public class WidgetCandidateList extends Widget {
             return getContentHeight();
         }
 
-        void draw(int x, int y, int textColor) {
+        void draw(int x, int y, int textColor, Theme theme) {
             // 改为类似于 1.17 的 padding
             int offsetX = x + 2;
 
@@ -119,7 +131,9 @@ public class WidgetCandidateList extends Widget {
             int indexAreaW = getIndexAreaWidth();
             int idxTextW = mc.fontRenderer.getStringWidth(idx);
             int centeredX = offsetX + (indexAreaW - idxTextW) / 2;
-            mc.fontRenderer.drawString(idx, centeredX, y, 0xFF555555);
+
+            int indexColor = (theme != null) ? theme.getIndexColor() : 0xFF555555;
+            mc.fontRenderer.drawString(idx, centeredX, y, indexColor);
 
             // 渲染text
             offsetX += indexAreaW;

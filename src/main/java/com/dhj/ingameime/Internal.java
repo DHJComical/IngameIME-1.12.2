@@ -1,5 +1,6 @@
 package com.dhj.ingameime;
 
+import com.dhj.ingameime.config.Config;
 import ingameime.*;
 import net.minecraft.client.Minecraft;
 import org.lwjgl.LWJGLUtil;

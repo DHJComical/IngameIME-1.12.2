@@ -4,8 +4,8 @@ import ingameime.InputMode;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 
-import static com.dhj.ingameime.Config.AlphaModeText;
-import static com.dhj.ingameime.Config.NativeModeText;
+import static com.dhj.ingameime.config.Config.AlphaModeText;
+import static com.dhj.ingameime.config.Config.NativeModeText;
 
 public class WidgetInputMode extends Widget {
     public final long ActiveTime = 3000;
@@ -13,8 +13,13 @@ public class WidgetInputMode extends Widget {
     private InputMode Mode = InputMode.AlphaNumeric;
 
     public WidgetInputMode() {
-        Padding = 5;
         DrawInline = false;
+        updateThemeColors();
+    }
+    
+    @Override
+    protected void updateThemeColors() {
+        super.updateThemeColors();
     }
 
     @Override

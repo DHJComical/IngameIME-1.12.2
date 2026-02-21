@@ -1,18 +1,50 @@
 package com.dhj.ingameime.gui;
 
+import com.dhj.ingameime.theme.Theme;
+import com.dhj.ingameime.theme.ThemeManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.ScaledResolution;
 
-public class Widget extends Gui {
+public class Widget extends Gui implements ThemeManager.ThemeChangeListener {
     public int offsetX, offsetY;
-    public int TextColor = 0xFF_00_00_00;
-    public int Background = 0xEB_EB_EB_EB;
+    public int TextColor;
+    public int Background;
     public int Padding = 1;
     public int X, Y;
     public int Width, Height;
     public boolean DrawInline = true;
     protected boolean isDirty = true;
+    
+    public Widget() {
+        updateThemeColors();
+        ThemeManager.getInstance().addThemeChangeListener(this);
+    }
+    
+    protected void updateThemeColors() {
+        Theme theme = ThemeManager.getInstance().getCurrentTheme();
+        if (theme != null) {
+            TextColor = theme.getTextColor();
+            Background = theme.getBackgroundColor();
+            Padding = theme.getPadding();
+        }
+    }
+    
+    /**
+     * 强制更新主题颜色
+     */
+    public void refreshThemeColors() {
+        updateThemeColors();
+        isDirty = true;
+    }
+    
+    /**
+     * 主题变更监听器回调
+     */
+    @Override
+    public void onThemeChanged(Theme newTheme) {
+        refreshThemeColors();
+    }
 
     public boolean isActive() {
         return false;
