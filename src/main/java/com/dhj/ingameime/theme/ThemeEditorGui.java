@@ -271,10 +271,11 @@ public class ThemeEditorGui extends GuiScreen {
             mc.displayGuiScreen(nameInputGui);
         } else if (button.id == 3) {
             // 删除主题
-            if (!selectedThemeId.equals("default") && 
-                !selectedThemeId.equals("dark") && 
-                !selectedThemeId.equals("light")) {
+            if (!selectedThemeId.equals("default") &&
+                    !selectedThemeId.equals("dark") &&
+                    !selectedThemeId.equals("light")) {
                 themeManager.deleteCustomTheme(selectedThemeId);
+                themeManager.setThemeAndNotify("default");
                 selectedThemeId = "default";
                 loadThemeList();
                 loadCurrentTheme();
