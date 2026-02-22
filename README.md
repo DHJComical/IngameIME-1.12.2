@@ -23,9 +23,14 @@ Use `InputMethod` in **Full screen** Minecraft!
 - [RuiXuqi](https://github.com/RuiXuqi):More dynamic cursor tracking and project refactoring, and port it back to 1.7.10
 - There will be more in the future :)
 
+## AI Coder
+- Google Gemini (3.1 Pro / 3.0 Pro / 3.0 Flash / 2.5 Pro)
+- DeepSeek (deepseek-chat)
+- MiniMax (M2.1)
+- Kimi (k2.5)
+
 ## Bug
 - Mixin errors will occur when used with [RandomPatches](https://www.curseforge.com/minecraft/mc-mods/randompatches-forge) (please use [Universal Tweaks](https://www.curseforge.com/minecraft/mc-mods/universal-tweaks) instead of this mod's functionality, or set patchMinecraftClass=false in config/randompatches.cfg
-- Input method position offset in [Flux Network](https://github.com/SonarSonic/Flux-Networks)
 
 ## Supported Platforms
 
