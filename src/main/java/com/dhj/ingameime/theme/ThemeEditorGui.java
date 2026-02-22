@@ -21,8 +21,7 @@ public class ThemeEditorGui extends GuiScreen {
     private GuiTextField txtThemeName;
     private GuiTextField txtThemeId;
     private String selectedThemeId = "default";
-    
-    private final int colorFieldsStartY = 100;
+
     private final GuiTextField[] colorFields = new GuiTextField[10];
     private final String[] colorLabels = {
         I18n.format("ingameime.theme.editor.text_color"),
@@ -38,7 +37,6 @@ public class ThemeEditorGui extends GuiScreen {
     private GuiTextField txtBorderWidth;
     
     private final java.util.List<String> themeIds = new java.util.ArrayList<>();
-    private int themeSelectionIndex = 0;
     private final ThemeNameInputGui nameInputGui;
     
     // Scroll related items
@@ -47,8 +45,6 @@ public class ThemeEditorGui extends GuiScreen {
     private int contentHeight = 400;
     private int viewportHeight = 200;
     private boolean isScrolling = false;
-    private int scrollBarDragStartY = 0;
-    private int scrollBarDragStartOffset = 0;
 
     private final int[] previewColors = new int[6];
     
@@ -114,8 +110,9 @@ public class ThemeEditorGui extends GuiScreen {
         // Create a color input field
         int fieldWidth = 100;
         int fieldHeight = 20;
-        int labelWidth = 80;
-        int x = width / 2 - 150;
+        int labelWidth = 120;
+        int x = width / 2 - 160;
+        int colorFieldsStartY = 100;
         int y = colorFieldsStartY + 40;
         
         for (int i = 0; i < colorLabels.length; i++) {
@@ -148,9 +145,8 @@ public class ThemeEditorGui extends GuiScreen {
         themeIds.addAll(availableThemes.keySet());
         
         // Find the index of the current theme
-        themeSelectionIndex = themeIds.indexOf(selectedThemeId);
+        int themeSelectionIndex = themeIds.indexOf(selectedThemeId);
         if (themeSelectionIndex == -1 && !themeIds.isEmpty()) {
-            themeSelectionIndex = 0;
             selectedThemeId = themeIds.get(0);
         }
     }
@@ -190,12 +186,12 @@ public class ThemeEditorGui extends GuiScreen {
         colorFields[3].setText(String.format("%08X", theme.getSelectedBackgroundColor()));
         colorFields[4].setText(String.format("%08X", theme.getCursorColor()));
         colorFields[5].setText(String.format("%08X", theme.getBorderColor()));
-        updateColorPreviews();
         
         // Set fields such as padding
         txtPadding.setText(String.valueOf(theme.getPadding()));
         txtCandidatePadding.setText(String.valueOf(theme.getCandidatePadding()));
         txtBorderWidth.setText(String.valueOf(theme.getBorderWidth()));
+        updateColorPreviews();
     }
 
     private void saveCurrentTheme() {
@@ -254,7 +250,23 @@ public class ThemeEditorGui extends GuiScreen {
             return defaultValue;
         }
     }
-    
+
+    /**
+     * Called by ThemeSelectionGui to return the selected theme ID.
+     */
+    public void setSelectedThemeId(String themeId) {
+        this.selectedThemeId = themeId;
+        // Refresh editor fields with the newly selected theme data
+        loadCurrentTheme();
+    }
+
+    /**
+     * Returns the currently selected theme ID for the selection GUI to highlight.
+     */
+    public String getSelectedThemeId() {
+        return this.selectedThemeId;
+    }
+
     @Override
     protected void actionPerformed(@Nonnull GuiButton button) throws IOException {
         super.actionPerformed(button);
@@ -281,81 +293,78 @@ public class ThemeEditorGui extends GuiScreen {
                 loadCurrentTheme();
             }
         } else if (button.id == 4) {
-            if (!themeIds.isEmpty()) {
-                themeSelectionIndex = (themeSelectionIndex + 1) % themeIds.size();
-                selectedThemeId = themeIds.get(themeSelectionIndex);
-                // Load only into the editor, do not apply the theme.
-                loadCurrentTheme();
-            }
+            // Open the new selection GUI instead of cycling
+            mc.displayGuiScreen(new ThemeSelectionGui(this));
         }
     }
-    
+
     @Override
     protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
-        super.mouseClicked(mouseX, mouseY, mouseButton);
-        
-        // 计算滚动区域参数（与drawScreen一致）
-        int bottomButtonAreaHeight = 45;
-        int scrollBarY = 80;
-        int scrollAreaBottom = height - bottomButtonAreaHeight;
-        int scrollBarHeight = scrollAreaBottom - scrollBarY;
-        
-        // 检查是否点击了滚动条
-        if (maxScrollOffset > 0 && mouseButton == 0) {
-            int scrollBarX = width - 20;
-            int thumbHeight = Math.max(20, (int) ((float) scrollBarHeight / contentHeight * scrollBarHeight));
-            int thumbY = scrollBarY + (int) ((float) scrollOffset / maxScrollOffset * (scrollBarHeight - thumbHeight));
-            
-            // 检查是否点击了滚动条滑块
-            if (mouseX >= scrollBarX && mouseX <= scrollBarX + 6 &&
-                mouseY >= thumbY && mouseY <= thumbY + thumbHeight) {
-                isScrolling = true;
-                scrollBarDragStartY = mouseY;
-                scrollBarDragStartOffset = scrollOffset;
-            }
-            // 检查是否点击了滚动条背景（跳转到该位置）
-            else if (mouseX >= scrollBarX && mouseX <= scrollBarX + 6 &&
-                     mouseY >= scrollBarY && mouseY <= scrollBarY + scrollBarHeight) {
-                // 计算点击位置对应的滚动偏移
-                float ratio = (float) (mouseY - scrollBarY) / scrollBarHeight;
-                scrollOffset = (int) (ratio * maxScrollOffset);
-                scrollOffset = Math.max(0, Math.min(scrollOffset, maxScrollOffset));
+        // 计算标准区域 (需与 drawScreen 一致)
+        int scrollAreaTop = 80;
+        int bottomAreaHeight = 50;
+        int scrollAreaBottom = height - bottomAreaHeight;
+
+        // --- 滚动条点击判定 ---
+        // 判定范围设为右侧 15 像素，方便玩家点击
+        if (mouseX >= width - 15 && mouseX <= width && maxScrollOffset > 0) {
+            if (mouseY >= scrollAreaTop && mouseY <= scrollAreaBottom) {
+                this.isScrolling = true;
+                // 点击时立即更新一次位置
+                updateScrollFromMouse(mouseY);
+                return; // 点击了滚动条，不再处理输入框
             }
         }
-        
-        // 检查点击是否在滚动区域内（排除底部按钮区域）
-        if (mouseY < height - bottomButtonAreaHeight && mouseY > scrollBarY) {
+
+        // --- 输入框点击判定 ---
+        // 只有点击在滚动区域（Header 和 Footer 之间）才生效
+        if (mouseY > scrollAreaTop && mouseY < scrollAreaBottom) {
+            txtThemeId.mouseClicked(mouseX, mouseY, mouseButton);
             txtThemeName.mouseClicked(mouseX, mouseY, mouseButton);
             for (GuiTextField field : colorFields) {
-                if (field != null) {
-                    field.mouseClicked(mouseX, mouseY, mouseButton);
-                }
+                if (field != null) field.mouseClicked(mouseX, mouseY, mouseButton);
             }
             if (txtPadding != null) txtPadding.mouseClicked(mouseX, mouseY, mouseButton);
             if (txtCandidatePadding != null) txtCandidatePadding.mouseClicked(mouseX, mouseY, mouseButton);
             if (txtBorderWidth != null) txtBorderWidth.mouseClicked(mouseX, mouseY, mouseButton);
         }
+
+        super.mouseClicked(mouseX, mouseY, mouseButton);
     }
-    
+
     @Override
     protected void mouseReleased(int mouseX, int mouseY, int state) {
         super.mouseReleased(mouseX, mouseY, state);
-        isScrolling = false;
+        this.isScrolling = false;
     }
-    
+
     @Override
     protected void mouseClickMove(int mouseX, int mouseY, int clickedMouseButton, long timeSinceLastClick) {
         super.mouseClickMove(mouseX, mouseY, clickedMouseButton, timeSinceLastClick);
-        
-        // 处理滚动条拖动
-        if (isScrolling && clickedMouseButton == 0) {
-            int scrollBarHeight = viewportHeight;
-            int thumbHeight = Math.max(20, (int) ((float) viewportHeight / contentHeight * scrollBarHeight));
-            int dragDelta = mouseY - scrollBarDragStartY;
-            float dragRatio = (float) dragDelta / (scrollBarHeight - thumbHeight);
-            scrollOffset = scrollBarDragStartOffset + (int) (dragRatio * maxScrollOffset);
-            scrollOffset = Math.max(0, Math.min(scrollOffset, maxScrollOffset));
+
+        if (this.isScrolling && clickedMouseButton == 0) {
+            updateScrollFromMouse(mouseY);
         }
+    }
+
+    /**
+     * 根据鼠标 Y 坐标计算并更新滚动偏移
+     */
+    private void updateScrollFromMouse(int mouseY) {
+        int scrollAreaTop = 80;
+        int bottomAreaHeight = 50;
+        int scrollAreaBottom = height - bottomAreaHeight;
+        int trackHeight = scrollAreaBottom - scrollAreaTop;
+
+        // 计算鼠标在轨道中的百分比 (0.0 ~ 1.0)
+        float f = (float)(mouseY - scrollAreaTop) / (float)trackHeight;
+
+        // 映射到滚动偏移
+        // 减去 viewportHeight/2 是为了让滑块中心跟随鼠标，这种手感最接近原版
+        this.scrollOffset = (int)(f * (float)contentHeight) - (viewportHeight / 2);
+
+        // 限制范围
+        this.scrollOffset = Math.max(0, Math.min(this.scrollOffset, maxScrollOffset));
     }
     
     @Override
@@ -379,45 +388,40 @@ public class ThemeEditorGui extends GuiScreen {
 
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-        drawDefaultBackground();
+        // Draw the tiled dirt background for the whole screen
+        this.drawBackground(0);
 
-        int bottomButtonAreaHeight = 45;
+        // Define Slot-style boundaries
+        // Header height increased to 80 to cover top buttons
+        int labelWidth = 120;
         int scrollAreaTop = 80;
-        int scrollAreaBottom = height - bottomButtonAreaHeight;
+        int bottomAreaHeight = 45;
+        int scrollAreaBottom = height - bottomAreaHeight;
+
+        // Update scrolling parameters
         viewportHeight = scrollAreaBottom - scrollAreaTop;
-        contentHeight = 350;
+        contentHeight = 305; // Adjust based on your content
         maxScrollOffset = Math.max(0, contentHeight - viewportHeight);
         scrollOffset = Math.min(scrollOffset, maxScrollOffset);
 
-        // 绘制固定标题
-        drawCenteredString(fontRenderer, I18n.format("ingameime.theme.editor.title"), width / 2, 10, 0xFFFFFF);
-        fontRenderer.drawString(I18n.format("ingameime.theme.editor.current") + ": " + selectedThemeId, width / 2 + 5, 56, 0xFFFFFF);
-        drawRect(20, scrollAreaTop - 2, width - 20, scrollAreaTop - 1, 0xFF555555);
-
-        // 开启裁剪 (Scissor)
+        // Render Scrollable Content (Inside the Scissor box)
         GL11.glEnable(GL11.GL_SCISSOR_TEST);
         int scaleFactor = new ScaledResolution(mc).getScaleFactor();
-        GL11.glScissor(
-                0,
-                (height - scrollAreaBottom) * scaleFactor,
-                width * scaleFactor,
-                viewportHeight * scaleFactor
-        );
+        // The Scissor Y is measured from the bottom of the screen
+        GL11.glScissor(0, bottomAreaHeight * scaleFactor, width * scaleFactor, viewportHeight * scaleFactor);
 
         int x = width / 2 - 150;
-
-        // 更新并绘制 主题名称 输入框
-        // 原始Y是100，现在减去滚动偏移
-        txtThemeName.y = 100 - scrollOffset;
-        txtThemeName.drawTextBox();
-
-        // 更新并绘制 颜色列表
-        int startY = colorFieldsStartY + 40;
-        // 计算当前每一行的起始Y (包含滚动偏移)
+        // Content starts below the header
+        int startY = scrollAreaTop + 10;
         int currentY = startY - scrollOffset;
 
-        // 预览框X坐标
-        int previewX = width / 2 + 100;
+        // Draw Theme Name Field
+        txtThemeName.y = currentY;
+        txtThemeName.drawTextBox();
+        currentY += 30;
+
+        // Draw Colors and Labels
+        int previewX = x + labelWidth + 110;
         int previewSize = 20;
 
         for (int i = 0; i < colorLabels.length; i++) {
@@ -426,60 +430,77 @@ public class ThemeEditorGui extends GuiScreen {
                 colorFields[i].y = currentY;
                 colorFields[i].drawTextBox();
             }
+            // Draw Preview Rects
             drawRect(previewX - 1, currentY - 1, previewX + previewSize + 1, currentY + previewSize + 1, 0xFF000000);
             drawRect(previewX, currentY, previewX + previewSize, currentY + previewSize, previewColors[i]);
-
             currentY += 25;
         }
 
-        // 更新并绘制 Padding 等其他字段
+        // Additional Fields (Padding, etc.)
         currentY += 10;
         fontRenderer.drawString(I18n.format("ingameime.theme.editor.padding"), x, currentY + 5, 0xFFFFFF);
-        if (txtPadding != null) {
-            txtPadding.y = currentY;
-            txtPadding.drawTextBox();
-        }
-
+        if (txtPadding != null) { txtPadding.y = currentY; txtPadding.drawTextBox(); }
         currentY += 25;
         fontRenderer.drawString(I18n.format("ingameime.theme.editor.candidate_padding"), x, currentY + 5, 0xFFFFFF);
-        if (txtCandidatePadding != null) {
-            txtCandidatePadding.y = currentY;
-            txtCandidatePadding.drawTextBox();
-        }
-
+        if (txtCandidatePadding != null) { txtCandidatePadding.y = currentY; txtCandidatePadding.drawTextBox(); }
         currentY += 25;
         fontRenderer.drawString(I18n.format("ingameime.theme.editor.border_width"), x, currentY + 5, 0xFFFFFF);
-        if (txtBorderWidth != null) {
-            txtBorderWidth.y = currentY;
-            txtBorderWidth.drawTextBox();
-        }
+        if (txtBorderWidth != null) { txtBorderWidth.y = currentY; txtBorderWidth.drawTextBox(); }
 
-        // 关闭裁剪
         GL11.glDisable(GL11.GL_SCISSOR_TEST);
 
-        // 绘制底部分割线
-        drawRect(20, scrollAreaBottom + 1, width - 20, scrollAreaBottom + 2, 0xFF555555);
+        // Draw Overlays (Standard Header and Footer)
+        // These cover the scrolling content to keep the buttons and title clean
+        this.overlayBackground(0, scrollAreaTop); // Top Header
+        this.overlayBackground(scrollAreaBottom, height); // Bottom Footer
 
-        // 绘制滚动条
+        // Draw Shadows (Gradient effect at the edges of scroll area)
+        this.drawGradientRect(0, scrollAreaTop, width, scrollAreaTop + 4, 0xFF000000, 0x00000000);
+        this.drawGradientRect(0, scrollAreaBottom - 4, width, scrollAreaBottom, 0x00000000, 0xFF000000);
+
+        // Draw Static UI Elements (Title and Info)
+        drawCenteredString(fontRenderer, I18n.format("ingameime.theme.editor.title"), width / 2, 10, 0xFFFFFF);
+        // "Current Theme" text - placed inside the header area
+        fontRenderer.drawString(I18n.format("ingameime.theme.editor.current") + ": " + selectedThemeId, width / 2 + 5, 56, 0xFFFFFF);
+
+        // Draw Scrollbar
         if (maxScrollOffset > 0) {
-            drawScrollBar(scrollAreaTop, viewportHeight);
+            drawScrollBar(scrollAreaTop, scrollAreaBottom);
         }
 
+        // Draw Buttons (Fixed positions)
         for (net.minecraft.client.gui.GuiButton button : buttonList) {
             button.drawButton(mc, mouseX, mouseY, partialTicks);
         }
     }
-    
-    private void drawScrollBar(int scrollBarY, int scrollBarHeight) {
-        int scrollBarX = width - 20;
+
+    /**
+     * Helper to draw the standard darkened tiled dirt background for overlays.
+     */
+    protected void overlayBackground(int startY, int endY) {
+        net.minecraft.client.renderer.Tessellator tessellator = net.minecraft.client.renderer.Tessellator.getInstance();
+        net.minecraft.client.renderer.BufferBuilder bufferbuilder = tessellator.getBuffer();
+        this.mc.getTextureManager().bindTexture(net.minecraft.client.gui.Gui.OPTIONS_BACKGROUND);
+        org.lwjgl.opengl.GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+
+        bufferbuilder.begin(7, net.minecraft.client.renderer.vertex.DefaultVertexFormats.POSITION_TEX_COLOR);
+        bufferbuilder.pos(0.0D, endY, 0.0D).tex(0.0D, (float)endY / 32.0F).color(64, 64, 64, 255).endVertex();
+        bufferbuilder.pos(this.width, endY, 0.0D).tex((float)this.width / 32.0F, (float)endY / 32.0F).color(64, 64, 64, 255).endVertex();
+        bufferbuilder.pos(this.width, startY, 0.0D).tex((float)this.width / 32.0F, (float)startY / 32.0F).color(64, 64, 64, 255).endVertex();
+        bufferbuilder.pos(0.0D, startY, 0.0D).tex(0.0D, (float)startY / 32.0F).color(64, 64, 64, 255).endVertex();
+        tessellator.draw();
+    }
+
+    private void drawScrollBar(int top, int bottom) {
+        int scrollBarX = width - 6;
+        int scrollBarHeight = bottom - top;
         int thumbHeight = Math.max(20, (int) ((float) scrollBarHeight / contentHeight * scrollBarHeight));
-        int thumbY = scrollBarY + (int) ((float) scrollOffset / maxScrollOffset * (scrollBarHeight - thumbHeight));
-        
-        // 绘制滚动条背景
-        drawRect(scrollBarX, scrollBarY, scrollBarX + 6, scrollBarY + scrollBarHeight, 0x80333333);
-        
-        // 绘制滚动条滑块
-        drawRect(scrollBarX, thumbY, scrollBarX + 6, thumbY + thumbHeight, 0xFFAAAAAA);
+        int thumbY = top + (int) ((float) scrollOffset / maxScrollOffset * (scrollBarHeight - thumbHeight));
+
+        // Background of the scrollbar (Dark grey)
+        drawRect(scrollBarX, top, scrollBarX + 6, bottom, 0xFF000000);
+        // Thumb of the scrollbar (Light grey)
+        drawRect(scrollBarX, thumbY, scrollBarX + 6, thumbY + thumbHeight, 0xFF808080);
     }
     
     @Override
@@ -512,7 +533,7 @@ public class ThemeEditorGui extends GuiScreen {
     private void updateColorPreviews() {
         for (int i = 0; i < colorLabels.length; i++) {
             if (colorFields[i] != null) {
-                previewColors[i] = parseColor(colorFields[i].getText(), 0x00000000);
+                previewColors[i] = parseColor(colorFields[i].getText(), 0);
             }
         }
     }
