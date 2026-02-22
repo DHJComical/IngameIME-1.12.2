@@ -3,7 +3,7 @@ package com.dhj.ingameime.theme;
 import com.google.gson.annotations.JsonAdapter;
 
 /**
- * 主题类，包含所有可配置的UI属性
+ * Theme class, containing all configurable UI properties.
  */
 public class Theme {
     private String id;
@@ -26,7 +26,7 @@ public class Theme {
     private int candidatePadding;
     private int borderWidth;
     
-    // 默认构造函数用于JSON反序列化
+    // The default constructor is used for JSON deserialization.
     public Theme() {
     }
     
@@ -139,7 +139,7 @@ public class Theme {
     }
     
     /**
-     * 获取带透明度的背景颜色
+     * Get background color with transparency
      */
     public int getBackgroundColorWithAlpha(float alpha) {
         alpha = Math.max(0.0f, Math.min(1.0f, alpha));
@@ -148,7 +148,7 @@ public class Theme {
     }
     
     /**
-     * 获取带透明度的边框颜色
+     * Get the border color with transparency
      */
     public int getBorderColorWithAlpha(float alpha) {
         alpha = Math.max(0.0f, Math.min(1.0f, alpha));
@@ -157,12 +157,12 @@ public class Theme {
     }
     
     /**
-     * 复制主题
+     * Copy theme
      */
     public Theme copy() {
         return new Theme(
             id + "_copy",
-            name + " (副本)",
+            name + " (copy)",
             textColor,
             backgroundColor,
             indexColor,
@@ -176,21 +176,21 @@ public class Theme {
     }
     
     /**
-     * 创建自定义主题
+     * Create a custom theme
      */
     public static Theme createCustomTheme(String id, String name) {
         return new Theme(
             id,
             name,
-            0xFF000000,  // 文字颜色
-            0xEBEBEBEB,  // 背景颜色
-            0xFF555555,  // 索引颜色
-            0xEBEBEBEB,  // 选中项背景
-            0xFF000000,  // 光标颜色
-            3,           // 内边距
-            5,           // 候选框内边距
-            1,           // 边框宽度
-            0x80000000   // 边框颜色
+            0xFF000000,  // Text color
+            0xEBEBEBEB,  // Background color
+            0xFF555555,  // Index color
+            0xEBEBEBEB,  // Selected background color
+            0xFF000000,  // Cursor color
+            3,           // Padding
+            5,           // Candidate padding
+            1,           // Border width
+            0x80000000   // Border color
         );
     }
 }

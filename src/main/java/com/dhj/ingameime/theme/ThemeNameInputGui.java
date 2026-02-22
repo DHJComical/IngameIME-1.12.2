@@ -9,7 +9,7 @@ import javax.annotation.Nonnull;
 import java.io.IOException;
 
 /**
- * 主题名称输入GUI
+ * Theme Name Input GUI
  */
 public class ThemeNameInputGui extends GuiScreen {
     private final GuiScreen parent;
@@ -26,15 +26,15 @@ public class ThemeNameInputGui extends GuiScreen {
     public void initGui() {
         super.initGui();
         
-        // 添加确认按钮
+        // Add confirmation button
         GuiButton btnConfirm = new GuiButton(0, width / 2 - 155, height / 2 + 30, 150, 20, I18n.format("gui.done"));
         buttonList.add(btnConfirm);
         
-        // 添加取消按钮
+        // Add cancel button
         GuiButton btnCancel = new GuiButton(1, width / 2 + 5, height / 2 + 30, 150, 20, I18n.format("gui.cancel"));
         buttonList.add(btnCancel);
         
-        // 主题名称输入框
+        // Theme name input box
         txtThemeName = new GuiTextField(2, fontRenderer, width / 2 - 100, height / 2 - 10, 200, 20);
         txtThemeName.setMaxStringLength(50);
         txtThemeName.setFocused(true);
@@ -45,14 +45,14 @@ public class ThemeNameInputGui extends GuiScreen {
         super.actionPerformed(button);
         
         if (button.id == 0) {
-            // 确认
+            // Confirm
             themeName = txtThemeName.getText().trim();
             if (!themeName.isEmpty()) {
                 confirmed = true;
                 mc.displayGuiScreen(parent);
             }
         } else if (button.id == 1) {
-            // 取消
+            // Cancel
             confirmed = false;
             mc.displayGuiScreen(parent);
         }
@@ -69,7 +69,7 @@ public class ThemeNameInputGui extends GuiScreen {
         super.keyTyped(typedChar, keyCode);
         txtThemeName.textboxKeyTyped(typedChar, keyCode);
         
-        // 按回车键确认
+        // Press Enter to confirm.
         if (keyCode == 28) { // Enter key
             themeName = txtThemeName.getText().trim();
             if (!themeName.isEmpty()) {
@@ -83,13 +83,13 @@ public class ThemeNameInputGui extends GuiScreen {
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         drawDefaultBackground();
         
-        // 标题
+        // Title
         drawCenteredString(fontRenderer, I18n.format("ingameime.theme.editor.input_title"), width / 2, height / 2 - 50, 0xFFFFFF);
         
-        // 提示文字
+        // Prompt text
         drawCenteredString(fontRenderer, I18n.format("ingameime.theme.editor.input_hint"), width / 2, height / 2 - 30, 0xAAAAAA);
         
-        // 绘制输入框
+        // Draw input box
         txtThemeName.drawTextBox();
         
         super.drawScreen(mouseX, mouseY, partialTicks);
@@ -102,21 +102,21 @@ public class ThemeNameInputGui extends GuiScreen {
     }
     
     /**
-     * 获取输入的主题名称
+     * Get the input topic name
      */
     public String getThemeName() {
         return themeName;
     }
     
     /**
-     * 是否已确认
+     * Is it confirmed?
      */
     public boolean isConfirmed() {
         return confirmed;
     }
     
     /**
-     * 重置状态
+     * Reset state
      */
     public void reset() {
         themeName = "";

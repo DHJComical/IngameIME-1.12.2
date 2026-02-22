@@ -10,7 +10,7 @@ import net.minecraftforge.fml.client.config.IConfigElement;
 import net.minecraftforge.fml.client.config.GuiConfigEntries.ButtonEntry;
 
 /**
- * 主题编辑器配置条目
+ * Theme Editor Configuration Entries
  */
 public class ThemeEditorEntry extends ButtonEntry implements ThemeManager.ThemeChangeListener {
     public ThemeEditorEntry(GuiConfig owningScreen, GuiConfigEntries owningEntryList, IConfigElement configElement) {
@@ -23,7 +23,7 @@ public class ThemeEditorEntry extends ButtonEntry implements ThemeManager.ThemeC
         ThemeManager themeManager = ThemeManager.getInstance();
         Theme currentTheme = themeManager.getCurrentTheme();
         if (currentTheme != null) {
-            // 使用翻译键，支持主题名称参数
+            // Use TranslationKey
             this.btnValue.displayString = I18n.format(
                 "ingameime.config.theme.current_theme_button",
                 currentTheme.getName()
@@ -38,7 +38,7 @@ public class ThemeEditorEntry extends ButtonEntry implements ThemeManager.ThemeC
     
     @Override
     public void valueButtonPressed(int slotIndex) {
-        // 打开主题编辑器
+        // Open Theme Editor
         if (owningScreen.mc != null) {
             owningScreen.mc.displayGuiScreen(new ThemeEditorGui(owningScreen));
         }

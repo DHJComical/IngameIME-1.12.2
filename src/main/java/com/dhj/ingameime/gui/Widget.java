@@ -31,7 +31,7 @@ public class Widget extends Gui implements ThemeManager.ThemeChangeListener {
     }
     
     /**
-     * 强制更新主题颜色
+     * Force update theme colors
      */
     public void refreshThemeColors() {
         updateThemeColors();
@@ -39,7 +39,7 @@ public class Widget extends Gui implements ThemeManager.ThemeChangeListener {
     }
     
     /**
-     * 主题变更监听器回调
+     * Theme change listener callback
      */
     @Override
     public void onThemeChanged(Theme newTheme) {

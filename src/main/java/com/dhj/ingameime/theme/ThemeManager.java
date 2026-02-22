@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 主题管理器，负责加载、管理和应用主题
+ * Theme manager is responsible for loading, managing, and applying themes.
  */
 public class ThemeManager {
 
@@ -65,8 +65,8 @@ public class ThemeManager {
     }
 
     /**
-     * 加载标准主题 (Default, Dark, Light)
-     * 逻辑修改：优先检查磁盘是否有 JSON，如果有则读取，没有才使用硬编码并生成文件。
+     * Load standard themes (Default, Dark, Light)
+     * Logical modification: First check if there is JSON on the disk. If so, read it. Otherwise, use hard-coded JSON and generate a file.
      */
     private void loadDefaultThemes() {
         // --- Default Theme ---
@@ -109,7 +109,7 @@ public class ThemeManager {
         File file = new File(themesDir, id + ".json");
         boolean loadedFromDisk = false;
 
-        // 尝试从磁盘读取
+        // Try reading from disk
         if (file.exists()) {
             try (FileReader reader = new FileReader(file)) {
                 Theme diskTheme = gson.fromJson(reader, Theme.class);
@@ -118,23 +118,23 @@ public class ThemeManager {
                     loadedFromDisk = true;
                 }
             } catch (Exception e) {
-                IngameIME_Forge.logDebugInfo("读取标准主题失败: " + id + ", 将重置为默认值。" + e.getMessage());
+                IngameIME_Forge.logDebugInfo("[IME-ThemeSystem] Failed to read standard theme:" + id + ", will be reset to default value." + e.getMessage());
             }
         }
 
-        // 如果磁盘没有文件，或者读取失败，则使用硬编码默认值，并保存到磁盘
+        // If the file is not present on disk, or the read operation fails, use the hard-coded default value and save to disk.
         if (!loadedFromDisk) {
             themes.put(id, hardcodedTheme);
             saveThemeToFile(hardcodedTheme);
         }
     }
     private void saveThemeToFile(Theme theme) {
-        // 使用主题ID作为文件名
+        // Use the ThemeID as the filename
         File themeFile = new File(themesDir, theme.getId() + ".json");
         try (FileWriter writer = new FileWriter(themeFile)) {
             gson.toJson(theme, writer);
         } catch (IOException e) {
-            IngameIME_Forge.logDebugInfo("无法保存主题文件: " + themeFile.getName());
+            IngameIME_Forge.logDebugInfo("[IME-ThemeSystem] Unable to save theme file:" + themeFile.getName());
         }
     }
 
@@ -145,12 +145,10 @@ public class ThemeManager {
         if (lastThemeId != null && !lastThemeId.isEmpty()) {
             themeId = lastThemeId;
         }
-
-        // 如果 themes map 里已经有了 (在 loadDefaultThemes 或 loadCustomThemes 里加载了)，直接用
         if (themes.containsKey(themeId)) {
             currentTheme = themes.get(themeId);
         } else {
-            // 兜底逻辑
+            // Default
             currentTheme = themes.get("default");
             if (currentTheme == null) {
                 currentTheme = DEFAULT_THEME_BACKUP;
@@ -159,7 +157,7 @@ public class ThemeManager {
     }
     
     /**
-     * 加载上次使用的主题ID
+     * Load the last used ThemeId
      */
     private String loadLastThemeId() {
         if (lastThemeFile.exists()) {
@@ -169,21 +167,19 @@ public class ThemeManager {
                 if (length > 0) {
                     return new String(buffer, 0, length).trim();
                 }
-            } catch (IOException e) {
-                // 忽略错误，返回null
-            }
+            } catch (IOException ignored) {}
         }
         return null;
     }
     
     /**
-     * 保存当前主题ID为上次使用的主题
+     * Save the current ThemeId as the last used theme.
      */
     private void saveLastThemeId(String themeId) {
         try (FileWriter writer = new FileWriter(lastThemeFile)) {
             writer.write(themeId);
         } catch (IOException e) {
-            IngameIME_Forge.logDebugInfo("无法保存上次使用的主题ID: " + e.getMessage());
+            IngameIME_Forge.logDebugInfo("[IME-ThemeSystem] Unable to save the last used theme ID:" + e.getMessage());
         }
     }
     
@@ -192,7 +188,7 @@ public class ThemeManager {
     }
     
     /**
-     * 根据ID获取主题
+     * Get theme based on ID
      */
     public Theme getTheme(String themeId) {
         return themes.get(themeId);
@@ -213,7 +209,7 @@ public class ThemeManager {
                         saveLastThemeId(themeId);
                     }
                 } catch (Exception e) {
-                    IngameIME_Forge.logDebugInfo("无法加载自定义主题: " + themeId);
+                    IngameIME_Forge.logDebugInfo("[IME-ThemeSystem] Unable to load custom theme:" + themeId);
                 }
             }
         }
@@ -242,7 +238,7 @@ public class ThemeManager {
                             themes.put(themeId, theme);
                         }
                     } catch (Exception e) {
-                        IngameIME_Forge.logDebugInfo("无法加载主题文件: " + themeFile.getName());
+                        IngameIME_Forge.logDebugInfo("[IME-ThemeSystem] Unable to load theme file:" + themeFile.getName());
                     }
                 }
             }
@@ -265,14 +261,14 @@ public class ThemeManager {
     }
     
     /**
-     * 主题变更监听器接口
+     * Theme Change Listener Interface
      */
     public interface ThemeChangeListener {
         void onThemeChanged(Theme newTheme);
     }
     
     /**
-     * 添加主题变更监听器
+     * Add theme change listener
      */
     public void addThemeChangeListener(ThemeChangeListener listener) {
         if (!listeners.contains(listener)) {
@@ -281,14 +277,14 @@ public class ThemeManager {
     }
     
     /**
-     * 移除主题变更监听器
+     * Remove theme change listener
      */
     public void removeThemeChangeListener(ThemeChangeListener listener) {
         listeners.remove(listener);
     }
     
     /**
-     * 通知所有监听器主题已变更
+     * Notify all listeners that the theme has changed.
      */
     private void notifyThemeChanged() {
         for (ThemeChangeListener listener : listeners) {
@@ -297,7 +293,7 @@ public class ThemeManager {
     }
     
     /**
-     * 设置主题并通知监听器
+     * Set a theme and notify the listener.
      */
     public void setThemeAndNotify(String themeId) {
         setTheme(themeId);

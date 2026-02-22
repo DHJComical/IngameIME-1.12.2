@@ -42,27 +42,20 @@ public class WidgetInputMode extends Widget {
     @Override
     public void layout() {
         if (!isDirty) return;
-
         FontRenderer font = Minecraft.getMinecraft().fontRenderer;
-
         Height = font.FONT_HEIGHT;
-
         if (Mode == InputMode.AlphaNumeric)
             Width = font.getStringWidth(AlphaModeText);
         else
             Width = font.getStringWidth(NativeModeText);
-
         super.layout();
     }
 
     @Override
     public void draw() {
         if (!isActive()) return;
-
         if (isDirty) layout();
-
         super.draw();
-
         if (Mode == InputMode.AlphaNumeric)
             Minecraft.getMinecraft().fontRenderer.drawString(AlphaModeText, X + Padding, Y + Padding, TextColor);
         else

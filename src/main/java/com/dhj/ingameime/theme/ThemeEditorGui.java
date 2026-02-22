@@ -41,14 +41,14 @@ public class ThemeEditorGui extends GuiScreen {
     private int themeSelectionIndex = 0;
     private final ThemeNameInputGui nameInputGui;
     
-    // 滚动相关
+    // Scroll related items
     private int scrollOffset = 0;
     private int maxScrollOffset = 0;
-    private int contentHeight = 400; // 内容总高度
-    private int viewportHeight = 200; // 可视区域高度
+    private int contentHeight = 400;
+    private int viewportHeight = 200;
     private boolean isScrolling = false;
-    private int scrollBarDragStartY = 0; // 拖动开始时的鼠标Y坐标
-    private int scrollBarDragStartOffset = 0; // 拖动开始时的滚动偏移
+    private int scrollBarDragStartY = 0;
+    private int scrollBarDragStartOffset = 0;
 
     private final int[] previewColors = new int[6];
     
@@ -67,11 +67,11 @@ public class ThemeEditorGui extends GuiScreen {
     public void initGui() {
         super.initGui();
         
-        // 检查是否从主题名称输入GUI返回并确认
+        // Check if entering the topic name in the GUI returns and confirm.
         if (nameInputGui.isConfirmed()) {
             String themeName = nameInputGui.getThemeName();
             if (!themeName.isEmpty()) {
-                // 使用主题名称生成安全的主题ID
+                // Generate a secure topic ID using the topic name.
                 String newThemeId = generateThemeIdFromName(themeName);
                 Theme newTheme = Theme.createCustomTheme(newThemeId, themeName);
                 themeManager.saveCustomTheme(newTheme);
@@ -79,39 +79,39 @@ public class ThemeEditorGui extends GuiScreen {
             }
         }
         
-        // 加载可用主题列表
+        // Load the list of available themes
         loadThemeList();
         
-        // 添加返回按钮
+        // Add back button
         GuiButton btnBack = new GuiButton(0, width / 2 - 155, height - 29, 150, 20, I18n.format("gui.back"));
         buttonList.add(btnBack);
         
-        // 添加应用按钮
+        // Add app button
         GuiButton btnApply = new GuiButton(1, width / 2 + 5, height - 29, 150, 20, I18n.format("ingameime.theme.editor.apply"));
         buttonList.add(btnApply);
         
-        // 添加创建新主题按钮
+        // Add a "Create New Theme" button
         GuiButton btnCreateNew = new GuiButton(2, width / 2 - 155, 25, 150, 20, I18n.format("ingameime.theme.editor.create"));
         buttonList.add(btnCreateNew);
         
-        // 添加删除主题按钮
+        // Add a "Remove Theme" Buttons
         GuiButton btnDelete = new GuiButton(3, width / 2 + 5, 25, 150, 20, I18n.format("ingameime.theme.editor.delete"));
         buttonList.add(btnDelete);
         
-        // 添加选择主题按钮
+        // Add a "Theme Selection" button
         GuiButton btnSelectTheme = new GuiButton(4, width / 2 - 155, 50, 150, 20, I18n.format("ingameime.theme.editor.select"));
         buttonList.add(btnSelectTheme);
         
-        // 主题ID输入框
+        // Theme ID Input Box
         txtThemeId = new GuiTextField(5, fontRenderer, width / 2 - 100, 75, 200, 20);
         txtThemeId.setMaxStringLength(50);
-        txtThemeId.setEnabled(false); // 主题ID不可编辑
+        txtThemeId.setEnabled(false); // Theme ID is not editable
         
-        // 主题名称输入框
+        // Theme name input box
         txtThemeName = new GuiTextField(6, fontRenderer, width / 2 - 100, 100, 200, 20);
         txtThemeName.setMaxStringLength(50);
         
-        // 创建颜色输入字段
+        // Create a color input field
         int fieldWidth = 100;
         int fieldHeight = 20;
         int labelWidth = 80;
@@ -119,14 +119,14 @@ public class ThemeEditorGui extends GuiScreen {
         int y = colorFieldsStartY + 40;
         
         for (int i = 0; i < colorLabels.length; i++) {
-            // 颜色输入框
+            // Color input box
             colorFields[i] = new GuiTextField(20 + i, fontRenderer, x + labelWidth, y, fieldWidth, fieldHeight);
             colorFields[i].setMaxStringLength(8); // 8位十六进制
             
             y += 25;
         }
         
-        // 添加padding输入字段
+        // Add a padding input field
         y += 10;
         txtPadding = new GuiTextField(30, fontRenderer, x + labelWidth, y, fieldWidth, fieldHeight);
         txtPadding.setMaxStringLength(2);
@@ -147,7 +147,7 @@ public class ThemeEditorGui extends GuiScreen {
         Map<String, Theme> availableThemes = themeManager.getAvailableThemes();
         themeIds.addAll(availableThemes.keySet());
         
-        // 找到当前主题的索引
+        // Find the index of the current theme
         themeSelectionIndex = themeIds.indexOf(selectedThemeId);
         if (themeSelectionIndex == -1 && !themeIds.isEmpty()) {
             themeSelectionIndex = 0;
@@ -158,12 +158,12 @@ public class ThemeEditorGui extends GuiScreen {
     private void loadCurrentTheme() {
         Theme theme = null;
         
-        // 首先尝试加载选中的主题ID
+        // First, try loading the selected theme ID.
         if (selectedThemeId != null && !selectedThemeId.isEmpty()) {
             theme = themeManager.getTheme(selectedThemeId);
         }
         
-        // 如果没有选中的主题，加载当前应用的主题
+        // If no theme is selected, load the theme currently being applied.
         if (theme == null) {
             theme = themeManager.getCurrentTheme();
             if (theme != null) {
@@ -183,7 +183,7 @@ public class ThemeEditorGui extends GuiScreen {
         txtThemeId.setText(theme.getId());
         txtThemeName.setText(theme.getName());
         
-        // 设置颜色值（十六进制）
+        // Set color value (hexadecimal)
         colorFields[0].setText(String.format("%08X", theme.getTextColor()));
         colorFields[1].setText(String.format("%08X", theme.getBackgroundColor()));
         colorFields[2].setText(String.format("%08X", theme.getIndexColor()));
@@ -192,7 +192,7 @@ public class ThemeEditorGui extends GuiScreen {
         colorFields[5].setText(String.format("%08X", theme.getBorderColor()));
         updateColorPreviews();
         
-        // 设置padding等字段
+        // Set fields such as padding
         txtPadding.setText(String.valueOf(theme.getPadding()));
         txtCandidatePadding.setText(String.valueOf(theme.getCandidatePadding()));
         txtBorderWidth.setText(String.valueOf(theme.getBorderWidth()));
@@ -247,7 +247,7 @@ public class ThemeEditorGui extends GuiScreen {
             return defaultValue;
         }
         try {
-            // 移除可能的前缀
+            // Remove possible prefixes
             hex = hex.replace("#", "").replace("0x", "").replace("0X", "");
             return (int) Long.parseLong(hex, 16);
         } catch (NumberFormatException e) {
@@ -260,17 +260,17 @@ public class ThemeEditorGui extends GuiScreen {
         super.actionPerformed(button);
         
         if (button.id == 0) {
-            // 返回
+            // Return
             mc.displayGuiScreen(parent);
         } else if (button.id == 1) {
-            // 应用主题
+            // Apply theme
             saveCurrentTheme();
         } else if (button.id == 2) {
-            // 打开主题名称输入GUI
+            // Open the theme name and enter the GUI.
             nameInputGui.reset();
             mc.displayGuiScreen(nameInputGui);
         } else if (button.id == 3) {
-            // 删除主题
+            // Delete theme
             if (!selectedThemeId.equals("default") &&
                     !selectedThemeId.equals("dark") &&
                     !selectedThemeId.equals("light")) {
@@ -281,11 +281,10 @@ public class ThemeEditorGui extends GuiScreen {
                 loadCurrentTheme();
             }
         } else if (button.id == 4) {
-            // 选择主题 - 循环选择下一个主题（仅切换显示，不应用）
             if (!themeIds.isEmpty()) {
                 themeSelectionIndex = (themeSelectionIndex + 1) % themeIds.size();
                 selectedThemeId = themeIds.get(themeSelectionIndex);
-                // 仅加载到编辑器，不应用主题
+                // Load only into the editor, do not apply the theme.
                 loadCurrentTheme();
             }
         }

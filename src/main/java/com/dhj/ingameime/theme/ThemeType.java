@@ -1,7 +1,7 @@
 package com.dhj.ingameime.theme;
 
 /**
- * 主题类型枚举
+ * Topic type enumeration
  */
 public enum ThemeType {
     DEFAULT("default"),
@@ -20,19 +20,19 @@ public enum ThemeType {
     }
     
     /**
-     * 获取显示名称（从ThemeManager获取）
+     * Get the display name (from ThemeManager).
      */
     public String getDisplayName() {
         Theme theme = ThemeManager.getInstance().getTheme(id);
         if (theme != null) {
             return theme.getName();
         }
-        // 如果主题未加载，返回ID作为后备
+        // If the theme is not loaded, return the ID as a fallback.
         return id;
     }
     
     /**
-     * 根据ID获取主题类型
+     * Get theme type by ID
      */
     public static ThemeType fromId(String id) {
         if (id == null || id.isEmpty()) {
@@ -45,19 +45,19 @@ public enum ThemeType {
             }
         }
         
-        // 如果不是预定义主题，则认为是自定义主题
+        // If it is not a predefined theme, it is considered a custom theme.
         return CUSTOM;
     }
     
     /**
-     * 获取所有预定义主题类型（不包括CUSTOM）
+     * Retrieve all predefined theme types (excluding CUSTOM).
      */
     public static ThemeType[] getPredefinedThemes() {
         return new ThemeType[]{DEFAULT, DARK, LIGHT};
     }
     
     /**
-     * 获取所有主题类型的显示名称数组
+     * Get the array of display names for all theme types
      */
     public static String[] getDisplayNames() {
         ThemeType[] types = values();
@@ -69,7 +69,7 @@ public enum ThemeType {
     }
     
     /**
-     * 获取所有主题类型的ID数组
+     * Get the array of IDs for all theme types
      */
     public static String[] getIds() {
         ThemeType[] types = values();
