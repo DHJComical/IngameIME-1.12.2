@@ -1,20 +1,30 @@
 package com.dhj.ingameime.theme;
 
+import com.google.gson.annotations.JsonAdapter;
+
 /**
  * 主题类，包含所有可配置的UI属性
  */
 public class Theme {
     private String id;
     private String name;
+
+    @JsonAdapter(ColorTypeAdapter.class)
     private int textColor;
+    @JsonAdapter(ColorTypeAdapter.class)
     private int backgroundColor;
+    @JsonAdapter(ColorTypeAdapter.class)
     private int indexColor;
+    @JsonAdapter(ColorTypeAdapter.class)
     private int selectedBackgroundColor;
+    @JsonAdapter(ColorTypeAdapter.class)
     private int cursorColor;
+    @JsonAdapter(ColorTypeAdapter.class)
+    private int borderColor;
+
     private int padding;
     private int candidatePadding;
     private int borderWidth;
-    private int borderColor;
     
     // 默认构造函数用于JSON反序列化
     public Theme() {
