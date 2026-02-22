@@ -41,7 +41,8 @@ ingameime.theme.editor.border_width=Border Width
 ingameime.theme.editor.custom_name=Custom Theme
 ingameime.theme.editor.input_title=Enter Theme Name
 ingameime.theme.editor.input_hint=Please enter a name for the new theme
-
-# Theme Editor Entry
 ingameime.config.theme.editor_button=Open Theme Editor
 ingameime.config.theme.current_theme_button=Current Theme: %s (Click to Edit)
+ingameime.theme.selection.title=Select Theme
+ingameime.theme.selection.confirm=Select
+ingameime.theme.selection.confirm_hint=Double click to select

@@ -40,7 +40,8 @@ ingameime.theme.editor.border_width=边框宽度
 ingameime.theme.editor.custom_name=自定义主题
 ingameime.theme.editor.input_title=输入主题名称
 ingameime.theme.editor.input_hint=请输入新主题的名称
-
-# 主题编辑器条目
 ingameime.config.theme.editor_button=打开主题编辑器
 ingameime.config.theme.current_theme_button=当前主题: %s (点击编辑)
+ingameime.theme.selection.title=选择主题
+ingameime.theme.selection.confirm=选择
+ingameime.theme.selection.confirm_hint=双击以选择
