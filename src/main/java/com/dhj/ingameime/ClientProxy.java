@@ -3,7 +3,7 @@ package com.dhj.ingameime;
 import com.dhj.ingameime.config.Config;
 import com.dhj.ingameime.control.IControl;
 import com.dhj.ingameime.gui.OverlayScreen;
-import com.dhj.ingameime.theme.ThemeManager;
+import com.dhj.ingameime.theme.api.ThemeManager;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraftforge.client.event.GuiScreenEvent;

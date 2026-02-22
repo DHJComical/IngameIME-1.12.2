@@ -1,7 +1,10 @@
 package com.dhj.ingameime.theme;
 
+import com.dhj.ingameime.theme.api.Theme;
+import com.dhj.ingameime.theme.api.ThemeManager;
+
 /**
- * Topic type enumeration
+ * Theme type enumeration
  */
 public enum ThemeType {
     DEFAULT("default"),

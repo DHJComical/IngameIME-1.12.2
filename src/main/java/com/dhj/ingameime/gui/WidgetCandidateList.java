@@ -1,7 +1,7 @@
 package com.dhj.ingameime.gui;
 
-import com.dhj.ingameime.theme.Theme;
-import com.dhj.ingameime.theme.ThemeManager;
+import com.dhj.ingameime.theme.api.Theme;
+import com.dhj.ingameime.theme.api.ThemeManager;
 import net.minecraft.client.Minecraft;
 
 import java.util.List;
@@ -139,5 +139,10 @@ public class WidgetCandidateList extends Widget {
             offsetX += indexAreaW;
             mc.fontRenderer.drawString(text, offsetX, y, textColor);
         }
+    }
+
+    @Override
+    protected String getComponentId() {
+        return "candidate";
     }
 }

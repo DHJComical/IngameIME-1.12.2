@@ -1,7 +1,8 @@
 package com.dhj.ingameime.gui;
 
-import com.dhj.ingameime.theme.Theme;
-import com.dhj.ingameime.theme.ThemeManager;
+import com.dhj.ingameime.theme.api.Theme;
+import com.dhj.ingameime.theme.api.ThemeManager;
+import com.dhj.ingameime.theme.api.ThemeRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.ScaledResolution;
@@ -80,7 +81,13 @@ public class Widget extends Gui implements ThemeManager.ThemeChangeListener {
     }
 
     public void draw() {
-        drawRect(X, Y, X + Width + 2 * Padding, Y + Height + 2 * Padding, Background);
+        Theme theme = ThemeManager.getInstance().getCurrentTheme();
+        if (theme == null) return;
+        ThemeRenderer.render(theme, X, Y, Width + 2 * Padding, Height + 2 * Padding, getComponentId());
+    }
+
+    protected String getComponentId() {
+        return "generic";
     }
 
     public void setPos(int x, int y) {

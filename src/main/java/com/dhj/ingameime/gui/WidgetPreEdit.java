@@ -2,8 +2,8 @@ package com.dhj.ingameime.gui;
 
 import com.dhj.ingameime.ClientProxy;
 import com.dhj.ingameime.Internal;
-import com.dhj.ingameime.theme.Theme;
-import com.dhj.ingameime.theme.ThemeManager;
+import com.dhj.ingameime.theme.api.Theme;
+import com.dhj.ingameime.theme.api.ThemeManager;
 import ingameime.PreEditRect;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
@@ -100,5 +100,10 @@ public class WidgetPreEdit extends Widget {
             targetY = Y - listExpectedHeight;
         }
         return targetY;
+    }
+
+    @Override
+    protected String getComponentId() {
+        return "preedit";
     }
 }

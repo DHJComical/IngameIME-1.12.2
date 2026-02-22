@@ -1,5 +1,8 @@
 package com.dhj.ingameime.theme;
 
+import com.dhj.ingameime.IngameIME_Forge;
+import com.dhj.ingameime.theme.api.Theme;
+import com.dhj.ingameime.theme.api.ThemeManager;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiTextField;
@@ -13,7 +16,7 @@ import java.io.IOException;
 import java.util.Map;
 
 /**
- * 主题编辑器GUI
+ * Theme Editor GUI
  */
 public class ThemeEditorGui extends GuiScreen {
     private final GuiScreen parent;
@@ -63,11 +66,11 @@ public class ThemeEditorGui extends GuiScreen {
     public void initGui() {
         super.initGui();
         
-        // Check if entering the topic name in the GUI returns and confirm.
+        // Check if entering the theme name in the GUI returns and confirm.
         if (nameInputGui.isConfirmed()) {
             String themeName = nameInputGui.getThemeName();
             if (!themeName.isEmpty()) {
-                // Generate a secure topic ID using the topic name.
+                // Generate a secure theme ID using the theme name.
                 String newThemeId = generateThemeIdFromName(themeName);
                 Theme newTheme = Theme.createCustomTheme(newThemeId, themeName);
                 themeManager.saveCustomTheme(newTheme);
@@ -118,7 +121,7 @@ public class ThemeEditorGui extends GuiScreen {
         for (int i = 0; i < colorLabels.length; i++) {
             // Color input box
             colorFields[i] = new GuiTextField(20 + i, fontRenderer, x + labelWidth, y, fieldWidth, fieldHeight);
-            colorFields[i].setMaxStringLength(8); // 8位十六进制
+            colorFields[i].setMaxStringLength(8); // 8-digit hexadecimal
             
             y += 25;
         }
@@ -196,35 +199,34 @@ public class ThemeEditorGui extends GuiScreen {
 
     private void saveCurrentTheme() {
         try {
-            String name = txtThemeName.getText();
-            if (name.isEmpty()) {
-                name = selectedThemeId;
+            Theme theme = themeManager.getTheme(selectedThemeId);
+
+            if (theme == null) {
+                theme = Theme.createCustomTheme(selectedThemeId, txtThemeName.getText());
             }
 
-            // Empty object
-            Theme theme = new Theme();
-            theme.setId(selectedThemeId);
-            theme.setName(name);
+            theme.setName(txtThemeName.getText());
+            theme.setTextColor((int)Long.parseLong(colorFields[0].getText(), 16));
+            theme.setBackgroundColor((int)Long.parseLong(colorFields[1].getText(), 16));
+            theme.setIndexColor((int)Long.parseLong(colorFields[2].getText(), 16));
+            theme.setSelectedBackgroundColor((int)Long.parseLong(colorFields[3].getText(), 16));
+            theme.setCursorColor((int)Long.parseLong(colorFields[4].getText(), 16));
+            theme.setBorderColor((int)Long.parseLong(colorFields[5].getText(), 16));
 
-            // Set color
-            theme.setTextColor(parseColor(colorFields[0].getText(), 0xFF000000));
-            theme.setBackgroundColor(parseColor(colorFields[1].getText(), 0xEBEBEBEB));
-            theme.setIndexColor(parseColor(colorFields[2].getText(), 0xFF555555));
-            theme.setSelectedBackgroundColor(parseColor(colorFields[3].getText(), 0xEBEBEBEB));
-            theme.setCursorColor(parseColor(colorFields[4].getText(), 0xFF000000));
-            theme.setBorderColor(parseColor(colorFields[5].getText(), 0x80000000));
+            theme.setPadding(Integer.parseInt(txtPadding.getText()));
+            theme.setCandidatePadding(Integer.parseInt(txtCandidatePadding.getText()));
+            theme.setBorderWidth(Integer.parseInt(txtBorderWidth.getText()));
 
-            // Set layout
-            theme.setPadding(parseInt(txtPadding.getText(), 3));
-            theme.setCandidatePadding(parseInt(txtCandidatePadding.getText(), 5));
-            theme.setBorderWidth(parseInt(txtBorderWidth.getText(), 1));
-
-            // Save
             themeManager.saveCustomTheme(theme);
-            themeManager.setThemeAndNotify(selectedThemeId);
-            loadThemeList();
 
-        } catch (NumberFormatException ignored) {}
+            themeManager.setThemeAndNotify(selectedThemeId);
+
+            loadThemeList();
+            
+            IngameIME_Forge.logDebugInfo("[ThemeEditor] Theme saved and applied: {} ({})", selectedThemeId, theme.getName());
+        } catch (Exception e) {
+            IngameIME_Forge.logDebugInfo("[ThemeEditor] Save failed: {}", e.getMessage());
+        }
     }
     
     private int parseInt(String text, int defaultValue) {
@@ -238,16 +240,16 @@ public class ThemeEditorGui extends GuiScreen {
         }
     }
     
-    private int parseColor(String hex, int defaultValue) {
+    private int parseColor(String hex) {
         if (hex == null || hex.isEmpty()) {
-            return defaultValue;
+            return 0;
         }
         try {
             // Remove possible prefixes
             hex = hex.replace("#", "").replace("0x", "").replace("0X", "");
             return (int) Long.parseLong(hex, 16);
         } catch (NumberFormatException e) {
-            return defaultValue;
+            return 0;
         }
     }
 
@@ -300,24 +302,24 @@ public class ThemeEditorGui extends GuiScreen {
 
     @Override
     protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
-        // 计算标准区域 (需与 drawScreen 一致)
+        // Calculate standard area (must be consistent with drawScreen)
         int scrollAreaTop = 80;
         int bottomAreaHeight = 50;
         int scrollAreaBottom = height - bottomAreaHeight;
 
-        // --- 滚动条点击判定 ---
-        // 判定范围设为右侧 15 像素，方便玩家点击
+        // --- Scrollbar click detection ---
+        // Set detection range to 15 pixels on the right for easy clicking
         if (mouseX >= width - 15 && mouseX <= width && maxScrollOffset > 0) {
             if (mouseY >= scrollAreaTop && mouseY <= scrollAreaBottom) {
                 this.isScrolling = true;
-                // 点击时立即更新一次位置
+                // Update position immediately when clicked
                 updateScrollFromMouse(mouseY);
-                return; // 点击了滚动条，不再处理输入框
+                return; // Clicked on scrollbar, don't process text fields
             }
         }
 
-        // --- 输入框点击判定 ---
-        // 只有点击在滚动区域（Header 和 Footer 之间）才生效
+        // --- Text field click detection ---
+        // Only takes effect when clicking in scroll area (between Header and Footer)
         if (mouseY > scrollAreaTop && mouseY < scrollAreaBottom) {
             txtThemeId.mouseClicked(mouseX, mouseY, mouseButton);
             txtThemeName.mouseClicked(mouseX, mouseY, mouseButton);
@@ -348,7 +350,7 @@ public class ThemeEditorGui extends GuiScreen {
     }
 
     /**
-     * 根据鼠标 Y 坐标计算并更新滚动偏移
+     * Calculate and update scroll offset based on mouse Y coordinate
      */
     private void updateScrollFromMouse(int mouseY) {
         int scrollAreaTop = 80;
@@ -356,14 +358,14 @@ public class ThemeEditorGui extends GuiScreen {
         int scrollAreaBottom = height - bottomAreaHeight;
         int trackHeight = scrollAreaBottom - scrollAreaTop;
 
-        // 计算鼠标在轨道中的百分比 (0.0 ~ 1.0)
+        // Calculate mouse percentage in track (0.0 ~ 1.0)
         float f = (float)(mouseY - scrollAreaTop) / (float)trackHeight;
 
-        // 映射到滚动偏移
-        // 减去 viewportHeight/2 是为了让滑块中心跟随鼠标，这种手感最接近原版
+        // Map to scroll offset
+        // Subtracting viewportHeight/2 makes the thumb center follow the mouse, closest to vanilla feel
         this.scrollOffset = (int)(f * (float)contentHeight) - (viewportHeight / 2);
 
-        // 限制范围
+        // Limit range
         this.scrollOffset = Math.max(0, Math.min(this.scrollOffset, maxScrollOffset));
     }
     
@@ -378,7 +380,7 @@ public class ThemeEditorGui extends GuiScreen {
             }
         }
         
-        // 处理padding相关输入框的键盘输入
+        // Handle keyboard input for padding-related text fields
         if (txtPadding != null) txtPadding.textboxKeyTyped(typedChar, keyCode);
         if (txtCandidatePadding != null) txtCandidatePadding.textboxKeyTyped(typedChar, keyCode);
         if (txtBorderWidth != null) txtBorderWidth.textboxKeyTyped(typedChar, keyCode);
@@ -509,7 +511,7 @@ public class ThemeEditorGui extends GuiScreen {
         
         int scroll = Mouse.getEventDWheel();
         if (scroll != 0) {
-            scroll = scroll > 0 ? -20 : 20; // 反转方向，每次滚动20像素
+            scroll = scroll > 0 ? -20 : 20; // Reverse direction, scroll 20 pixels per tick
             scrollOffset = Math.max(0, Math.min(scrollOffset + scroll, maxScrollOffset));
         }
     }
@@ -524,7 +526,7 @@ public class ThemeEditorGui extends GuiScreen {
             }
         }
         
-        // 更新padding相关输入框的光标
+        // Update cursor for padding-related text fields
         if (txtPadding != null) txtPadding.updateCursorCounter();
         if (txtCandidatePadding != null) txtCandidatePadding.updateCursorCounter();
         if (txtBorderWidth != null) txtBorderWidth.updateCursorCounter();
@@ -533,30 +535,30 @@ public class ThemeEditorGui extends GuiScreen {
     private void updateColorPreviews() {
         for (int i = 0; i < colorLabels.length; i++) {
             if (colorFields[i] != null) {
-                previewColors[i] = parseColor(colorFields[i].getText(), 0);
+                previewColors[i] = parseColor(colorFields[i].getText());
             }
         }
     }
     
     /**
-     * 从主题名称生成安全的主题ID
+     * Generate safe theme ID from theme name
      */
     private String generateThemeIdFromName(String themeName) {
         if (themeName == null || themeName.isEmpty()) {
             return "custom_theme";
         }
         
-        // 转换为小写，替换空格为下划线，移除非法字符
+        // Convert to lowercase, replace spaces with underscores, remove illegal characters
         String safeId = themeName.toLowerCase()
             .replaceAll("\\s+", "_")
             .replaceAll("[^a-z0-9_]", "");
         
-        // 如果ID为空或太短，添加前缀
+        // If ID is empty or too short, add prefix
         if (safeId.length() < 2) {
             safeId = "custom_theme";
         }
         
-        // 确保ID以字母开头
+        // Ensure ID starts with a letter
         if (!Character.isLetter(safeId.charAt(0))) {
             safeId = "theme_" + safeId;
         }

@@ -1,8 +1,8 @@
 package com.dhj.ingameime.config;
 
 import com.dhj.ingameime.theme.ThemeEditorGui;
-import com.dhj.ingameime.theme.ThemeManager;
-import com.dhj.ingameime.theme.Theme;
+import com.dhj.ingameime.theme.api.ThemeManager;
+import com.dhj.ingameime.theme.api.Theme;
 import net.minecraft.client.resources.I18n;
 import net.minecraftforge.fml.client.config.GuiConfig;
 import net.minecraftforge.fml.client.config.GuiConfigEntries;

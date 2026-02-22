@@ -102,7 +102,7 @@ public class ThemeNameInputGui extends GuiScreen {
     }
     
     /**
-     * Get the input topic name
+     * Get the input theme name
      */
     public String getThemeName() {
         return themeName;
