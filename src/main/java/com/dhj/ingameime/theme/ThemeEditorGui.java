@@ -392,7 +392,7 @@ public class ThemeEditorGui extends GuiScreen {
 
         // 绘制固定标题
         drawCenteredString(fontRenderer, I18n.format("ingameime.theme.editor.title"), width / 2, 10, 0xFFFFFF);
-        fontRenderer.drawString(I18n.format("ingameime.theme.editor.current") + ": " + selectedThemeId, width / 2 - 100, 35, 0xFFFFFF);
+        fontRenderer.drawString(I18n.format("ingameime.theme.editor.current") + ": " + selectedThemeId, width / 2 + 5, 56, 0xFFFFFF);
         drawRect(20, scrollAreaTop - 2, width - 20, scrollAreaTop - 1, 0xFF555555);
 
         // 开启裁剪 (Scissor)

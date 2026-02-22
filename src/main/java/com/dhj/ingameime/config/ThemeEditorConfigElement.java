@@ -22,7 +22,7 @@ public class ThemeEditorConfigElement implements IConfigElement {
     
     @Override
     public String getName() {
-        return "主题编辑器";
+        return "Theme Editor";
     }
     
     @Override
@@ -37,7 +37,7 @@ public class ThemeEditorConfigElement implements IConfigElement {
     
     @Override
     public String getComment() {
-        return "打开主题编辑器，自定义输入法界面的外观";
+        return "Open Theme Editor to edit theme that you IME";
     }
     
     @Override
