@@ -98,6 +98,7 @@ public class Theme {
     }
     
     public void setPadding(int padding) {
+        padding = Math.max(0, padding);
         this.padding = padding;
     }
     
@@ -106,6 +107,7 @@ public class Theme {
     }
     
     public void setCandidatePadding(int candidatePadding) {
+        candidatePadding = Math.max(0, candidatePadding);
         this.candidatePadding = candidatePadding;
     }
     
@@ -114,6 +116,7 @@ public class Theme {
     }
     
     public void setBorderWidth(int borderWidth) {
+        borderWidth = Math.max(0, borderWidth);
         this.borderWidth = borderWidth;
     }
     
@@ -129,6 +132,7 @@ public class Theme {
      * 获取带透明度的背景颜色
      */
     public int getBackgroundColorWithAlpha(float alpha) {
+        alpha = Math.max(0.0f, Math.min(1.0f, alpha));
         int a = (int)(alpha * 255) << 24;
         return (backgroundColor & 0x00FFFFFF) | a;
     }
@@ -137,6 +141,7 @@ public class Theme {
      * 获取带透明度的边框颜色
      */
     public int getBorderColorWithAlpha(float alpha) {
+        alpha = Math.max(0.0f, Math.min(1.0f, alpha));
         int a = (int)(alpha * 255) << 24;
         return (borderColor & 0x00FFFFFF) | a;
     }

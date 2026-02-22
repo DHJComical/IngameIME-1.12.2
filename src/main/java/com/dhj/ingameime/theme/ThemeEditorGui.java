@@ -3,6 +3,7 @@ package com.dhj.ingameime.theme;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiTextField;
+import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.resources.I18n;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
@@ -48,6 +49,8 @@ public class ThemeEditorGui extends GuiScreen {
     private boolean isScrolling = false;
     private int scrollBarDragStartY = 0; // 拖动开始时的鼠标Y坐标
     private int scrollBarDragStartOffset = 0; // 拖动开始时的滚动偏移
+
+    private final int[] previewColors = new int[6];
     
     public ThemeEditorGui(GuiScreen parent) {
         this.parent = parent;
@@ -187,60 +190,45 @@ public class ThemeEditorGui extends GuiScreen {
         colorFields[3].setText(String.format("%08X", theme.getSelectedBackgroundColor()));
         colorFields[4].setText(String.format("%08X", theme.getCursorColor()));
         colorFields[5].setText(String.format("%08X", theme.getBorderColor()));
+        updateColorPreviews();
         
         // 设置padding等字段
         txtPadding.setText(String.valueOf(theme.getPadding()));
         txtCandidatePadding.setText(String.valueOf(theme.getCandidatePadding()));
         txtBorderWidth.setText(String.valueOf(theme.getBorderWidth()));
     }
-    
+
     private void saveCurrentTheme() {
         try {
             String name = txtThemeName.getText();
             if (name.isEmpty()) {
                 name = selectedThemeId;
             }
-            
-            // 解析颜色值
-            int textColor = parseColor(colorFields[0].getText(), 0xFF000000);
-            int backgroundColor = parseColor(colorFields[1].getText(), 0xEBEBEBEB);
-            int indexColor = parseColor(colorFields[2].getText(), 0xFF555555);
-            int selectedBgColor = parseColor(colorFields[3].getText(), 0xEBEBEBEB);
-            int cursorColor = parseColor(colorFields[4].getText(), 0xFF000000);
-            int borderColor = parseColor(colorFields[5].getText(), 0x80000000);
-            
-            // 解析padding等字段
-            int padding = parseInt(txtPadding.getText(), 3);
-            int candidatePadding = parseInt(txtCandidatePadding.getText(), 5);
-            int borderWidth = parseInt(txtBorderWidth.getText(), 1);
-            
-            // 创建或更新主题
-            Theme theme = new Theme(
-                selectedThemeId,
-                name,
-                textColor,
-                backgroundColor,
-                indexColor,
-                selectedBgColor,
-                cursorColor,
-                padding,
-                candidatePadding,
-                borderWidth,
-                borderColor
-            );
-            
-            // 保存主题
+
+            // Empty object
+            Theme theme = new Theme();
+            theme.setId(selectedThemeId);
+            theme.setName(name);
+
+            // Set color
+            theme.setTextColor(parseColor(colorFields[0].getText(), 0xFF000000));
+            theme.setBackgroundColor(parseColor(colorFields[1].getText(), 0xEBEBEBEB));
+            theme.setIndexColor(parseColor(colorFields[2].getText(), 0xFF555555));
+            theme.setSelectedBackgroundColor(parseColor(colorFields[3].getText(), 0xEBEBEBEB));
+            theme.setCursorColor(parseColor(colorFields[4].getText(), 0xFF000000));
+            theme.setBorderColor(parseColor(colorFields[5].getText(), 0x80000000));
+
+            // Set layout
+            theme.setPadding(parseInt(txtPadding.getText(), 3));
+            theme.setCandidatePadding(parseInt(txtCandidatePadding.getText(), 5));
+            theme.setBorderWidth(parseInt(txtBorderWidth.getText(), 1));
+
+            // Save
             themeManager.saveCustomTheme(theme);
-            
-            // 应用主题并通知监听器
             themeManager.setThemeAndNotify(selectedThemeId);
-            
-            // 重新加载主题列表
             loadThemeList();
-            
-        } catch (NumberFormatException e) {
-            // 颜色格式错误，忽略
-        }
+
+        } catch (NumberFormatException ignored) {}
     }
     
     private int parseInt(String text, int defaultValue) {
@@ -385,6 +373,8 @@ public class ThemeEditorGui extends GuiScreen {
         if (txtPadding != null) txtPadding.textboxKeyTyped(typedChar, keyCode);
         if (txtCandidatePadding != null) txtCandidatePadding.textboxKeyTyped(typedChar, keyCode);
         if (txtBorderWidth != null) txtBorderWidth.textboxKeyTyped(typedChar, keyCode);
+
+        updateColorPreviews();
     }
 
     @Override
@@ -406,7 +396,7 @@ public class ThemeEditorGui extends GuiScreen {
 
         // 开启裁剪 (Scissor)
         GL11.glEnable(GL11.GL_SCISSOR_TEST);
-        int scaleFactor = new net.minecraft.client.gui.ScaledResolution(mc).getScaleFactor();
+        int scaleFactor = new ScaledResolution(mc).getScaleFactor();
         GL11.glScissor(
                 0,
                 (height - scrollAreaBottom) * scaleFactor,
@@ -431,24 +421,14 @@ public class ThemeEditorGui extends GuiScreen {
         int previewSize = 20;
 
         for (int i = 0; i < colorLabels.length; i++) {
-            // 绘制标签
             fontRenderer.drawString(colorLabels[i], x, currentY + 5, 0xFFFFFF);
-
             if (colorFields[i] != null) {
                 colorFields[i].y = currentY;
                 colorFields[i].drawTextBox();
             }
+            drawRect(previewX - 1, currentY - 1, previewX + previewSize + 1, currentY + previewSize + 1, 0xFF000000);
+            drawRect(previewX, currentY, previewX + previewSize, currentY + previewSize, previewColors[i]);
 
-            try {
-                int color = 0;
-                if (colorFields[i] != null) {
-                    color = parseColor(colorFields[i].getText(), 0x00000000);
-                }
-                drawRect(previewX - 1, currentY - 1, previewX + previewSize + 1, currentY + previewSize + 1, 0xFF000000);
-                drawRect(previewX, currentY, previewX + previewSize, currentY + previewSize, color);
-            } catch (Exception ignored) {}
-
-            // 下一行
             currentY += 25;
         }
 
@@ -527,6 +507,14 @@ public class ThemeEditorGui extends GuiScreen {
         if (txtPadding != null) txtPadding.updateCursorCounter();
         if (txtCandidatePadding != null) txtCandidatePadding.updateCursorCounter();
         if (txtBorderWidth != null) txtBorderWidth.updateCursorCounter();
+    }
+
+    private void updateColorPreviews() {
+        for (int i = 0; i < colorLabels.length; i++) {
+            if (colorFields[i] != null) {
+                previewColors[i] = parseColor(colorFields[i].getText(), 0x00000000);
+            }
+        }
     }
     
     /**

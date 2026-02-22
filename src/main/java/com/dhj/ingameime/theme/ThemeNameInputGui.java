@@ -5,17 +5,16 @@ import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.resources.I18n;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 
 /**
  * 主题名称输入GUI
  */
 public class ThemeNameInputGui extends GuiScreen {
-    private GuiScreen parent;
+    private final GuiScreen parent;
     private GuiTextField txtThemeName;
-    private GuiButton btnConfirm;
-    private GuiButton btnCancel;
-    
+
     private String themeName = "";
     private boolean confirmed = false;
     
@@ -28,11 +27,11 @@ public class ThemeNameInputGui extends GuiScreen {
         super.initGui();
         
         // 添加确认按钮
-        btnConfirm = new GuiButton(0, width / 2 - 155, height / 2 + 30, 150, 20, I18n.format("gui.done"));
+        GuiButton btnConfirm = new GuiButton(0, width / 2 - 155, height / 2 + 30, 150, 20, I18n.format("gui.done"));
         buttonList.add(btnConfirm);
         
         // 添加取消按钮
-        btnCancel = new GuiButton(1, width / 2 + 5, height / 2 + 30, 150, 20, I18n.format("gui.cancel"));
+        GuiButton btnCancel = new GuiButton(1, width / 2 + 5, height / 2 + 30, 150, 20, I18n.format("gui.cancel"));
         buttonList.add(btnCancel);
         
         // 主题名称输入框
@@ -42,7 +41,7 @@ public class ThemeNameInputGui extends GuiScreen {
     }
     
     @Override
-    protected void actionPerformed(GuiButton button) throws IOException {
+    protected void actionPerformed(@Nonnull GuiButton button) throws IOException {
         super.actionPerformed(button);
         
         if (button.id == 0) {

@@ -300,11 +300,8 @@ public class ThemeManager {
      * 设置主题并通知监听器
      */
     public void setThemeAndNotify(String themeId) {
-        Theme oldTheme = currentTheme;
         setTheme(themeId);
-        if (currentTheme != oldTheme) {
-            notifyThemeChanged();
-        }
+        notifyThemeChanged();
     }
     
 }
