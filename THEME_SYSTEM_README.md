@@ -1,189 +1,300 @@
-# IngameIME 主题系统
+# IngameIME Theme System
 
-## 概述
+## Overview
 
-IngameIME 现在支持完整的主题系统，允许用户自定义输入法界面的外观。主题系统支持：
+The IngameIME Theme System is a flexible and extensible UI customization framework that allows users to fully customize the appearance of the input method interface. The system supports real-time preview, dynamic switching, and easily shareable theme configuration files.
 
-1. **多种预定义主题**：默认、深色、浅色
-2. **自定义主题**：用户可以创建自己的主题
-3. **实时预览**：在主题编辑器中实时预览颜色变化
-4. **配置文件支持**：主题保存为JSON文件，易于编辑和分享
-5. **动态切换**：无需重启游戏即可切换主题
+## Theme Properties Explained
 
-## 主题属性
+Each theme contains the following configurable UI properties:
 
-每个主题包含以下可配置属性：
+| Property | Description | Default Value | Format Notes |
+|----------|-------------|---------------|--------------|
+| `id` | Unique theme identifier | `"default"` | Lowercase letters, numbers, underscores |
+| `name` | Theme display name | `"Default Theme"` | Any string |
+| `textColor` | Text color | `0xFF000000` | 32-bit hexadecimal ARGB format |
+| `backgroundColor` | Background color | `0xEBEBEBEB` | 32-bit hexadecimal ARGB format |
+| `indexColor` | Candidate index color | `0xFF555555` | 32-bit hexadecimal ARGB format |
+| `selectedBackgroundColor` | Selected item background color | `0xEBEBEBEB` | 32-bit hexadecimal ARGB format |
+| `cursorColor` | Cursor color | `0xFF000000` | 32-bit hexadecimal ARGB format |
+| `borderColor` | Border color | `0x80000000` | 32-bit hexadecimal ARGB format |
+| `padding` | Padding | `3` | Pixel value, minimum 0 |
+| `candidatePadding` | Candidate box padding | `3` | Pixel value, minimum 0 |
+| `borderWidth` | Border width | `1` | Pixel value, minimum 0 |
 
-| 属性 | 描述 | 默认值 |
-|------|------|--------|
-| `textColor` | 文字颜色 | `0xFF000000` (黑色) |
-| `backgroundColor` | 背景颜色 | `0xEBEBEBEB` (浅灰色半透明) |
-| `indexColor` | 候选词索引颜色 | `0xFF555555` (深灰色) |
-| `selectedBackgroundColor` | 选中项背景颜色 | `0xEBEBEBEB` (浅灰色半透明) |
-| `cursorColor` | 光标颜色 | `0xFF000000` (黑色) |
-| `padding` | 内边距 | `3` 像素 |
-| `candidatePadding` | 候选框内边距 | `5` 像素 |
-| `borderWidth` | 边框宽度 | `1` 像素 |
-| `borderColor` | 边框颜色 | `0x80000000` (黑色半透明) |
+### Color Format Explanation
 
-## 使用方法
+Color values use 32-bit ARGB format:
+- **A (Alpha)**: First 2 hexadecimal digits, representing transparency (00=fully transparent, FF=fully opaque)
+- **R (Red)**: 3rd-4th hexadecimal digits, red component
+- **G (Green)**: 5th-6th hexadecimal digits, green component
+- **B (Blue)**: 7th-8th hexadecimal digits, blue component
 
-### 1. 通过配置界面使用
+Examples:
+- `0xFF000000`: Fully opaque black
+- `0x80000000`: 50% transparent black
+- `0xEBEBEBEB`: Approximately 92% transparent light gray
+- `0xFFFFFFFF`: Fully opaque white
 
-1. 在游戏中打开 Mod 配置界面
-2. 点击 "主题编辑器" 按钮
-3. 在主题编辑器中：
-   - 选择现有主题
-   - 修改颜色值（支持8位十六进制，如 `FF000000`）
-   - 点击 "应用主题" 保存更改
-   - 点击 "创建新主题" 创建自定义主题
-   - 点击 "删除主题" 删除自定义主题（不能删除默认主题）
+## Usage Guide
 
-### 2. 通过配置文件使用
+### 1. Using the In-game Configuration Interface
 
-主题文件保存在 `config/ingameime/themes/` 目录中，格式为 JSON：
+1. Press `ESC` in-game to open the menu
+2. Select `Mod Options` → `IngameIME` → `Config`
+3. Click the `Theme Editor` button in the configuration interface
+4. In the theme editor:
+   - **Select Theme**: Choose existing theme from dropdown list
+   - **Modify Colors**: Click color buttons to select new colors
+   - **Adjust Values**: Modify padding, border width, etc.
+   - **Real-time Preview**: Right-side preview area shows instant effects
+   - **Apply Theme**: Click `Apply Theme` to save and apply changes
+   - **Create New Theme**: Click `Create New Theme` to input name and create custom theme
+   - **Delete Theme**: Click `Delete Theme` to remove current custom theme (cannot delete default themes)
+
+### 2. Using Configuration Files
+
+Theme files are saved in the `config/ingameime/themes/` directory in JSON format:
 
 ```json
 {
-  "id": "my_theme",
-  "name": "我的主题",
-  "textColor": -16777216,
-  "backgroundColor": -337222421,
-  "indexColor": -11184811,
-  "selectedBackgroundColor": -337222421,
-  "cursorColor": -16777216,
+  "id": "my_custom_theme",
+  "name": "My Custom Theme",
+  "textColor": "0xFF000000",
+  "backgroundColor": "0xEBEBEBEB",
+  "indexColor": "0xFF555555",
+  "selectedBackgroundColor": "0xEBEBEBEB",
+  "cursorColor": "0xFF000000",
+  "borderColor": "0x80000000",
   "padding": 3,
-  "candidatePadding": 5,
-  "borderWidth": 1,
-  "borderColor": -2147483648
+  "candidatePadding": 3,
+  "borderWidth": 1
 }
 ```
 
-**注意**：颜色值使用十进制整数表示（Java int），可以通过在线工具将十六进制转换为十进制。
+**Important Notes**:
+- Color values support multiple formats: `0xFF000000`, `#FF000000`, `FF000000`
+- Theme IDs must be unique and cannot conflict with built-in themes (default, dark, light)
+- After modifying configuration files, reload themes in-game to take effect
 
-### 3. 修改配置文件
+### 3. Theme Management Files
 
-在 `config/ingameime.cfg` 中，可以设置默认主题：
+The system automatically maintains the following files:
+- `config/ingameime/themes/last_theme.txt`: Records the last used theme ID
+- `config/ingameime/themes/*.json`: Configuration files for each theme
 
-```properties
-# 主题配置
-theme {
-    # 当前使用的主题。可以设置为 'default', 'dark', 'light' 或自定义主题文件名（不带.json后缀）
-    S:currentTheme=default
-}
-```
+## Predefined Themes
 
-## 预定义主题
+### 1. Default Theme (default)
+- **Text Color**: Black (`0xFF000000`)
+- **Background Color**: Light gray semi-transparent (`0xEBEBEBEB`)
+- **Use Case**: Universal design, suitable for most game interfaces
+- **Characteristics**: Good readability with moderate transparency
 
-### 1. 默认主题 (default)
-- 文字颜色：黑色
-- 背景：浅灰色半透明
-- 适合大多数游戏场景
+### 2. Dark Theme (dark)
+- **Text Color**: White (`0xFFFFFFFF`)
+- **Background Color**: Dark gray semi-transparent (`0x80333333`)
+- **Use Case**: Dark game interfaces, nighttime use
+- **Characteristics**: Low brightness, reduces visual distraction
 
-### 2. 深色主题 (dark)
-- 文字颜色：白色
-- 背景：深灰色半透明
-- 适合暗色界面
+### 3. Light Theme (light)
+- **Text Color**: Black (`0xFF000000`)
+- **Background Color**: White semi-transparent (`0xF0FFFFFF`)
+- **Use Case**: Light game interfaces, daytime use
+- **Characteristics**: High contrast, clear and readable
 
-### 3. 浅色主题 (light)
-- 文字颜色：黑色
-- 背景：白色半透明
-- 适合亮色界面
+## Developer API
 
-## 开发者API
-
-### 获取当前主题
+### Get Theme Manager Instance
 
 ```java
 ThemeManager themeManager = ThemeManager.getInstance();
+```
+
+### Get and Switch Themes
+
+```java
+// Get current theme
 Theme currentTheme = themeManager.getCurrentTheme();
+
+// Get specific theme by ID
+Theme darkTheme = themeManager.getTheme("dark");
+
+// Switch theme (takes effect immediately)
+themeManager.setTheme("light");
+
+// Switch theme and notify all listeners
+themeManager.setThemeAndNotify("custom_theme");
 ```
 
-### 切换主题
+### Theme Management Operations
 
 ```java
-themeManager.setTheme("dark"); // 切换到深色主题
-```
+// Get all available themes
+Map<String, Theme> allThemes = themeManager.getAvailableThemes();
 
-### 创建自定义主题
-
-```java
-Theme customTheme = new Theme(
-    "custom_id",
-    "自定义主题",
-    0xFF000000,  // 文字颜色
-    0xEBEBEBEB,  // 背景颜色
-    0xFF555555,  // 索引颜色
-    0xEBEBEBEB,  // 选中项背景
-    0xFF000000,  // 光标颜色
-    3,           // 内边距
-    5,           // 候选框内边距
-    1,           // 边框宽度
-    0x80000000   // 边框颜色
-);
-
+// Create and save custom theme
+Theme customTheme = Theme.createCustomTheme("my_theme", "My Theme");
+customTheme.setTextColor(0xFF3366CC);  // Modify color
+customTheme.setPadding(5);             // Modify padding
 themeManager.saveCustomTheme(customTheme);
+
+// Delete custom theme
+themeManager.deleteCustomTheme("my_theme");
+
+// Reload all themes (e.g., after modifying config files)
+themeManager.reloadThemes();
 ```
 
-## 技术实现
+### Theme Change Listener
 
-### 架构设计
-
-1. **ThemeManager**：单例模式，管理所有主题的加载、保存和应用
-2. **Theme**：数据类，包含所有可配置的UI属性
-3. **ThemeEditorGui**：主题编辑器界面
-4. **Widget集成**：所有UI组件都继承自Theme-aware的Widget基类
-
-### 文件结构
-
-```
-src/main/java/com/dhj/ingameime/theme/
-├── Theme.java              # 主题数据类
-├── ThemeManager.java       # 主题管理器
-└── ThemeEditorGui.java     # 主题编辑器GUI
-
-config/ingameime/themes/
-├── default.json           # 默认主题
-├── dark.json             # 深色主题
-└── light.json            # 浅色主题
-```
-
-### 扩展性
-
-主题系统设计为可扩展的，未来可以轻松添加：
-- 更多主题属性（字体、阴影、圆角等）
-- 主题导入/导出功能
-- 主题分享社区
-- 动态主题（根据时间/环境自动切换）
-
-## 故障排除
-
-### 常见问题
-
-1. **主题不生效**：检查主题文件格式是否正确，颜色值是否为有效的32位整数
-2. **编译错误**：确保已添加Gson依赖（已在dependencies.gradle中添加）
-3. **GUI显示异常**：检查颜色值的透明度通道（前两位十六进制）
-
-### 调试
-
-启用调试日志查看主题加载过程：
-
-```properties
-# 在config/ingameime.cfg中
-debug {
-    B:DebugLog=true
+```java
+public class MyUIComponent implements ThemeManager.ThemeChangeListener {
+    
+    public MyUIComponent() {
+        // Register theme change listener
+        ThemeManager.getInstance().addThemeChangeListener(this);
+    }
+    
+    @Override
+    public void onThemeChanged(Theme newTheme) {
+        // Automatically called when theme changes
+        updateColors(newTheme);
+        refreshDisplay();
+    }
+    
+    public void cleanup() {
+        // Remove listener
+        ThemeManager.getInstance().removeThemeChangeListener(this);
+    }
 }
 ```
 
-## 贡献指南
+### Using Themes in UI Components
 
-欢迎贡献新的主题！请遵循以下步骤：
+```java
+public class MyWidget extends Widget {
+    
+    public MyWidget() {
+        // Widget base class automatically registers theme listener
+        // Get theme colors using the following methods
+        Theme theme = ThemeManager.getInstance().getCurrentTheme();
+        int textColor = theme.getTextColor();
+        int bgColor = theme.getBackgroundColor();
+        int padding = theme.getPadding();
+    }
+    
+    @Override
+    public void draw() {
+        // Draw using theme colors
+        Theme theme = ThemeManager.getInstance().getCurrentTheme();
+        drawRect(x, y, x + width, y + height, theme.getBackgroundColor());
+        drawString(text, x + theme.getPadding(), y + theme.getPadding(), theme.getTextColor());
+    }
+}
+```
 
-1. 在 `config/ingameime/themes/` 目录中创建新的JSON主题文件
-2. 确保包含所有必需的属性
-3. 测试主题在不同场景下的显示效果
-4. 提交Pull Request
+### File Structure
 
-## 许可证
+```
+src/main/java/com/dhj/ingameime/theme/
+├── Theme.java              # Theme data class
+├── ThemeManager.java       # Theme manager (singleton)
+├── ColorTypeAdapter.java   # Gson color type adapter
+├── ThemeEditorGui.java     # Theme editor GUI
+└── ThemeNameInputGui.java  # Theme name input GUI
 
-主题系统遵循与IngameIME相同的LGPL-2.1许可证。
+src/main/java/com/dhj/ingameime/gui/
+├── Widget.java             # UI component base class (theme-aware)
+├── WidgetCandidateList.java # Candidate list component
+└── WidgetPreEdit.java      # Pre-edit text component
+
+src/main/java/com/dhj/ingameime/config/
+├── ThemeEditorConfigElement.java # Theme editor entry in config interface
+└── ThemeEditorEntry.java         # Theme editor configuration item
+
+config/ingameime/themes/
+├── default.json           # Default theme (auto-generated)
+├── dark.json             # Dark theme (auto-generated)
+├── light.json            # Light theme (auto-generated)
+├── last_theme.txt        # Last used theme ID
+└── *.json               # User custom themes
+```
+
+## Extensibility Design
+
+### Adding New Theme Properties
+
+1. Add new field and getter/setter in `Theme.java`
+2. Add corresponding editing controls in `ThemeEditorGui.java`
+3. Use new property in UI components
+
+### Custom Theme Serialization
+
+Modify `ColorTypeAdapter.java` to support more color formats, or create custom adapters for other properties.
+
+### Theme Import/Export
+
+Extend `ThemeManager` to add theme import/export functionality for theme sharing.
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Theme Not Applying**
+   - Check if theme file format is correct (valid JSON)
+   - Confirm color value format is correct (supports `0x...`, `#...`, plain hexadecimal)
+   - Check game logs for loading errors
+
+2. **Color Display Abnormalities**
+   - Check alpha channel (first 2 hexadecimal digits)
+   - Ensure color values are within valid range (0x00000000 - 0xFFFFFFFF)
+   - Verify color values are 32-bit integers
+
+
+### Debug Information
+
+Enable debug logging to view theme system operation status:
+
+```java
+// Enable debugging in code
+IngameIME_Forge.logDebugInfo("Theme loading: " + themeId);
+
+// Or enable via configuration file
+// Set DebugLog = true in config/ingameime.cfg
+```
+
+## Contribution Guidelines
+
+Welcome contributions to the theme system code or theme designs!
+
+### Submitting New Themes
+
+1. Create JSON file in `config/ingameime/themes/` directory
+2. Ensure all required properties are included
+3. Provide meaningful theme name and ID
+4. Test display effects in different game scenarios
+5. Submit Pull Request or share theme file
+
+### Code Contributions
+
+1. Follow existing code style and architecture
+2. Add appropriate comments and documentation
+3. Include unit tests (if applicable)
+4. Ensure backward compatibility
+
+### Theme Sharing
+
+Custom themes can be shared through:
+- Direct JSON file sharing
+- Publishing to Mod communities
+- Integration into theme packs
+
+## License
+
+The theme system follows the same LGPL-2.1 license as IngameIME. Custom theme files are not restricted by the license and can be freely shared and used.
+
+---
+
+*Last Updated: February 22, 2026*
+*IngameIME-1.12.2 Theme System v1.0*
