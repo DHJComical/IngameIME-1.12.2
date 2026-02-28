@@ -45,3 +45,12 @@ ingameime.config.theme.current_theme_button=当前主题: %s (点击编辑)
 ingameime.theme.selection.title=选择主题
 ingameime.theme.selection.confirm=选择
 ingameime.theme.selection.confirm_hint=双击以选择
+
+# 颜色选择器
+ingameime.colorpicker.title=颜色选择器
+ingameime.colorpicker.confirm=确认
+ingameime.colorpicker.hue=色相
+ingameime.colorpicker.alpha=透明度
+ingameime.colorpicker.hex=十六进制
+ingameime.colorpicker.original=原始颜色
+ingameime.colorpicker.current=当前颜色

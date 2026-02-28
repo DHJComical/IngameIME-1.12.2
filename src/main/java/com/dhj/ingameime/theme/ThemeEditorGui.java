@@ -28,20 +28,20 @@ public class ThemeEditorGui extends GuiScreen {
     private final GuiTextField[] colorFields = new GuiTextField[10];
     private final String[] colorLabels = {
         I18n.format("ingameime.theme.editor.text_color"),
-        I18n.format("ingameime.theme.editor.background_color"), 
+        I18n.format("ingameime.theme.editor.background_color"),
         I18n.format("ingameime.theme.editor.index_color"),
         I18n.format("ingameime.theme.editor.selected_bg"),
         I18n.format("ingameime.theme.editor.cursor_color"),
         I18n.format("ingameime.theme.editor.border_color")
     };
-    
+
     private GuiTextField txtPadding;
     private GuiTextField txtCandidatePadding;
     private GuiTextField txtBorderWidth;
-    
+
     private final java.util.List<String> themeIds = new java.util.ArrayList<>();
     private final ThemeNameInputGui nameInputGui;
-    
+
     // Scroll related items
     private int scrollOffset = 0;
     private int maxScrollOffset = 0;
@@ -50,7 +50,11 @@ public class ThemeEditorGui extends GuiScreen {
     private boolean isScrolling = false;
 
     private final int[] previewColors = new int[6];
-    
+
+    // Color preview click areas
+    private final int[] previewX = new int[6];
+    private final int[] previewY = new int[6];
+
     public ThemeEditorGui(GuiScreen parent) {
         this.parent = parent;
         this.themeManager = ThemeManager.getInstance();
@@ -61,11 +65,11 @@ public class ThemeEditorGui extends GuiScreen {
             this.selectedThemeId = current.getId();
         }
     }
-    
+
     @Override
     public void initGui() {
         super.initGui();
-        
+
         // Check if entering the theme name in the GUI returns and confirm.
         if (nameInputGui.isConfirmed()) {
             String themeName = nameInputGui.getThemeName();
@@ -77,39 +81,39 @@ public class ThemeEditorGui extends GuiScreen {
                 selectedThemeId = newThemeId;
             }
         }
-        
+
         // Load the list of available themes
         loadThemeList();
-        
+
         // Add back button
         GuiButton btnBack = new GuiButton(0, width / 2 - 155, height - 29, 150, 20, I18n.format("gui.back"));
         buttonList.add(btnBack);
-        
+
         // Add app button
         GuiButton btnApply = new GuiButton(1, width / 2 + 5, height - 29, 150, 20, I18n.format("ingameime.theme.editor.apply"));
         buttonList.add(btnApply);
-        
+
         // Add a "Create New Theme" button
         GuiButton btnCreateNew = new GuiButton(2, width / 2 - 155, 25, 150, 20, I18n.format("ingameime.theme.editor.create"));
         buttonList.add(btnCreateNew);
-        
+
         // Add a "Remove Theme" Buttons
         GuiButton btnDelete = new GuiButton(3, width / 2 + 5, 25, 150, 20, I18n.format("ingameime.theme.editor.delete"));
         buttonList.add(btnDelete);
-        
+
         // Add a "Theme Selection" button
         GuiButton btnSelectTheme = new GuiButton(4, width / 2 - 155, 50, 150, 20, I18n.format("ingameime.theme.editor.select"));
         buttonList.add(btnSelectTheme);
-        
+
         // Theme ID Input Box
         txtThemeId = new GuiTextField(5, fontRenderer, width / 2 - 100, 75, 200, 20);
         txtThemeId.setMaxStringLength(50);
         txtThemeId.setEnabled(false); // Theme ID is not editable
-        
+
         // Theme name input box
         txtThemeName = new GuiTextField(6, fontRenderer, width / 2 - 100, 100, 200, 20);
         txtThemeName.setMaxStringLength(50);
-        
+
         // Create a color input field
         int fieldWidth = 100;
         int fieldHeight = 20;
@@ -117,51 +121,51 @@ public class ThemeEditorGui extends GuiScreen {
         int x = width / 2 - 160;
         int colorFieldsStartY = 100;
         int y = colorFieldsStartY + 40;
-        
+
         for (int i = 0; i < colorLabels.length; i++) {
             // Color input box
             colorFields[i] = new GuiTextField(20 + i, fontRenderer, x + labelWidth, y, fieldWidth, fieldHeight);
             colorFields[i].setMaxStringLength(8); // 8-digit hexadecimal
-            
+
             y += 25;
         }
-        
+
         // Add a padding input field
         y += 10;
         txtPadding = new GuiTextField(30, fontRenderer, x + labelWidth, y, fieldWidth, fieldHeight);
         txtPadding.setMaxStringLength(2);
-        
+
         y += 25;
         txtCandidatePadding = new GuiTextField(31, fontRenderer, x + labelWidth, y, fieldWidth, fieldHeight);
         txtCandidatePadding.setMaxStringLength(2);
-        
+
         y += 25;
         txtBorderWidth = new GuiTextField(32, fontRenderer, x + labelWidth, y, fieldWidth, fieldHeight);
         txtBorderWidth.setMaxStringLength(2);
-        
+
         loadCurrentTheme();
     }
-    
+
     private void loadThemeList() {
         themeIds.clear();
         Map<String, Theme> availableThemes = themeManager.getAvailableThemes();
         themeIds.addAll(availableThemes.keySet());
-        
+
         // Find the index of the current theme
         int themeSelectionIndex = themeIds.indexOf(selectedThemeId);
         if (themeSelectionIndex == -1 && !themeIds.isEmpty()) {
             selectedThemeId = themeIds.get(0);
         }
     }
-    
+
     private void loadCurrentTheme() {
         Theme theme = null;
-        
+
         // First, try loading the selected theme ID.
         if (selectedThemeId != null && !selectedThemeId.isEmpty()) {
             theme = themeManager.getTheme(selectedThemeId);
         }
-        
+
         // If no theme is selected, load the theme currently being applied.
         if (theme == null) {
             theme = themeManager.getCurrentTheme();
@@ -169,19 +173,19 @@ public class ThemeEditorGui extends GuiScreen {
                 selectedThemeId = theme.getId();
             }
         }
-        
+
         if (theme != null) {
             loadThemeToEditor(theme);
         }
     }
-    
+
     private void loadThemeToEditor(Theme theme) {
         if (theme == null) return;
-        
+
         selectedThemeId = theme.getId();
         txtThemeId.setText(theme.getId());
         txtThemeName.setText(theme.getName());
-        
+
         // Set color value (hexadecimal)
         colorFields[0].setText(String.format("%08X", theme.getTextColor()));
         colorFields[1].setText(String.format("%08X", theme.getBackgroundColor()));
@@ -189,7 +193,7 @@ public class ThemeEditorGui extends GuiScreen {
         colorFields[3].setText(String.format("%08X", theme.getSelectedBackgroundColor()));
         colorFields[4].setText(String.format("%08X", theme.getCursorColor()));
         colorFields[5].setText(String.format("%08X", theme.getBorderColor()));
-        
+
         // Set fields such as padding
         txtPadding.setText(String.valueOf(theme.getPadding()));
         txtCandidatePadding.setText(String.valueOf(theme.getCandidatePadding()));
@@ -222,13 +226,13 @@ public class ThemeEditorGui extends GuiScreen {
             themeManager.setThemeAndNotify(selectedThemeId);
 
             loadThemeList();
-            
+
             IngameIME_Forge.logDebugInfo("[ThemeEditor] Theme saved and applied: {} ({})", selectedThemeId, theme.getName());
         } catch (Exception e) {
             IngameIME_Forge.logDebugInfo("[ThemeEditor] Save failed: {}", e.getMessage());
         }
     }
-    
+
     private int parseInt(String text, int defaultValue) {
         if (text == null || text.isEmpty()) {
             return defaultValue;
@@ -239,7 +243,7 @@ public class ThemeEditorGui extends GuiScreen {
             return defaultValue;
         }
     }
-    
+
     private int parseColor(String hex) {
         if (hex == null || hex.isEmpty()) {
             return 0;
@@ -272,9 +276,9 @@ public class ThemeEditorGui extends GuiScreen {
     @Override
     protected void actionPerformed(@Nonnull GuiButton button) throws IOException {
         super.actionPerformed(button);
-        
+
         if (button.id == 0) {
-            // Return
+            themeManager.reloadThemes();
             mc.displayGuiScreen(parent);
         } else if (button.id == 1) {
             // Apply theme
@@ -321,14 +325,50 @@ public class ThemeEditorGui extends GuiScreen {
         // --- Text field click detection ---
         // Only takes effect when clicking in scroll area (between Header and Footer)
         if (mouseY > scrollAreaTop && mouseY < scrollAreaBottom) {
-            txtThemeId.mouseClicked(mouseX, mouseY, mouseButton);
-            txtThemeName.mouseClicked(mouseX, mouseY, mouseButton);
-            for (GuiTextField field : colorFields) {
-                if (field != null) field.mouseClicked(mouseX, mouseY, mouseButton);
+            // Check if clicking on color preview
+            boolean clickedPreview = false;
+            for (int i = 0; i < colorLabels.length; i++) {
+                if (previewX[i] > 0 && previewY[i] > 0) {
+                    int px = previewX[i] - 1;
+                    int py = previewY[i] - 1;
+                    int previewSize = 20;
+                    if (mouseX >= px && mouseX <= px + previewSize + 2 &&
+                        mouseY >= py && mouseY <= py + previewSize + 2) {
+                        // Open color picker
+                        int currentColor = parseColor(colorFields[i].getText());
+                        final int colorIndex = i;
+                        mc.displayGuiScreen(new ColorPickerGui(this, currentColor, newColor -> {
+                            // 1. 获取当前正在编辑的主题对象引用
+                            Theme theme = themeManager.getTheme(selectedThemeId);
+                            if (theme != null) {
+                                // 2. 将新颜色同步到主题对象中
+                                // 这样当 initGui -> loadCurrentTheme 运行重绘时，读取的就是新颜色
+                                if (colorIndex == 0) theme.setTextColor(newColor);
+                                else if (colorIndex == 1) theme.setBackgroundColor(newColor);
+                                else if (colorIndex == 2) theme.setIndexColor(newColor);
+                                else if (colorIndex == 3) theme.setSelectedBackgroundColor(newColor);
+                                else if (colorIndex == 4) theme.setCursorColor(newColor);
+                                else if (colorIndex == 5) theme.setBorderColor(newColor);
+                            }
+                            // 注意：此处不需要手动更新 colorFields[].setText，
+                            // 因为 loadCurrentTheme() 会自动根据 theme 对象刷新 UI。
+                        }));
+                        clickedPreview = true;
+                        break;
+                    }
+                }
             }
-            if (txtPadding != null) txtPadding.mouseClicked(mouseX, mouseY, mouseButton);
-            if (txtCandidatePadding != null) txtCandidatePadding.mouseClicked(mouseX, mouseY, mouseButton);
-            if (txtBorderWidth != null) txtBorderWidth.mouseClicked(mouseX, mouseY, mouseButton);
+
+            if (!clickedPreview) {
+                txtThemeId.mouseClicked(mouseX, mouseY, mouseButton);
+                txtThemeName.mouseClicked(mouseX, mouseY, mouseButton);
+                for (GuiTextField field : colorFields) {
+                    if (field != null) field.mouseClicked(mouseX, mouseY, mouseButton);
+                }
+                if (txtPadding != null) txtPadding.mouseClicked(mouseX, mouseY, mouseButton);
+                if (txtCandidatePadding != null) txtCandidatePadding.mouseClicked(mouseX, mouseY, mouseButton);
+                if (txtBorderWidth != null) txtBorderWidth.mouseClicked(mouseX, mouseY, mouseButton);
+            }
         }
 
         super.mouseClicked(mouseX, mouseY, mouseButton);
@@ -368,18 +408,18 @@ public class ThemeEditorGui extends GuiScreen {
         // Limit range
         this.scrollOffset = Math.max(0, Math.min(this.scrollOffset, maxScrollOffset));
     }
-    
+
     @Override
     protected void keyTyped(char typedChar, int keyCode) throws IOException {
         super.keyTyped(typedChar, keyCode);
-        
+
         txtThemeName.textboxKeyTyped(typedChar, keyCode);
         for (GuiTextField field : colorFields) {
             if (field != null) {
                 field.textboxKeyTyped(typedChar, keyCode);
             }
         }
-        
+
         // Handle keyboard input for padding-related text fields
         if (txtPadding != null) txtPadding.textboxKeyTyped(typedChar, keyCode);
         if (txtCandidatePadding != null) txtCandidatePadding.textboxKeyTyped(typedChar, keyCode);
@@ -432,9 +472,14 @@ public class ThemeEditorGui extends GuiScreen {
                 colorFields[i].y = currentY;
                 colorFields[i].drawTextBox();
             }
+            // Save preview position for click detection
+            this.previewX[i] = previewX;
+            this.previewY[i] = currentY;
             // Draw Preview Rects
             drawRect(previewX - 1, currentY - 1, previewX + previewSize + 1, currentY + previewSize + 1, 0xFF000000);
             drawRect(previewX, currentY, previewX + previewSize, currentY + previewSize, previewColors[i]);
+            // Draw click hint
+            fontRenderer.drawString("🖱", previewX + previewSize + 3, currentY + 5, 0xAAAAAA);
             currentY += 25;
         }
 
@@ -504,18 +549,18 @@ public class ThemeEditorGui extends GuiScreen {
         // Thumb of the scrollbar (Light grey)
         drawRect(scrollBarX, thumbY, scrollBarX + 6, thumbY + thumbHeight, 0xFF808080);
     }
-    
+
     @Override
     public void handleMouseInput() throws IOException {
         super.handleMouseInput();
-        
+
         int scroll = Mouse.getEventDWheel();
         if (scroll != 0) {
             scroll = scroll > 0 ? -20 : 20; // Reverse direction, scroll 20 pixels per tick
             scrollOffset = Math.max(0, Math.min(scrollOffset + scroll, maxScrollOffset));
         }
     }
-    
+
     @Override
     public void updateScreen() {
         super.updateScreen();
@@ -525,7 +570,7 @@ public class ThemeEditorGui extends GuiScreen {
                 field.updateCursorCounter();
             }
         }
-        
+
         // Update cursor for padding-related text fields
         if (txtPadding != null) txtPadding.updateCursorCounter();
         if (txtCandidatePadding != null) txtCandidatePadding.updateCursorCounter();
@@ -539,7 +584,7 @@ public class ThemeEditorGui extends GuiScreen {
             }
         }
     }
-    
+
     /**
      * Generate safe theme ID from theme name
      */
@@ -547,22 +592,22 @@ public class ThemeEditorGui extends GuiScreen {
         if (themeName == null || themeName.isEmpty()) {
             return "custom_theme";
         }
-        
+
         // Convert to lowercase, replace spaces with underscores, remove illegal characters
         String safeId = themeName.toLowerCase()
             .replaceAll("\\s+", "_")
             .replaceAll("[^a-z0-9_]", "");
-        
+
         // If ID is empty or too short, add prefix
         if (safeId.length() < 2) {
             safeId = "custom_theme";
         }
-        
+
         // Ensure ID starts with a letter
         if (!Character.isLetter(safeId.charAt(0))) {
             safeId = "theme_" + safeId;
         }
-        
+
         return safeId;
     }
 }

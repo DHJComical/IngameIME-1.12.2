@@ -46,3 +46,12 @@ ingameime.config.theme.current_theme_button=Current Theme: %s (Click to Edit)
 ingameime.theme.selection.title=Select Theme
 ingameime.theme.selection.confirm=Select
 ingameime.theme.selection.confirm_hint=Double click to select
+
+# Color Picker
+ingameime.colorpicker.title=Color Picker
+ingameime.colorpicker.confirm=Confirm
+ingameime.colorpicker.hue=Hue
+ingameime.colorpicker.alpha=Alpha
+ingameime.colorpicker.hex=Hex
+ingameime.colorpicker.original=Original Color
+ingameime.colorpicker.current=Current Color
