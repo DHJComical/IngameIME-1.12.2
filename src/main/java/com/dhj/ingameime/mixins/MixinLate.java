@@ -20,6 +20,9 @@ public class MixinLate implements ILateMixinLoader {
         if (Loader.isModLoaded("betterquesting")) {
             mixins.add("mixins.ingameime.betterquesting.json");
         }
+        if (Loader.isModLoaded("bibliocraft")) {
+            mixins.add("mixins.ingameime.bibliocraft.json");
+        }
         return mixins;
     }
 }
