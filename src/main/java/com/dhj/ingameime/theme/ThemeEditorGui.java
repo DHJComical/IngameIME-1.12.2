@@ -338,11 +338,11 @@ public class ThemeEditorGui extends GuiScreen {
                         int currentColor = parseColor(colorFields[i].getText());
                         final int colorIndex = i;
                         mc.displayGuiScreen(new ColorPickerGui(this, currentColor, newColor -> {
-                            // 1. 获取当前正在编辑的主题对象引用
+                            // Get reference to the theme object currently being edited
                             Theme theme = themeManager.getTheme(selectedThemeId);
                             if (theme != null) {
-                                // 2. 将新颜色同步到主题对象中
-                                // 这样当 initGui -> loadCurrentTheme 运行重绘时，读取的就是新颜色
+                                // Sync new color to theme object
+                                // This ensures when initGui -> loadCurrentTheme runs redraw, it reads the new color
                                 if (colorIndex == 0) theme.setTextColor(newColor);
                                 else if (colorIndex == 1) theme.setBackgroundColor(newColor);
                                 else if (colorIndex == 2) theme.setIndexColor(newColor);
@@ -350,8 +350,8 @@ public class ThemeEditorGui extends GuiScreen {
                                 else if (colorIndex == 4) theme.setCursorColor(newColor);
                                 else if (colorIndex == 5) theme.setBorderColor(newColor);
                             }
-                            // 注意：此处不需要手动更新 colorFields[].setText，
-                            // 因为 loadCurrentTheme() 会自动根据 theme 对象刷新 UI。
+                            // Note: No need to manually update colorFields[].setText here,
+                            // because loadCurrentTheme() will automatically refresh UI based on theme object.
                         }));
                         clickedPreview = true;
                         break;

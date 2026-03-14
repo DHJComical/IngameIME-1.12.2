@@ -24,11 +24,11 @@ public class ColorPickerGui extends GuiScreen {
     private float hue, saturation, brightness;
     private int alpha;
 
-    // 布局与滚动常量
+    // Layout and scrolling constants
     private final int topAreaHeight = 32;
     private final int bottomAreaHeight = 45;
     private int scrollOffset = 0;
-    private final int contentHeight = 320; // 调色盘(120)+滑块(30*2)+预览(60)+间距
+    private final int contentHeight = 320; // Palette(120)+Sliders(30*2)+Preview(60)+Spacing
     private int maxScrollOffset = 0;
     private boolean isScrollingBar = false;
 
@@ -71,7 +71,7 @@ public class ColorPickerGui extends GuiScreen {
     @Override
     public void initGui() {
         int centerX = width / 2;
-        // 这里的 Y 坐标是逻辑坐标（相对于内容顶端）
+        // Y coordinate here is logical (relative to content top)
         paletteX = centerX - paletteWidth / 2 + 30;
         paletteY = 10;
         hueSliderX = paletteX;
@@ -96,7 +96,7 @@ public class ColorPickerGui extends GuiScreen {
         maxScrollOffset = Math.max(0, contentHeight - viewportHeight);
         if (scrollOffset > maxScrollOffset) scrollOffset = maxScrollOffset;
 
-        // 开启裁剪并绘制可滚动内容
+        // Enable scissor and draw scrollable content
         GL11.glEnable(GL11.GL_SCISSOR_TEST);
         int sf = new ScaledResolution(mc).getScaleFactor();
         GL11.glScissor(0, bottomAreaHeight * sf, width * sf, viewportHeight * sf);
@@ -113,7 +113,7 @@ public class ColorPickerGui extends GuiScreen {
         GlStateManager.popMatrix();
         GL11.glDisable(GL11.GL_SCISSOR_TEST);
 
-        // 绘制遮罩
+        // Draw overlay
         overlayBackground(0, topAreaHeight);
         overlayBackground(height - bottomAreaHeight, height);
         drawGradientRect(0, topAreaHeight, width, topAreaHeight + 4, 0xFF000000, 0x00000000);
@@ -121,7 +121,7 @@ public class ColorPickerGui extends GuiScreen {
 
         drawCenteredString(fontRenderer, I18n.format("ingameime.colorpicker.title"), width / 2, 10, 0xFFFFFF);
 
-        // 绘制滚动条
+        // Draw scrollbar
         if (maxScrollOffset > 0) {
             drawScrollBar(scrollAreaTop, scrollAreaBottom);
         }
@@ -141,13 +141,13 @@ public class ColorPickerGui extends GuiScreen {
     protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
         super.mouseClicked(mouseX, mouseY, mouseButton);
         if (mouseButton == 0) {
-            // 处理右侧滚动条点击
+            // Handle right scrollbar click
             if (mouseX >= width - 15 && mouseY >= topAreaHeight && mouseY <= height - bottomAreaHeight) {
                 isScrollingBar = true;
                 return;
             }
 
-            // 处理内容点击
+            // Handle content click
             int adjustedY = mouseY + scrollOffset - topAreaHeight;
             if (mouseY > topAreaHeight && mouseY < height - bottomAreaHeight) {
                 if (mouseX >= paletteX && mouseX <= paletteX + paletteWidth && adjustedY >= paletteY && adjustedY <= paletteY + paletteHeight) {
@@ -219,7 +219,7 @@ public class ColorPickerGui extends GuiScreen {
         selectedColor = (alpha << 24) | (rgb[0] << 16) | (rgb[1] << 8) | rgb[2];
     }
 
-    // --- 渲染辅助方法 ---
+    // --- Rendering helper methods ---
     private void drawColorPalette() {
         int step = 2;
         for (int x = 0; x < paletteWidth; x += step) {
@@ -238,12 +238,12 @@ public class ColorPickerGui extends GuiScreen {
     }
 
     private void drawHueSlider() {
-        // 绘制滑块标签（移动到正上方，并确保颜色为白色）
+        // Draw slider label (moved to top center, ensure color is white)
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         fontRenderer.drawString(I18n.format("ingameime.colorpicker.hue"), hueSliderX,
                 hueSliderY - 12, 0xFFFFFF);
 
-        // 绘制色相条背景
+        // Draw hue bar background
         for (int x = 0; x < sliderWidth; x++) {
             float h = (float) x / sliderWidth;
             int[] rgb = HSBtoRGB(h, 1.0f, 1.0f);
@@ -251,22 +251,22 @@ public class ColorPickerGui extends GuiScreen {
                     (255 << 24) | (rgb[0] << 16) | (rgb[1] << 8) | rgb[2]);
         }
 
-        // 绘制滑块头 (Minecraft Style)
+        // Draw slider head (Minecraft Style)
         int sx = hueSliderX + (int)(hue * sliderWidth);
         drawRect(sx - 2, hueSliderY - 2, sx + 2, hueSliderY + sliderHeight + 2, 0xFF000000);
         drawRect(sx - 1, hueSliderY - 1, sx + 1, hueSliderY + sliderHeight + 1, 0xFFFFFFFF);
     }
 
     private void drawAlphaSlider() {
-        // 绘制滑块标签（移动到正上方）
+        // Draw slider label (moved to top center)
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         fontRenderer.drawString(I18n.format("ingameime.colorpicker.alpha"), alphaSliderX,
                 alphaSliderY - 12, 0xFFFFFF);
 
-        // 棋盘格背景
+        // Checkerboard background
         drawCheckerboard(alphaSliderX, alphaSliderY, sliderWidth, sliderHeight);
 
-        // 渐变层
+        // Gradient layer
         for (int x = 0; x < sliderWidth; x++) {
             int a = (int)((float)x / sliderWidth * 255);
             int[] rgb = HSBtoRGB(hue, saturation, brightness);
@@ -274,7 +274,7 @@ public class ColorPickerGui extends GuiScreen {
                     (a << 24) | (rgb[0] << 16) | (rgb[1] << 8) | rgb[2]);
         }
 
-        // 绘制滑块头
+        // Draw slider head
         int sx = alphaSliderX + (int)((float)alpha / 255 * sliderWidth);
         drawRect(sx - 2, alphaSliderY - 2, sx + 2, alphaSliderY + sliderHeight + 2, 0xFF000000);
         drawRect(sx - 1, alphaSliderY - 1, sx + 1, alphaSliderY + sliderHeight + 1, 0xFFFFFFFF);
