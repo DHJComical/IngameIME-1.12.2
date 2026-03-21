@@ -13,3 +13,47 @@ ingameime.config.modetext.native_mode=Native Mode Text
 ingameime.config.modetext.native_mode.tooltip=Text to display when in Native mode.
 ingameime.config.debug.debug_log=Debug Log
 ingameime.config.debug.debug_log.tooltip=Config if print debug log.
+ingameime.config.theme.comment=Theme Configuration
+ingameime.config.theme.comment.tooltip=Configure IME theme
+
+# Theme Configuration
+ingameime.config.theme.editor=Open Theme Editor
+ingameime.config.theme.current_theme_button=Current Theme: %s (Click to Edit)
+ingameime.theme.default=Default Theme
+ingameime.theme.dark=Dark Theme
+ingameime.theme.light=Light Theme
+ingameime.theme.custom=Custom Theme
+
+# Theme Editor
+ingameime.theme.editor.title=Theme Editor
+ingameime.theme.editor.current=Current Theme
+ingameime.theme.editor.apply=Apply Theme
+ingameime.theme.editor.create=Create New Theme
+ingameime.theme.editor.delete=Delete Theme
+ingameime.theme.editor.select=Select Theme
+ingameime.theme.editor.text_color=Text Color
+ingameime.theme.editor.background_color=Background Color
+ingameime.theme.editor.index_color=Index Color
+ingameime.theme.editor.selected_bg=Selected Background
+ingameime.theme.editor.cursor_color=Cursor Color
+ingameime.theme.editor.border_color=Border Color
+ingameime.theme.editor.padding=Padding
+ingameime.theme.editor.candidate_padding=Candidate Padding
+ingameime.theme.editor.border_width=Border Width
+ingameime.theme.editor.custom_name=Custom Theme
+ingameime.theme.editor.input_title=Enter Theme Name
+ingameime.theme.editor.input_hint=Please enter the name of the new theme
+
+# Theme Selection
+ingameime.theme.selection.title=Select Theme
+ingameime.theme.selection.confirm=Select
+ingameime.theme.selection.confirm_hint=Double-click to select
+
+# Color Picker
+ingameime.colorpicker.title=Color Picker
+ingameime.colorpicker.confirm=Confirm
+ingameime.colorpicker.hue=Hue
+ingameime.colorpicker.alpha=Alpha
+ingameime.colorpicker.hex=Hex
+ingameime.colorpicker.original=Original Color
+ingameime.colorpicker.current=Current Color

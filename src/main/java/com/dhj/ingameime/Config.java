@@ -7,7 +7,7 @@ import java.io.File;
 import java.util.Arrays;
 
 public class Config {
-    public static final String[] CATEGORIES = new String[]{"api", "uiless", "general", "modetext", "debug"};
+    public static final String[] CATEGORIES = new String[]{"api", "uiless", "general", "modetext", "debug", "theme"};
     private static final String PREFIX = IngameIME_Forge.MOD_ID + ".config.";
 
     private static Configuration config;
@@ -76,6 +76,15 @@ public class Config {
                 DebugLog,
                 "Config if print debug log."
         ).setLanguageKey(PREFIX + CATEGORIES[4] + ".debug_log").getBoolean();
+
+        // Theme category - just a placeholder to show in config GUI
+        // Actual theme configuration is handled by ThemeManager
+        config.get(
+                CATEGORIES[5],
+                "_comment",
+                "Open the in-game config GUI to access the Theme Editor",
+                "Theme configuration is managed through the Theme Editor in the config GUI"
+        ).setLanguageKey(PREFIX + CATEGORIES[5] + ".comment");
 
         if (config.hasChanged()) {
             config.save();

@@ -1,5 +1,6 @@
 package com.dhj.ingameime;
 
+import com.dhj.ingameime.theme.ThemeEditorConfigElement;
 import cpw.mods.fml.client.config.GuiConfig;
 import cpw.mods.fml.client.config.IConfigElement;
 import net.minecraft.client.gui.GuiScreen;
@@ -21,6 +22,9 @@ public class ConfigGui extends GuiConfig {
         for (String category : Config.CATEGORIES) {
             list.addAll(new ConfigElement(config.getCategory(category)).getChildElements());
         }
+        // Add theme editor entry
+        list.add(new ThemeEditorConfigElement());
+
         return list;
     }
 }

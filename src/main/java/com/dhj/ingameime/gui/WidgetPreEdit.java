@@ -2,14 +2,22 @@ package com.dhj.ingameime.gui;
 
 import com.dhj.ingameime.ClientProxy;
 import com.dhj.ingameime.Internal;
+import com.dhj.ingameime.theme.api.Theme;
+import com.dhj.ingameime.theme.api.ThemeManager;
 import ingameime.PreEditRect;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.gui.ScaledResolution;
 
 public class WidgetPreEdit extends Widget {
     private final int CursorWidth = 3;
     private String Content = null;
     private int Cursor = -1;
+
+    @Override
+    protected void updateThemeColors() {
+        super.updateThemeColors();
+    }
 
     public void setContent(String content, int cursor) {
         Cursor = cursor;
@@ -28,16 +36,12 @@ public class WidgetPreEdit extends Widget {
         } else {
             Width = Height = 0;
         }
-        super.layout();
 
-        WidgetCandidateList list = ClientProxy.Screen.CandidateList;
-        list.setPos(X, Y + Height);
-        // Check if overlap
-        if (list.Y < Y + Height) {
-            list.setPos(X, Y - list.Height);
-        }
+        X = offsetX - Padding;
+        Y = offsetY - Padding;
 
-        // Update Rect
+        isDirty = false;
+
         if (!Internal.LIBRARY_LOADED || Internal.InputCtx == null) return;
         PreEditRect rect = new PreEditRect();
         rect.setX(X);
@@ -55,13 +59,51 @@ public class WidgetPreEdit extends Widget {
     @Override
     public void draw() {
         if (!isActive()) return;
+
+        if (isDirty) layout();
+
+        WidgetCandidateList list = ClientProxy.Screen.CandidateList;
+        if (list != null && list.isActive()) {
+            Minecraft mc = Minecraft.getMinecraft();
+            list.DrawInline = true;
+            int targetX = X;
+            int targetY = getTargetY(list, mc);
+            list.setPos(targetX, targetY);
+        }
         super.draw();
+
         FontRenderer font = Minecraft.getMinecraft().fontRenderer;
-        String beforeCursor = Content.substring(0, Cursor);
-        String afterCursor = Content.substring(Cursor);
+
+        String beforeCursor = "";
+        String afterCursor = "";
+        if (Content != null && Cursor >= 0 && Cursor <= Content.length()) {
+            beforeCursor = Content.substring(0, Cursor);
+            afterCursor = Content.substring(Cursor);
+        } else if (Content != null) {
+            beforeCursor = Content;
+        }
+
         int x = font.drawString(beforeCursor, X + Padding, Y + Padding, TextColor);
-        // Cursor
-        drawRect(x + 1, Y + Padding, x + 2, Y + Padding + Height, TextColor);
+        Theme theme = ThemeManager.getInstance().getCurrentTheme();
+        int cursorColor = (theme != null) ? theme.getCursorColor() : TextColor;
+        drawRect(x + 1, Y + Padding, x + 2, Y + Padding + Height, cursorColor);
         font.drawString(afterCursor, x + CursorWidth, Y + Padding, TextColor);
+    }
+
+    private int getTargetY(WidgetCandidateList list, Minecraft mc) {
+        int myTotalHeight = Height + 2 * Padding;
+        int listExpectedHeight = (list.Height > 0 ? list.Height : mc.fontRenderer.FONT_HEIGHT) + 2 * list.Padding;
+        ScaledResolution sr = new ScaledResolution(mc, mc.displayWidth, mc.displayHeight);
+        int displayHeight = sr.getScaledHeight();
+        int targetY = Y + myTotalHeight;
+        if (targetY + listExpectedHeight >= displayHeight - 5) {
+            targetY = Y - listExpectedHeight;
+        }
+        return targetY;
+    }
+
+    @Override
+    protected String getComponentId() {
+        return "preedit";
     }
 }

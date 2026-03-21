@@ -17,6 +17,8 @@ public enum Mixins implements IMixins {
         .addClientMixins("MixinGuiTextField")
         .addClientMixins("AccessorGuiTextField")
         .addClientMixins("AccessorGuiScreen")
+        .addClientMixins("MixinGuiSlot")
+        .addClientMixins("MixinGuiTextFieldAccess")
     ),
 
     BETTERQUESTING(new MixinBuilder()
