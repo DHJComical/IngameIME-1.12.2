@@ -1,6 +1,7 @@
 package com.dhj.ingameime.theme.api;
 
 import com.dhj.ingameime.IngameIME_Forge;
+import com.dhj.ingameime.theme.ColorTypeAdapterFactory;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.minecraft.client.Minecraft;
@@ -26,7 +27,11 @@ public class ThemeManager {
     private boolean initialized = false;
 
     private ThemeManager() {
-        this.gson = new GsonBuilder().setPrettyPrinting().create();
+        // Create Gson with color type adapter factory for hexadecimal serialization
+        this.gson = new GsonBuilder()
+            .registerTypeAdapterFactory(new ColorTypeAdapterFactory())
+            .setPrettyPrinting()
+            .create();
     }
 
     private void ensureInitialized() {

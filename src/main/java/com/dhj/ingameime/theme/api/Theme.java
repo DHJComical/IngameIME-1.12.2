@@ -1,6 +1,5 @@
 package com.dhj.ingameime.theme.api;
 
-import com.dhj.ingameime.theme.ColorTypeAdapter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -58,11 +57,5 @@ public class Theme {
         this.id = id; this.name = name; this.textColor = txt; this.backgroundColor = bg;
         this.indexColor = idx; this.selectedBackgroundColor = sel; this.cursorColor = cur;
         this.padding = pad; this.candidatePadding = cpad; this.borderWidth = bwd; this.borderColor = bcl;
-    }
-
-    // Manual serialization helpers for 1.7.10 (Gson @JsonAdapter not available)
-    public static void registerTypeAdapter(com.google.gson.GsonBuilder builder) {
-        builder.registerTypeAdapter(Integer.class, new ColorTypeAdapter());
-        builder.registerTypeAdapter(int.class, new ColorTypeAdapter());
     }
 }
