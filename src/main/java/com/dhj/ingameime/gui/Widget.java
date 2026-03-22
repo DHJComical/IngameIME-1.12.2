@@ -10,21 +10,37 @@ import org.lwjgl.opengl.GL11;
 
 public class Widget extends Gui implements ThemeManager.ThemeChangeListener {
     public int offsetX, offsetY;
-    public int TextColor;
-    public int Background;
+    public int TextColor = 0xFF000000;
+    public int Background = 0xEBEBEBEB;
     public int Padding = 1;
     public int X, Y;
     public int Width, Height;
     public boolean DrawInline = true;
     protected boolean isDirty = true;
+    private boolean themeInitialized = false;
 
     public Widget() {
-        updateThemeColors();
-        ThemeManager.getInstance().addThemeChangeListener(this);
+        // 延迟初始化主题颜色，直到第一次绘制时
+    }
+
+    private void ensureThemeInitialized() {
+        if (themeInitialized) return;
+        try {
+            ThemeManager manager = ThemeManager.getInstance();
+            if (manager != null) {
+                updateThemeColors();
+                manager.addThemeChangeListener(this);
+            }
+            themeInitialized = true;
+        } catch (Exception e) {
+            // 如果 ThemeManager 未准备好，使用默认值
+        }
     }
 
     protected void updateThemeColors() {
-        Theme theme = ThemeManager.getInstance().getCurrentTheme();
+        ThemeManager manager = ThemeManager.getInstance();
+        if (manager == null) return;
+        Theme theme = manager.getCurrentTheme();
         if (theme != null) {
             TextColor = theme.getTextColor();
             Background = theme.getBackgroundColor();
@@ -82,7 +98,10 @@ public class Widget extends Gui implements ThemeManager.ThemeChangeListener {
     }
 
     public void draw() {
-        Theme theme = ThemeManager.getInstance().getCurrentTheme();
+        ensureThemeInitialized();
+        ThemeManager manager = ThemeManager.getInstance();
+        if (manager == null) return;
+        Theme theme = manager.getCurrentTheme();
         if (theme == null) return;
         ThemeRenderer.render(theme, X, Y, Width + 2 * Padding, Height + 2 * Padding, getComponentId());
     }

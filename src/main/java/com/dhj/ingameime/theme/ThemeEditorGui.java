@@ -81,6 +81,8 @@ public class ThemeEditorGui extends GuiScreen {
                 Theme newTheme = Theme.createCustomTheme(newThemeId, themeName);
                 themeManager.saveCustomTheme(newTheme);
                 selectedThemeId = newThemeId;
+                // Reset the name input GUI state after creating the theme
+                nameInputGui.reset();
             }
         }
 
@@ -148,8 +150,11 @@ public class ThemeEditorGui extends GuiScreen {
 
     private void loadThemeList() {
         themeIds.clear();
+        // Scan for new themes before loading the list
+        themeManager.scanForNewThemes();
         Map<String, Theme> availableThemes = themeManager.getAvailableThemes();
         themeIds.addAll(availableThemes.keySet());
+        IngameIME_Forge.logDebugInfo("[ThemeEditor] Loaded {} themes: {}", themeIds.size(), themeIds);
 
         int themeSelectionIndex = themeIds.indexOf(selectedThemeId);
         if (themeSelectionIndex == -1 && !themeIds.isEmpty()) {
