@@ -26,6 +26,13 @@ public enum Mixins implements IMixins {
         .addRequiredMod(TargetMods.BETTERQUESTING)
         .addClientMixins("betterquesting.MixinPanelTextField")
         .addClientMixins("betterquesting.AccessorPanelTextField")
+    ),
+
+    BIBLIOCRAFT(new MixinBuilder()
+        .setPhase(Phase.LATE)
+        .addRequiredMod(TargetMods.BIBLIOCRAFT)
+        .addClientMixins("bibliocraft.MixinGuiClipboard")
+        .addClientMixins("bibliocraft.AccessorGuiBiblioTextField")
     );
 
     private final MixinBuilder builder;

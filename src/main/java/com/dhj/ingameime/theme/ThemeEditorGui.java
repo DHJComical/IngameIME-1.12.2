@@ -361,6 +361,8 @@ public class ThemeEditorGui extends GuiScreen {
     protected void keyTyped(char typedChar, int keyCode) {
         super.keyTyped(typedChar, keyCode);
 
+        // Handle keyboard input for all text fields
+        txtThemeId.textboxKeyTyped(typedChar, keyCode);
         txtThemeName.textboxKeyTyped(typedChar, keyCode);
         for (GuiTextField field : colorFields) {
             if (field != null) {
@@ -486,6 +488,8 @@ public class ThemeEditorGui extends GuiScreen {
     @Override
     public void updateScreen() {
         super.updateScreen();
+        // Update cursor counter for all text fields
+        txtThemeId.updateCursorCounter();
         txtThemeName.updateCursorCounter();
         for (GuiTextField field : colorFields) {
             if (field != null) {
