@@ -20,6 +20,7 @@ public class ThemeManager {
     private final Map<String, Theme> themes = new HashMap<>();
     private final Map<String, ResourceLocation> textureCache = new HashMap<>();
     private final Map<String, Integer[]> textureSizeCache = new HashMap<>();
+    private final Map<String, Long> themeFileTimestamps = new HashMap<>();
     private File themesDir;
     private File lastThemeFile;
     private final Gson gson;
@@ -86,6 +87,7 @@ public class ThemeManager {
         textureCache.values().forEach(loc -> Minecraft.getMinecraft().getTextureManager().deleteTexture(loc));
         textureCache.clear();
         textureSizeCache.clear();
+        themeFileTimestamps.clear();
     }
 
     public void scanForNewThemes() {
@@ -97,6 +99,17 @@ public class ThemeManager {
                 if (!themes.containsKey(f.getName())) {
                     IngameIME_Forge.logDebugInfo("[ThemeManager] Found new theme folder: {}", f.getName());
                     loadThemeFromFolder(f);
+                } else {
+                    // Check if existing theme was modified
+                    File themeFile = new File(f, "theme.json");
+                    Long recordedTimestamp = themeFileTimestamps.get(f.getName());
+                    if (recordedTimestamp != null && themeFile.exists()) {
+                        long currentTimestamp = themeFile.lastModified();
+                        if (currentTimestamp != recordedTimestamp) {
+                            IngameIME_Forge.logDebugInfo("[ThemeManager] Theme modified externally, reloading: {}", f.getName());
+                            loadThemeFromFolder(f);
+                        }
+                    }
                 }
             }
         }
@@ -127,7 +140,10 @@ public class ThemeManager {
             if (theme != null) {
                 theme.setId(folder.getName());
                 themes.put(theme.getId(), theme);
-                IngameIME_Forge.logDebugInfo("[ThemeManager] Loaded theme: {} ({})", theme.getId(), theme.getName());
+                // Record the file timestamp
+                themeFileTimestamps.put(theme.getId(), configFile.lastModified());
+                IngameIME_Forge.logDebugInfo("[ThemeManager] Loaded theme: {} ({}) with timestamp {}", 
+                    theme.getId(), theme.getName(), configFile.lastModified());
             }
         } catch (Exception e) {
             IngameIME_Forge.logDebugInfo("[ThemeManager] Error loading theme from folder '{}': {}", folder.getName(), e.getMessage());
@@ -168,15 +184,31 @@ public class ThemeManager {
         }
         File folder = new File(themesDir, theme.getId());
         if (!folder.exists()) folder.mkdirs();
-        
+
+        // Check if the file was modified externally
+        File themeFile = new File(folder, "theme.json");
+        Long recordedTimestamp = themeFileTimestamps.get(theme.getId());
+        if (recordedTimestamp != null && themeFile.exists()) {
+            long currentTimestamp = themeFile.lastModified();
+            if (currentTimestamp != recordedTimestamp) {
+                IngameIME_Forge.logDebugInfo("[ThemeManager] Theme file was modified externally, reloading from disk: {}", theme.getId());
+                // Reload the theme from disk instead of overwriting
+                loadThemeFromFolder(folder);
+                // Update the timestamp
+                themeFileTimestamps.put(theme.getId(), currentTimestamp);
+                return;
+            }
+        }
+
         // Update in-memory theme map
         themes.put(theme.getId(), theme);
-        
+
         // Save to disk
-        File themeFile = new File(folder, "theme.json");
         IngameIME_Forge.logDebugInfo("[ThemeManager] Saving theme to: {}", themeFile.getAbsolutePath());
         try (FileWriter writer = new FileWriter(themeFile)) {
             gson.toJson(theme, writer);
+            // Update the timestamp after saving
+            themeFileTimestamps.put(theme.getId(), themeFile.lastModified());
             IngameIME_Forge.logDebugInfo("[ThemeManager] Saved theme: {} ({})", theme.getId(), theme.getName());
         } catch (IOException e) {
             IngameIME_Forge.logDebugInfo("[ThemeManager] Failed to save theme '{}': {}", theme.getId(), e.getMessage());
