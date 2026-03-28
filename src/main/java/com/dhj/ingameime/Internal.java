@@ -303,7 +303,6 @@ public class Internal {
                         && type != Character.PRIVATE_USE
                         && type != Character.SURROGATE
                         && type != Character.UNASSIGNED;
-
                 if (isVisible) {
                     current.append(c);
                 } else if (current.length() > 0) {

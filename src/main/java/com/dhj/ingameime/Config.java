@@ -95,7 +95,6 @@ public class Config {
                 "Open the in-game config GUI to access the Theme Editor",
                 "Theme configuration is managed through the Theme Editor in the config GUI"
         ).setLanguageKey(PREFIX + CATEGORIES[5] + ".comment");
-
         if (config.hasChanged()) {
             config.save();
         }

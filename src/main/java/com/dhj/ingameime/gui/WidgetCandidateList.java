@@ -3,11 +3,14 @@ package com.dhj.ingameime.gui;
 import com.dhj.ingameime.theme.api.Theme;
 import com.dhj.ingameime.theme.api.ThemeManager;
 import net.minecraft.client.Minecraft;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.List;
 
 // 从 1.17 的 IngameIME 移植个人认为更好看的 UI (已适配 1.12.2)
 public class WidgetCandidateList extends Widget {
+    private static final Logger LOG = LogManager.getLogger("IngameIME-CandidateList");
     private final CandidateEntry drawItem = new CandidateEntry();
     private List<String> Candidates = null;
     private int Selected = -1;
@@ -27,6 +30,12 @@ public class WidgetCandidateList extends Widget {
     }
 
     public void setContent(List<String> candidates, int selected) {
+        LOG.debug("setContent: {} candidates, selected={}", candidates != null ? candidates.size() : 0, selected);
+        if (candidates != null) {
+            for (int i = 0; i < candidates.size(); i++) {
+                LOG.debug("  [{}] {}", i, candidates.get(i));
+            }
+        }
         Candidates = candidates;
         Selected = selected;
         isDirty = true;
@@ -69,6 +78,7 @@ public class WidgetCandidateList extends Widget {
 
         super.draw();
 
+        LOG.debug("Drawing {} candidates", Candidates.size());
         Theme theme = ThemeManager.getInstance().getCurrentTheme();
         int drawX = X + Padding;
         int drawY = Y + Padding;
