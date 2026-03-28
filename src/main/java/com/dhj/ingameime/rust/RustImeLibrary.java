@@ -71,7 +71,6 @@ public class RustImeLibrary {
     }
 
     public static native String rust_ime_library_get_version();
-
     public static String getVersion() {
         return rust_ime_library_get_version();
     }
