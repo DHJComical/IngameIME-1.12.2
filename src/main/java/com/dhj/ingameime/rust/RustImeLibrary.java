@@ -83,6 +83,38 @@ public class RustImeLibrary {
         return rust_ime_library_get_version();
     }
 
+    /**
+     * Set the maximum number of candidates to display per page.
+     * @param contextPtr Input context pointer
+     * @param maxCandidates Maximum number of candidates (default: 9)
+     */
+    public static native void rust_ime_library_set_max_candidates(long contextPtr, int maxCandidates);
+
+    public static void setMaxCandidates(long contextPtr, int maxCandidates) {
+        rust_ime_library_set_max_candidates(contextPtr, maxCandidates);
+    }
+
+    /**
+     * Get the maximum number of candidates to display per page.
+     * @param contextPtr Input context pointer
+     * @return Maximum number of candidates
+     */
+    public static native int rust_ime_library_get_max_candidates(long contextPtr);
+
+    public static int getMaxCandidates(long contextPtr) {
+        return rust_ime_library_get_max_candidates(contextPtr);
+    }
+
+    /**
+     * Enable or disable debug logging in Rust backend.
+     * @param enabled true to enable debug logging
+     */
+    public static native void rust_ime_library_set_debug_logging(boolean enabled);
+
+    public static void setDebugLogging(boolean enabled) {
+        rust_ime_library_set_debug_logging(enabled);
+    }
+
     // Callback interfaces
 
     /**

@@ -6,12 +6,14 @@ import net.minecraft.client.Minecraft;
 import org.lwjgl.LWJGLUtil;
 import org.lwjgl.opengl.Display;
 
+import javax.annotation.Nonnull;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.List;
 
 import static com.dhj.ingameime.IngameIME_Forge.LOG;
 
@@ -269,6 +271,14 @@ public class Internal {
             }
             LOG.info("InputContext has created!");
             LOG.info("Rust IME library version: {}", RustImeLibrary.getVersion());
+            // Set max candidates from config
+            RustImeLibrary.setMaxCandidates(InputCtx, Config.MaxCandidates);
+            LOG.info("Max candidates set to: {}", Config.MaxCandidates);
+            // Enable debug logging if configured
+            if (Config.DebugLog) {
+                RustImeLibrary.setDebugLogging(true);
+                LOG.info("Rust debug logging enabled");
+            }
         } else {
             LOG.error("InputContext could not init as the hWnd is NULL!");
             return;
@@ -315,10 +325,19 @@ public class Internal {
             public void onCandidateList(int state, String[] candidates, int selected) {
                 try {
                     if (candidates != null) {
-                        ClientProxy.Screen.CandidateList.setContent(
-                            new ArrayList<>(java.util.Arrays.asList(candidates)), 
-                            selected
-                        );
+                        LOG.debug("CandidateList callback: received {} candidates, selected={}", candidates.length, selected);
+                        // Split candidates by whitespace and flatten the list
+                        List<String> flattened = getStrings(candidates);
+                        LOG.debug("Flattened to {} candidates", flattened.size());
+                        for (int i = 0; i < flattened.size(); i++) {
+                            LOG.debug("  [{}] {}", i, flattened.get(i));
+                        }
+                        // Apply max candidates limit
+                        if (flattened.size() > Config.MaxCandidates) {
+                            flattened = new ArrayList<>(flattened.subList(0, Config.MaxCandidates));
+                            LOG.debug("Truncated to {} candidates", flattened.size());
+                        }
+                        ClientProxy.Screen.CandidateList.setContent(flattened, selected);
                     } else {
                         ClientProxy.Screen.CandidateList.setContent(null, -1);
                     }
@@ -347,6 +366,41 @@ public class Internal {
         RustImeLibrary.setInputModeCallback(InputCtx, inputModeCallback);
 
         System.gc();
+    }
+
+    @Nonnull
+    private static List<String> getStrings(String[] candidates) {
+        List<String> flattened = new ArrayList<>();
+        for (String candidate : candidates) {
+            // Extract individual candidates by splitting on any non-visible character
+            // This handles special Unicode spaces, zero-width chars, etc.
+            StringBuilder current = new StringBuilder();
+            for (int i = 0; i < candidate.length(); i++) {
+                char c = candidate.charAt(i);
+                // Check if character is visible (not whitespace, control, or format char)
+                int type = Character.getType(c);
+                boolean isVisible = type != Character.SPACE_SEPARATOR
+                                 && type != Character.LINE_SEPARATOR
+                                 && type != Character.PARAGRAPH_SEPARATOR
+                                 && type != Character.CONTROL
+                                 && type != Character.FORMAT
+                                 && type != Character.PRIVATE_USE
+                                 && type != Character.SURROGATE
+                                 && type != Character.UNASSIGNED;
+                
+                if (isVisible) {
+                    current.append(c);
+                } else if (current.length() > 0) {
+                    flattened.add(current.toString());
+                    current.setLength(0);
+                }
+            }
+            // Add remaining candidate
+            if (current.length() > 0) {
+                flattened.add(current.toString());
+            }
+        }
+        return flattened;
     }
 
     static void loadLibrary() {
