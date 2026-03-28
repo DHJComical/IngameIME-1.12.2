@@ -268,6 +268,7 @@ public class Internal {
                 return;
             }
             LOG.info("InputContext has created!");
+            LOG.info("Rust IME library version: {}", RustImeLibrary.getVersion());
         } else {
             LOG.error("InputContext could not init as the hWnd is NULL!");
             return;

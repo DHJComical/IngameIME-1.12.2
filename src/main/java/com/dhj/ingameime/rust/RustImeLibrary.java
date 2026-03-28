@@ -75,13 +75,10 @@ public class RustImeLibrary {
 
     /**
      * Get the library version string.
-     * Note: Currently not implemented in Rust backend.
+     * @return Version string in format "major.minor.patch"
      */
-    // public static native String rust_ime_library_get_version();
-    public static String rust_ime_library_get_version() {
-        return "0.1.0";
-    }
-
+    public static native String rust_ime_library_get_version();
+    
     public static String getVersion() {
         return rust_ime_library_get_version();
     }
