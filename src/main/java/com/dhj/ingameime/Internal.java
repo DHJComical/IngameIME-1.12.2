@@ -1,7 +1,7 @@
 package com.dhj.ingameime;
 
 import com.dhj.ingameime.config.Config;
-import ingameime.*;
+import com.dhj.ingameime.rust.RustImeLibrary;
 import net.minecraft.client.Minecraft;
 import org.lwjgl.LWJGLUtil;
 import org.lwjgl.opengl.Display;
@@ -17,21 +17,19 @@ import static com.dhj.ingameime.IngameIME_Forge.LOG;
 
 public class Internal {
     public static boolean LIBRARY_LOADED = false;
-    public static InputContext InputCtx = null;
-    static PreEditCallbackImpl preEditCallbackProxy = null;
-    static CommitCallbackImpl commitCallbackProxy = null;
-    static CandidateListCallbackImpl candidateListCallbackProxy = null;
-    static InputModeCallbackImpl inputModeCallbackProxy = null;
-    static PreEditCallback preEditCallback = null;
-    static CommitCallback commitCallback = null;
-    static CandidateListCallback candidateListCallback = null;
-    static InputModeCallback inputModeCallback = null;
+    public static long InputCtx = 0;  // Rust context pointer
+    static RustImeLibrary.PreEditCallback preEditCallback = null;
+    static RustImeLibrary.CommitCallback commitCallback = null;
+    static RustImeLibrary.CandidateListCallback candidateListCallback = null;
+    static RustImeLibrary.InputModeCallback inputModeCallback = null;
 
     private static void tryLoadLibrary(String libName) {
         if (!LIBRARY_LOADED) try {
-            InputStream lib = IngameIME.class.getClassLoader().getResourceAsStream(libName);
-            if (lib == null) throw new RuntimeException("Required library resource not exist!");
-            Path path = Files.createTempFile("IngameIME-Native", null);
+            // Load DLL from resources using System.load() instead of System.loadLibrary()
+            // because loadLibrary() adds platform prefixes/suffixes automatically
+            InputStream lib = Internal.class.getClassLoader().getResourceAsStream(libName);
+            if (lib == null) throw new RuntimeException("Required library resource not exist: " + libName);
+            Path path = Files.createTempFile("ingameime-core", ".dll");
             Files.copy(lib, path, StandardCopyOption.REPLACE_EXISTING);
             System.load(path.toString());
             LIBRARY_LOADED = true;
@@ -235,24 +233,21 @@ public class Internal {
     }
 
     public static void destroyInputCtx() {
-        if (InputCtx == null) return;
+        if (InputCtx == 0) return;
         try {
-            // Unregister callbacks first to avoid native calls after destruction
-            InputCtx.setCallback((PreEditCallback) null);
-            InputCtx.setCallback((CommitCallback) null);
-            InputCtx.setCallback((CandidateListCallback) null);
-            InputCtx.setCallback((InputModeCallback) null);
-        } catch (Throwable ignored) {
+            RustImeLibrary.destroyInputContext(InputCtx);
+            LOG.info("InputContext has destroyed!");
+        } catch (Throwable e) {
+            LOG.error("Failed to destroy InputContext", e);
         }
-        InputCtx.delete();
-        InputCtx = null;
-        LOG.info("InputContext has destroyed!");
+        InputCtx = 0;
     }
 
     public static void createInputCtx() {
         if (!LIBRARY_LOADED) return;
 
-        LOG.info("Using IngameIME-Native: {}", InputContext.getVersion());
+        LOG.info("Using IngameIME Rust backend");
+        // LOG.info("Using IngameIME Rust: {}", RustImeLibrary.rust_ime_library_get_version());
 
         if (!Display.isCreated()) {
             LOG.warn("Display is not created yet, deferring InputContext creation");
@@ -264,77 +259,91 @@ public class Internal {
                 Config.UiLess_Windows = true;
                 Config.sync();
             }
-            API api = Config.API_Windows.equals("TextServiceFramework") ? API.TextServiceFramework : API.Imm32;
+            // API parameter is ignored in Rust version (only IMM32 supported)
+            int api = Config.API_Windows.equals("TextServiceFramework") ? 0 : 1;
             LOG.info("Using API: {}, UiLess: {}", api, Config.UiLess_Windows);
-            InputCtx = IngameIME.CreateInputContextWin32(hWnd, api, Config.UiLess_Windows);
+            InputCtx = RustImeLibrary.createInputContextWin32(hWnd, api, Config.UiLess_Windows);
+            if (InputCtx == 0) {
+                LOG.error("Failed to create InputContext!");
+                return;
+            }
             LOG.info("InputContext has created!");
         } else {
             LOG.error("InputContext could not init as the hWnd is NULL!");
             return;
         }
 
-        preEditCallbackProxy = new PreEditCallbackImpl() {
+        // Setup callbacks
+        preEditCallback = new RustImeLibrary.PreEditCallback() {
             @Override
-            protected void call(CompositionState arg0, PreEditContext arg1) {
+            public void onPreEdit(int state, String content, int cursor) {
                 try {
-                    //LOG.info("PreEdit State: {}", arg0);
-                    if (arg0 == CompositionState.Begin) ClientProxy.Screen.WInputMode.setActive(false);
-                    if (arg1 != null) ClientProxy.Screen.PreEdit.setContent(arg1.getContent(), arg1.getSelStart());
-                    else ClientProxy.Screen.PreEdit.setContent(null, -1);
+                    if (state == 0) { // Begin
+                        ClientProxy.Screen.WInputMode.setActive(false);
+                    }
+                    if (content != null) {
+                        ClientProxy.Screen.PreEdit.setContent(content, cursor);
+                    } else {
+                        ClientProxy.Screen.PreEdit.setContent(null, -1);
+                    }
                 } catch (Throwable e) {
-                    LOG.error("Exception thrown during callback handling", e);
+                    LOG.error("Exception in PreEdit callback", e);
                 }
             }
         };
-        preEditCallback = new PreEditCallback(preEditCallbackProxy);
 
-        commitCallbackProxy = new CommitCallbackImpl() {
+        commitCallback = new RustImeLibrary.CommitCallback() {
             @Override
-            protected void call(String text) {
+            public void onCommit(String text) {
                 try {
                     Minecraft.getMinecraft().addScheduledTask(() -> {
                         try {
                             IMStates.getActiveControl().writeText(text);
                         } catch (Throwable e) {
-                            LOG.error("Exception thrown during scheduled commit task", e);
+                            LOG.error("Exception in Commit callback", e);
                         }
                     });
                 } catch (Throwable e) {
-                    LOG.error("Exception thrown when scheduling commit callback", e);
+                    LOG.error("Exception scheduling Commit task", e);
                 }
             }
         };
-        commitCallback = new CommitCallback(commitCallbackProxy);
 
-        candidateListCallbackProxy = new CandidateListCallbackImpl() {
+        candidateListCallback = new RustImeLibrary.CandidateListCallback() {
             @Override
-            protected void call(CandidateListState arg0, CandidateListContext arg1) {
+            public void onCandidateList(int state, String[] candidates, int selected) {
                 try {
-                    if (arg1 != null)
-                        ClientProxy.Screen.CandidateList.setContent(new ArrayList<>(arg1.getCandidates()), arg1.getSelection());
-                    else ClientProxy.Screen.CandidateList.setContent(null, -1);
+                    if (candidates != null) {
+                        ClientProxy.Screen.CandidateList.setContent(
+                            new ArrayList<>(java.util.Arrays.asList(candidates)), 
+                            selected
+                        );
+                    } else {
+                        ClientProxy.Screen.CandidateList.setContent(null, -1);
+                    }
                 } catch (Throwable e) {
-                    LOG.error("Exception thrown during callback handling", e);
+                    LOG.error("Exception in CandidateList callback", e);
                 }
             }
         };
-        candidateListCallback = new CandidateListCallback(candidateListCallbackProxy);
-        inputModeCallbackProxy = new InputModeCallbackImpl() {
-            @Override
-            protected void call(InputMode arg0) {
-                try {
-                    ClientProxy.Screen.WInputMode.setMode(arg0);
-                } catch (Throwable e) {
-                    LOG.error("Exception thrown during callback handling", e);
-                }
-            }
-        };
-        inputModeCallback = new InputModeCallback(inputModeCallbackProxy);
 
-        InputCtx.setCallback(preEditCallback);
-        InputCtx.setCallback(commitCallback);
-        InputCtx.setCallback(candidateListCallback);
-        InputCtx.setCallback(inputModeCallback);
+        inputModeCallback = new RustImeLibrary.InputModeCallback() {
+            @Override
+            public void onInputModeChanged(int mode) {
+                try {
+                    // mode: 0=Alpha, 1=Native, 2=Unsupported
+                    ClientProxy.Screen.WInputMode.setMode(mode == 1);
+                } catch (Throwable e) {
+                    LOG.error("Exception in InputMode callback", e);
+                }
+            }
+        };
+
+        // Register callbacks
+        RustImeLibrary.setPreEditCallback(InputCtx, preEditCallback);
+        RustImeLibrary.setCommitCallback(InputCtx, commitCallback);
+        RustImeLibrary.setCandidateListCallback(InputCtx, candidateListCallback);
+        RustImeLibrary.setInputModeCallback(InputCtx, inputModeCallback);
 
         System.gc();
     }
@@ -347,9 +356,8 @@ public class Internal {
             return;
         }
 
-        tryLoadLibrary("IngameIME_Java-arm64.dll");
-        tryLoadLibrary("IngameIME_Java-x64.dll");
-        tryLoadLibrary("IngameIME_Java-x86.dll");
+        // Load Rust-compiled native library (only x64 supported for now)
+        tryLoadLibrary("ingameime_core.dll");
 
         if (!LIBRARY_LOADED) {
             LOG.error("Unsupported arch: {}", System.getProperty("os.arch"));
@@ -357,16 +365,16 @@ public class Internal {
     }
 
     public static boolean getActivated() {
-        if (InputCtx != null) return InputCtx.getActivated();
+        if (InputCtx != 0) return RustImeLibrary.isInputContextActivated(InputCtx);
         else return false;
     }
 
     public static void setActivated(boolean activated) {
-        if (InputCtx == null) {
+        if (InputCtx == 0) {
             if (activated) {
-                LOG.warn("InputContext is null. Attempting to recreate it...");
+                LOG.warn("InputContext is 0. Attempting to recreate it...");
                 createInputCtx();
-                if (InputCtx == null) {
+                if (InputCtx == 0) {
                     LOG.error("Failed to recreate InputContext. IME will be unavailable.");
                     return;
                 }
@@ -381,7 +389,7 @@ public class Internal {
         }
 
         try {
-            InputCtx.setActivated(activated);
+            RustImeLibrary.setInputContextActivated(InputCtx, activated);
             IngameIME_Forge.logDebugInfo("IM active state: {}", activated);
         } catch (Throwable t) {
             LOG.error("Failed to set IME active state. This indicates the InputContext may be stale. Attempting to recover.", t);
@@ -393,10 +401,10 @@ public class Internal {
                 LOG.debug("Recreating new InputContext...");
                 createInputCtx();
 
-                if (InputCtx != null) {
+                if (InputCtx != 0) {
                     LOG.info("Recovery successful. Retrying setActivated...");
                     try {
-                        InputCtx.setActivated(activated);
+                        RustImeLibrary.setInputContextActivated(InputCtx, activated);
                         LOG.debug("IM active state after recovery: {}", activated);
                     } catch (Throwable retryError) {
                         LOG.error("Failed to set active state even after recovery.", retryError);

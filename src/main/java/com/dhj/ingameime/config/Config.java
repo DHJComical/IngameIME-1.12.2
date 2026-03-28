@@ -13,7 +13,7 @@ public class Config {
 
     private static Configuration config;
 
-    public static String API_Windows = "TextServiceFramework";
+    public static String API_Windows = "Imm32";
     public static boolean UiLess_Windows = true;
 
     public static boolean TurnOffOnMouseMove = true;
@@ -36,8 +36,8 @@ public class Config {
                 CATEGORIES[0],
                 "Windows",
                 API_Windows,
-                "Config the API to use on Windows platform. \nAvailable: TextServiceFramework, Imm32"
-        ).setLanguageKey(PREFIX + CATEGORIES[0] + ".windows").setValidValues(new String[]{"TextServiceFramework", "Imm32"}).setRequiresMcRestart(true);
+                "Config the API to use on Windows platform. \nNOTE: Rust version only supports Imm32.\nAvailable: Imm32"
+        ).setLanguageKey(PREFIX + CATEGORIES[0] + ".windows").setValidValues(new String[]{"Imm32"}).setRequiresMcRestart(true);
         if (Arrays.stream(P_API_Windows.getValidValues()).noneMatch(it -> it.equals(P_API_Windows.getString()))) {
             P_API_Windows.set(P_API_Windows.getDefault());
         }

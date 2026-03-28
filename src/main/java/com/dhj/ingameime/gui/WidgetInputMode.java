@@ -1,6 +1,5 @@
 package com.dhj.ingameime.gui;
 
-import ingameime.InputMode;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 
@@ -10,13 +9,13 @@ import static com.dhj.ingameime.config.Config.NativeModeText;
 public class WidgetInputMode extends Widget {
     public final long ActiveTime = 3000;
     private long LastActive = 0;
-    private InputMode Mode = InputMode.AlphaNumeric;
+    private boolean isNativeMode = false;  // false=Alpha, true=Native
 
     public WidgetInputMode() {
         DrawInline = false;
         updateThemeColors();
     }
-    
+
     @Override
     protected void updateThemeColors() {
         super.updateThemeColors();
@@ -32,8 +31,8 @@ public class WidgetInputMode extends Widget {
         else LastActive = 0;
     }
 
-    public void setMode(InputMode mode) {
-        Mode = mode;
+    public void setMode(boolean nativeMode) {
+        isNativeMode = nativeMode;
         setActive(true);
         isDirty = true;
         layout();
@@ -44,10 +43,7 @@ public class WidgetInputMode extends Widget {
         if (!isDirty) return;
         FontRenderer font = Minecraft.getMinecraft().fontRenderer;
         Height = font.FONT_HEIGHT;
-        if (Mode == InputMode.AlphaNumeric)
-            Width = font.getStringWidth(AlphaModeText);
-        else
-            Width = font.getStringWidth(NativeModeText);
+        Width = font.getStringWidth(isNativeMode ? NativeModeText : AlphaModeText);
         super.layout();
     }
 
@@ -56,9 +52,7 @@ public class WidgetInputMode extends Widget {
         if (!isActive()) return;
         if (isDirty) layout();
         super.draw();
-        if (Mode == InputMode.AlphaNumeric)
-            Minecraft.getMinecraft().fontRenderer.drawString(AlphaModeText, X + Padding, Y + Padding, TextColor);
-        else
-            Minecraft.getMinecraft().fontRenderer.drawString(NativeModeText, X + Padding, Y + Padding, TextColor);
+        String text = isNativeMode ? NativeModeText : AlphaModeText;
+        Minecraft.getMinecraft().fontRenderer.drawString(text, X + Padding, Y + Padding, TextColor);
     }
 }
