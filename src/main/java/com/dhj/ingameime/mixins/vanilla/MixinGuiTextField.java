@@ -24,6 +24,15 @@ public abstract class MixinGuiTextField {
     private void onSetFocus(boolean isFocusedIn, CallbackInfo ci) {
         GuiTextField self = (GuiTextField) (Object) this;
         try {
+            GuiScreen currentScreen = Minecraft.getMinecraft().currentScreen;
+            if (currentScreen != null) {
+                String screenClassName = currentScreen.getClass().getName();
+                if ("journeymap.client.ui.fullscreen.Fullscreen".equals(screenClassName)
+                    && !ingameime$isJourneyMapSearchField(self, currentScreen)) {
+                    return;
+                }
+            }
+
             VanillaTextFieldControl.onFocusChange(self, isFocusedIn);
         } catch (Throwable t) {
             IngameIME_Forge.LOG.error(
@@ -91,5 +100,24 @@ public abstract class MixinGuiTextField {
             return false;
         }
         return ((AccessorGuiChat) currentScreen).getInputField() == self;
+    }
+
+    @Unique
+    private boolean ingameime$isJourneyMapSearchField(GuiTextField field, GuiScreen screen) {
+        try {
+            java.lang.reflect.Field fieldX = screen.getClass().getDeclaredField("searchTextX");
+            fieldX.setAccessible(true);
+            Object searchTextX = fieldX.get(screen);
+            if (searchTextX == field) {
+                return true;
+            }
+
+            java.lang.reflect.Field fieldZ = screen.getClass().getDeclaredField("searchTextZ");
+            fieldZ.setAccessible(true);
+            Object searchTextZ = fieldZ.get(screen);
+            return searchTextZ == field;
+        } catch (Exception ignored) {
+            return false;
+        }
     }
 }
