@@ -51,6 +51,7 @@ dependencies {
     implementation rfg.deobf('curse.maven:better-questing-unofficial-629629:7421294')
     implementation rfg.deobf("curse.maven:antique-atlas-227795:2823030")
     implementation rfg.deobf("curse.maven:bibliocraft-228027:3647708")
+    implementation rfg.deobf("curse.maven:journeymap-32274:5172461")
     compileOnly 'org.lwjgl:lwjgl-glfw:3.3.1'
     compileOnly 'org.lwjgl:lwjgl-glfw:3.3.1:natives-windows'
     
