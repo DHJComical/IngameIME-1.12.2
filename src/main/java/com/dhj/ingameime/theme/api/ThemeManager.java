@@ -60,31 +60,100 @@ public class ThemeManager {
     }
 
     public void scanForNewThemes() {
+        // 扫描新的文件夹格式主题
         File[] folders = themesDir.listFiles(File::isDirectory);
         if (folders != null) {
             for (File f : folders) {
-                if (!themes.containsKey(f.getName())) loadThemeFromFolder(f);
+                if (!f.getName().startsWith(".") && !themes.containsKey(f.getName())) {
+                    loadThemeFromFolder(f);
+                }
+            }
+        }
+        
+        // 扫描新的 JSON 文件格式主题
+        File[] jsonFiles = themesDir.listFiles((dir, name) -> name.endsWith(".json"));
+        if (jsonFiles != null) {
+            for (File f : jsonFiles) {
+                String themeId = f.getName().replace(".json", "");
+                if (!themes.containsKey(themeId)) {
+                    loadThemeFromJsonFile(f);
+                }
             }
         }
     }
 
     private void loadAllFromFolders() {
+        // 加载文件夹格式的主题
         File[] folders = themesDir.listFiles(File::isDirectory);
-        if (folders != null) for (File f : folders) loadThemeFromFolder(f);
+        if (folders != null) {
+            for (File f : folders) {
+                if (!f.getName().startsWith(".")) { // 忽略隐藏文件夹
+                    loadThemeFromFolder(f);
+                }
+            }
+        }
+        
+        // 同时加载直接放置在 themes 目录下的 JSON 文件（兼容旧格式）
+        File[] jsonFiles = themesDir.listFiles((dir, name) -> name.endsWith(".json"));
+        if (jsonFiles != null) {
+            for (File f : jsonFiles) {
+                loadThemeFromJsonFile(f);
+            }
+        }
     }
 
     private void loadThemeFromFolder(File folder) {
+        if (!folder.isDirectory()) {
+            IngameIME_Forge.logDebugInfo("[ThemeManager] Skipping '{}' - not a directory", folder.getName());
+            return;
+        }
+        
         File configFile = new File(folder, "theme.json");
-        if (!configFile.exists()) return;
+        if (!configFile.exists()) {
+            IngameIME_Forge.logDebugInfo("[ThemeManager] Skipping folder '{}' - no theme.json found", folder.getName());
+            return;
+        }
+        
         try (FileReader reader = new FileReader(configFile)) {
             Theme theme = gson.fromJson(reader, Theme.class);
             if (theme != null) {
-                theme.setId(folder.getName());
+                if (theme.getId() == null || theme.getId().isEmpty()) {
+                    theme.setId(folder.getName());
+                }
+                if (theme.getName() == null || theme.getName().isEmpty()) {
+                    theme.setName(folder.getName());
+                }
                 themes.put(theme.getId(), theme);
                 IngameIME_Forge.logDebugInfo("[ThemeManager] Loaded theme: {} ({})", theme.getId(), theme.getName());
+            } else {
+                IngameIME_Forge.logDebugInfo("[ThemeManager] Failed to parse theme from '{}': gson returned null", folder.getName());
             }
         } catch (Exception e) {
-            IngameIME_Forge.logDebugInfo("[ThemeManager] Error loading theme from folder '{}': {}", folder.getName(), e.getMessage());
+            IngameIME_Forge.logDebugInfo("[ThemeManager] Error loading theme from folder '{}': {} - {}", 
+                folder.getName(), e.getClass().getSimpleName(), e.getMessage());
+        }
+    }
+
+    private void loadThemeFromJsonFile(File jsonFile) {
+        try (FileReader reader = new FileReader(jsonFile)) {
+            Theme theme = gson.fromJson(reader, Theme.class);
+            if (theme != null) {
+                // 使用文件名（不含.json）作为主题 ID
+                String themeId = jsonFile.getName().replace(".json", "");
+                if (theme.getId() == null || theme.getId().isEmpty()) {
+                    theme.setId(themeId);
+                }
+                if (theme.getName() == null || theme.getName().isEmpty()) {
+                    theme.setName(themeId);
+                }
+                themes.put(themeId, theme);
+                IngameIME_Forge.logDebugInfo("[ThemeManager] Loaded theme from JSON: {} ({})", theme.getId(), theme.getName());
+            } else {
+                IngameIME_Forge.logDebugInfo("[ThemeManager] Failed to parse theme from JSON file '{}': gson returned null", jsonFile.getName());
+            }
+        } catch (Exception e) {
+            IngameIME_Forge.logDebugInfo("[ThemeManager] Error loading theme from JSON file '{}': {} - {}", 
+                jsonFile.getName(), e.getClass().getSimpleName(), e.getMessage());
         }
     }
 
@@ -144,7 +213,41 @@ public class ThemeManager {
     }
 
     private void ensureStandardThemes() {
-        if (!themes.containsKey("default")) saveCustomTheme(Theme.createCustomTheme("default", "Default Theme"));
+        // 创建默认主题
+        if (!themes.containsKey("default")) {
+            Theme defaultTheme = Theme.createCustomTheme("default", "Default Theme");
+            defaultTheme.setTextColor(0xFF000000);
+            defaultTheme.setBackgroundColor(0xEBEBEBEB);
+            defaultTheme.setIndexColor(0xFF555555);
+            defaultTheme.setSelectedBackgroundColor(0xEBEBEBEB);
+            defaultTheme.setCursorColor(0xFF000000);
+            defaultTheme.setBorderColor(0x80000000);
+            saveCustomTheme(defaultTheme);
+        }
+        
+        // 创建深色主题
+        if (!themes.containsKey("dark")) {
+            Theme darkTheme = Theme.createCustomTheme("dark", "Dark Theme");
+            darkTheme.setTextColor(0xFFFFFFFF);
+            darkTheme.setBackgroundColor(0x80333333);
+            darkTheme.setIndexColor(0xFFAAAAAA);
+            darkTheme.setSelectedBackgroundColor(0x80555555);
+            darkTheme.setCursorColor(0xFFFFFFFF);
+            darkTheme.setBorderColor(0x80FFFFFF);
+            saveCustomTheme(darkTheme);
+        }
+        
+        // 创建浅色主题
+        if (!themes.containsKey("light")) {
+            Theme lightTheme = Theme.createCustomTheme("light", "Light Theme");
+            lightTheme.setTextColor(0xFF000000);
+            lightTheme.setBackgroundColor(0xF0FFFFFF);
+            lightTheme.setIndexColor(0xFF555555);
+            lightTheme.setSelectedBackgroundColor(0xE0EEEEEE);
+            lightTheme.setCursorColor(0xFF000000);
+            lightTheme.setBorderColor(0x80000000);
+            saveCustomTheme(lightTheme);
+        }
     }
 
     public void setThemeAndNotify(String id) {

@@ -148,6 +148,8 @@ public class ThemeEditorGui extends GuiScreen {
 
     private void loadThemeList() {
         themeIds.clear();
+        // 自动扫描新主题（包括手动导入的第三方主题）
+        themeManager.scanForNewThemes();
         Map<String, Theme> availableThemes = themeManager.getAvailableThemes();
         themeIds.addAll(availableThemes.keySet());
 

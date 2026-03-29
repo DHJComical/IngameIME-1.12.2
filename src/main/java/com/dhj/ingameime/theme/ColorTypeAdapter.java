@@ -25,12 +25,29 @@ public class ColorTypeAdapter extends TypeAdapter<Number> {
             return 0;
         }
 
-        String hex = in.nextString();
-        try {
-            hex = hex.replace("#", "").replace("0x", "").replace("0X", "");
-            return (int) Long.parseLong(hex, 16);
-        } catch (NumberFormatException e) {
-            return 0xFF000000;
+        String hex;
+        // 处理数字类型（包括十进制负数和正数）
+        if (in.peek() == JsonToken.NUMBER) {
+            long longValue = in.nextLong();
+            return (int) longValue;
+        } else {
+            // 处理字符串类型（十六进制格式）
+            hex = in.nextString();
+            try {
+                // 移除所有可能的空白字符和引号
+                hex = hex.trim().replace("\"", "").replace("'", "");
+                // 移除十六进制前缀
+                if (hex.toLowerCase().startsWith("0x")) {
+                    hex = hex.substring(2);
+                } else if (hex.startsWith("#")) {
+                    hex = hex.substring(1);
+                }
+                // 处理可能的前导 0x（如果还有残留）
+                hex = hex.replace("0x", "").replace("0X", "");
+                return (int) Long.parseLong(hex, 16);
+            } catch (NumberFormatException e) {
+                return 0xFF000000;
+            }
         }
     }
 }

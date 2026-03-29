@@ -30,6 +30,9 @@ public class ThemeSelectionGui extends GuiScreen {
 
     @Override
     public void initGui() {
+        // 扫描新主题（包括手动导入的第三方主题）
+        ThemeManager.getInstance().scanForNewThemes();
+        
         // Load available themes from manager
         themes.clear();
         Map<String, Theme> map = ThemeManager.getInstance().getAvailableThemes();

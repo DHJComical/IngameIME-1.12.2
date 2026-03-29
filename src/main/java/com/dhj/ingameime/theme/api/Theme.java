@@ -1,6 +1,7 @@
 package com.dhj.ingameime.theme.api;
 
 import com.dhj.ingameime.theme.ColorTypeAdapter;
+import com.dhj.ingameime.theme.HexIntegerTypeAdapter;
 import com.google.gson.annotations.JsonAdapter;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,9 +12,14 @@ public class Theme {
 
     @JsonAdapter(ColorTypeAdapter.class)
     private int textColor, backgroundColor, indexColor, selectedBackgroundColor, cursorColor, borderColor;
+    
+    @JsonAdapter(HexIntegerTypeAdapter.class)
     private int padding, candidatePadding, borderWidth;
-    private String textureFile = "";
+    
+    @JsonAdapter(HexIntegerTypeAdapter.class)
     private int u = 0, v = 0, sliceSize = 0, cornerSize = 0, textureWidth = 256, textureHeight = 256;
+    
+    private String textureFile = "";
     private List<ThemeDecoration> decorations = new ArrayList<>();
     public Theme() {}
 
