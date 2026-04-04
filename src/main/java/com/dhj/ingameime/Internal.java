@@ -208,7 +208,7 @@ public class Internal {
             LOG.info("InputContext has created!");
             LOG.info("Rust IME library version: {}", RustImeLibrary.getVersion());
             try {
-                RustImeLibrary.initLogger();
+                RustImeLibrary.initLogger(LOG);
                 LOG.info("Rust logger initialized, forwarding to Log4j");
             } catch (Throwable e) {
                 LOG.warn("Rust logger bridge initialization failed: {}", e.getClass().getSimpleName());

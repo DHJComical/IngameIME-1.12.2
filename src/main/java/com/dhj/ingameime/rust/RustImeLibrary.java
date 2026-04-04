@@ -1,7 +1,5 @@
 package com.dhj.ingameime.rust;
 
-import com.dhj.ingameime.IngameIME_Forge;
-
 /**
  * Rust-based IngameIME native library interface.
  */
@@ -93,29 +91,32 @@ public class RustImeLibrary {
         rust_ime_library_set_debug_logging(enabled);
     }
 
+    /**
+     * Initialize Rust logger with Java's Log4j logger.
+     * This forwards Rust logs to Java's logger.
+     */
     public static native void rust_ime_library_init_logger(Object logger);
 
-    public static void initLogger() {
-        rust_ime_library_init_logger(new LoggerWrapper());
+    public static void initLogger(org.apache.logging.log4j.Logger logger) {
+        // Wrap logger in a simple object that Rust can call methods on
+        rust_ime_library_init_logger(new LoggerWrapper(logger));
     }
 
+    /**
+     * Wrapper to expose Log4j logger methods to JNI
+     */
     @SuppressWarnings("unused")
     public static class LoggerWrapper {
-        public void info(String msg) {
-            IngameIME_Forge.logDebugInfo("[Rust] {}", msg);
+        private final org.apache.logging.log4j.Logger logger;
+
+        public LoggerWrapper(org.apache.logging.log4j.Logger logger) {
+            this.logger = logger;
         }
 
-        public void debug(String msg) {
-            IngameIME_Forge.logDebugInfo("[Rust] {}", msg);
-        }
-
-        public void warn(String msg) {
-            IngameIME_Forge.LOG.warn("[Rust] {}", msg);
-        }
-
-        public void error(String msg) {
-            IngameIME_Forge.LOG.error("[Rust] {}", msg);
-        }
+        public void info(String msg) { logger.info(msg); }
+        public void debug(String msg) { logger.debug(msg); }
+        public void warn(String msg) { logger.warn(msg); }
+        public void error(String msg) { logger.error(msg); }
     }
 
     public interface CommitCallback {
