@@ -285,77 +285,65 @@ public class Internal {
         }
 
         // Setup callbacks
-        preEditCallback = new RustImeLibrary.PreEditCallback() {
-            @Override
-            public void onPreEdit(int state, String content, int cursor) {
-                try {
-                    if (state == 0) { // Begin
-                        ClientProxy.Screen.WInputMode.setActive(false);
-                    }
-                    if (content != null) {
-                        ClientProxy.Screen.PreEdit.setContent(content, cursor);
-                    } else {
-                        ClientProxy.Screen.PreEdit.setContent(null, -1);
-                    }
-                } catch (Throwable e) {
-                    LOG.error("Exception in PreEdit callback", e);
+        preEditCallback = (state, content, cursor) -> {
+            try {
+                if (state == 0) { // Begin
+                    ClientProxy.Screen.WInputMode.setActive(false);
                 }
+                if (content != null) {
+                    ClientProxy.Screen.PreEdit.setContent(content, cursor);
+                } else {
+                    ClientProxy.Screen.PreEdit.setContent(null, -1);
+                }
+            } catch (Throwable e) {
+                LOG.error("Exception in PreEdit callback", e);
             }
         };
 
-        commitCallback = new RustImeLibrary.CommitCallback() {
-            @Override
-            public void onCommit(String text) {
-                try {
-                    Minecraft.getMinecraft().addScheduledTask(() -> {
-                        try {
-                            IMStates.getActiveControl().writeText(text);
-                        } catch (Throwable e) {
-                            LOG.error("Exception in Commit callback", e);
-                        }
-                    });
-                } catch (Throwable e) {
-                    LOG.error("Exception scheduling Commit task", e);
-                }
-            }
-        };
-
-        candidateListCallback = new RustImeLibrary.CandidateListCallback() {
-            @Override
-            public void onCandidateList(int state, String[] candidates, int selected) {
-                try {
-                    if (candidates != null) {
-                        LOG.debug("CandidateList callback: received {} candidates, selected={}", candidates.length, selected);
-                        // Split candidates by whitespace and flatten the list
-                        List<String> flattened = getStrings(candidates);
-                        LOG.debug("Flattened to {} candidates", flattened.size());
-                        for (int i = 0; i < flattened.size(); i++) {
-                            LOG.debug("  [{}] {}", i, flattened.get(i));
-                        }
-                        // Apply max candidates limit
-                        if (flattened.size() > Config.MaxCandidates) {
-                            flattened = new ArrayList<>(flattened.subList(0, Config.MaxCandidates));
-                            LOG.debug("Truncated to {} candidates", flattened.size());
-                        }
-                        ClientProxy.Screen.CandidateList.setContent(flattened, selected);
-                    } else {
-                        ClientProxy.Screen.CandidateList.setContent(null, -1);
+        commitCallback = text -> {
+            try {
+                Minecraft.getMinecraft().addScheduledTask(() -> {
+                    try {
+                        IMStates.getActiveControl().writeText(text);
+                    } catch (Throwable e) {
+                        LOG.error("Exception in Commit callback", e);
                     }
-                } catch (Throwable e) {
-                    LOG.error("Exception in CandidateList callback", e);
-                }
+                });
+            } catch (Throwable e) {
+                LOG.error("Exception scheduling Commit task", e);
             }
         };
 
-        inputModeCallback = new RustImeLibrary.InputModeCallback() {
-            @Override
-            public void onInputModeChanged(int mode) {
-                try {
-                    // mode: 0=Alpha, 1=Native, 2=Unsupported
-                    ClientProxy.Screen.WInputMode.setMode(mode == 1);
-                } catch (Throwable e) {
-                    LOG.error("Exception in InputMode callback", e);
+        candidateListCallback = (state, candidates, selected) -> {
+            try {
+                if (candidates != null) {
+                    LOG.debug("CandidateList callback: received {} candidates, selected={}", candidates.length, selected);
+                    // Split candidates by whitespace and flatten the list
+                    List<String> flattened = getStrings(candidates);
+                    LOG.debug("Flattened to {} candidates", flattened.size());
+                    for (int i = 0; i < flattened.size(); i++) {
+                        LOG.debug("  [{}] {}", i, flattened.get(i));
+                    }
+                    // Apply max candidates limit
+                    if (flattened.size() > Config.MaxCandidates) {
+                        flattened = new ArrayList<>(flattened.subList(0, Config.MaxCandidates));
+                        LOG.debug("Truncated to {} candidates", flattened.size());
+                    }
+                    ClientProxy.Screen.CandidateList.setContent(flattened, selected);
+                } else {
+                    ClientProxy.Screen.CandidateList.setContent(null, -1);
                 }
+            } catch (Throwable e) {
+                LOG.error("Exception in CandidateList callback", e);
+            }
+        };
+
+        inputModeCallback = mode -> {
+            try {
+                // mode: 0=Alpha, 1=Native, 2=Unsupported
+                ClientProxy.Screen.WInputMode.setMode(mode == 1);
+            } catch (Throwable e) {
+                LOG.error("Exception in InputMode callback", e);
             }
         };
 
