@@ -36,7 +36,7 @@ public class Config {
                 CATEGORIES[0],
                 "Windows",
                 API_Windows,
-                "Config the API to use on Windows platform. \nAvailable: TextServiceFramework, Imm32"
+                "Config the API to use on Windows platform. \nAvailable: Imm32, TextServiceFramework"
         ).setLanguageKey(PREFIX + CATEGORIES[0] + ".windows").setValidValues(new String[]{"TextServiceFramework", "Imm32"}).setRequiresMcRestart(true);
         if (Arrays.stream(P_API_Windows.getValidValues()).noneMatch(it -> it.equals(P_API_Windows.getString()))) {
             P_API_Windows.set(P_API_Windows.getDefault());
