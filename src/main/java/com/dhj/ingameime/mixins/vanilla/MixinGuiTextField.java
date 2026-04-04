@@ -20,10 +20,19 @@ public abstract class MixinGuiTextField {
         GuiTextField self = (GuiTextField) (Object) this;
 
         try {
+            GuiScreen currentScreen = Minecraft.getMinecraft().currentScreen;
+            if (currentScreen != null) {
+                String screenClassName = currentScreen.getClass().getName();
+                if (screenClassName.equals("journeymap.client.ui.fullscreen.Fullscreen")) {
+                    if (!isJourneyMapSearchField(self, currentScreen)) {
+                        return;
+                    }
+                }
+            }
+            
             if (Loader.isModLoaded(JEITextFieldControl.JEI_MOD_ID) && JEITextFieldControl.onFocusChange(self, isFocusedIn)) {
                 return;
             }
-            GuiScreen currentScreen = Minecraft.getMinecraft().currentScreen;
             if (currentScreen != null && currentScreen.getClass().getName().startsWith("hunternif.mc.atlas")) {
                 DirectTextFieldControl.onFocusChange(self, isFocusedIn);
                 return;
@@ -33,5 +42,34 @@ public abstract class MixinGuiTextField {
             IngameIME_Forge.LOG.error("IngameIME failed to handle focus change. This is a compatibility issue but the game was prevented from crashing.", t);
             System.err.println("IngameIME caught an error during focus change, preventing a crash: " + t.getMessage());
         }
+    }
+    
+    /**
+     * 检查是否是 JourneyMap 的搜索框
+     * 只有搜索框才应该唤起输入法
+     */
+    private boolean isJourneyMapSearchField(GuiTextField field, GuiScreen screen) {
+        try {
+            // 检查字段是否是搜索框（searchTextX 或 searchTextZ）
+            // 通过反射获取 screen 中的 searchTextX 和 searchTextZ 字段
+            java.lang.reflect.Field fieldX = screen.getClass().getDeclaredField("searchTextX");
+            fieldX.setAccessible(true);
+            Object searchTextX = fieldX.get(screen);
+            
+            if (searchTextX != null && searchTextX == field) {
+                return true;
+            }
+            
+            java.lang.reflect.Field fieldZ = screen.getClass().getDeclaredField("searchTextZ");
+            fieldZ.setAccessible(true);
+            Object searchTextZ = fieldZ.get(screen);
+            
+            if (searchTextZ != null && searchTextZ == field) {
+                return true;
+            }
+        } catch (Exception e) {
+            // 反射失败，默认允许
+        }
+        return false;
     }
 }
