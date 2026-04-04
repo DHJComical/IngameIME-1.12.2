@@ -6,6 +6,7 @@ import com.dhj.ingameime.theme.api.ThemeManager;
 import net.minecraft.client.Minecraft;
 
 import java.util.List;
+import java.util.Objects;
 
 // 从 1.17 的 IngameIME 移植个人认为更好看的 UI (已适配 1.12.2)
 public class WidgetCandidateList extends Widget {
@@ -28,12 +29,18 @@ public class WidgetCandidateList extends Widget {
     }
 
     public void setContent(List<String> candidates, int selected) {
-        IngameIME_Forge.logDebugInfo("[CandidateList] setContent: {} candidates, selected={}", candidates != null ? candidates.size() : 0, selected);
-        if (candidates != null) {
-            for (int i = 0; i < candidates.size(); i++) {
-                IngameIME_Forge.logDebugInfo("[CandidateList]   [{}] {}", i, candidates.get(i));
+        // Check if content or selection changed to avoid spam
+        boolean changed = !Objects.equals(this.Candidates, candidates) || this.Selected != selected;
+
+        if (changed) {
+            IngameIME_Forge.logDebugInfo("[Java Candidates] Received: {} items, selected={}", candidates != null ? candidates.size() : 0, selected);
+            if (candidates != null) {
+                for (int i = 0; i < candidates.size(); i++) {
+                    IngameIME_Forge.logDebugInfo("[Java Candidates]   [{}] {}", i, candidates.get(i));
+                }
             }
         }
+        
         Candidates = candidates;
         Selected = selected;
         isDirty = true;
@@ -76,7 +83,6 @@ public class WidgetCandidateList extends Widget {
 
         super.draw();
 
-        IngameIME_Forge.logDebugInfo("[CandidateList] Drawing {} candidates", Candidates.size());
         Theme theme = ThemeManager.getInstance().getCurrentTheme();
         int drawX = X + Padding;
         int drawY = Y + Padding;

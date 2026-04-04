@@ -7,6 +7,10 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.ResourceLocation;
 
 public class ThemeRenderer {
+    // Throttle counter to prevent log spam in debug mode
+    private static int logThrottle = 0;
+    private static final int LOG_INTERVAL = 60; // Log every 60 frames (~1 second at 60 FPS)
+
     public static void render(Theme theme, int x, int y, int w, int h, String componentId) {
         if (theme == null) return;
         drawBackground(theme, x, y, w, h);
@@ -17,12 +21,15 @@ public class ThemeRenderer {
                 }
             }
         }
+        logThrottle++;
     }
 
     private static void drawBackground(Theme theme, int x, int y, int w, int h) {
         ResourceLocation texture = ThemeManager.getInstance().getThemeTexture(theme.getId());
 
-        IngameIME_Forge.logDebugInfo(String.format("[ThemeRenderer] Rendering ID: %s | Texture: %b | Slice: %d", theme.getId(), (texture != null), theme.getSliceSize()));
+        if (logThrottle % LOG_INTERVAL == 0) {
+            IngameIME_Forge.logDebugInfo(String.format("[ThemeRenderer] Rendering ID: %s | Texture: %b | Slice: %d", theme.getId(), (texture != null), theme.getSliceSize()));
+        }
 
         if (texture != null && theme.getSliceSize() > 0) {
             draw9Slice(texture, x, y, w, h, theme);
@@ -39,7 +46,9 @@ public class ThemeRenderer {
         ResourceLocation res = ThemeManager.getInstance().getThemeTexture(key);
 
         if (res == null) {
-            IngameIME_Forge.logDebugInfo("[ThemeRenderer] Decoration texture not found: {}", key);
+            if (logThrottle % LOG_INTERVAL == 0) {
+                IngameIME_Forge.logDebugInfo("[ThemeRenderer] Decoration texture not found: {}", key);
+            }
             return;
         }
 
@@ -62,8 +71,10 @@ public class ThemeRenderer {
         int dx = ax + deco.offsetX - (deco.imageAnchor % 3) * dw / 2;
         int dy = ay + deco.offsetY - (deco.imageAnchor / 3) * dh / 2;
 
-        IngameIME_Forge.logDebugInfo(String.format("[ThemeRenderer] Draw Deco: File=%s | Pos=[%d,%d] | Size=[%d,%d]",
-                deco.textureFile, dx, dy, dw, dh));
+        if (logThrottle % LOG_INTERVAL == 0) {
+            IngameIME_Forge.logDebugInfo(String.format("[ThemeRenderer] Draw Deco: File=%s | Pos=[%d,%d] | Size=[%d,%d]",
+                    deco.textureFile, dx, dy, dw, dh));
+        }
 
         Minecraft.getMinecraft().getTextureManager().bindTexture(res);
         GlStateManager.enableBlend();
