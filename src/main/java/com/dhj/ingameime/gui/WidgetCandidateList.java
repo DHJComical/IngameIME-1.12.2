@@ -1,16 +1,14 @@
 package com.dhj.ingameime.gui;
 
+import com.dhj.ingameime.IngameIME_Forge;
 import com.dhj.ingameime.theme.api.Theme;
 import com.dhj.ingameime.theme.api.ThemeManager;
 import net.minecraft.client.Minecraft;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.util.List;
 
 // 从 1.17 的 IngameIME 移植个人认为更好看的 UI (已适配 1.12.2)
 public class WidgetCandidateList extends Widget {
-    private static final Logger LOG = LogManager.getLogger("IngameIME-CandidateList");
     private final CandidateEntry drawItem = new CandidateEntry();
     private List<String> Candidates = null;
     private int Selected = -1;
@@ -30,10 +28,10 @@ public class WidgetCandidateList extends Widget {
     }
 
     public void setContent(List<String> candidates, int selected) {
-        LOG.debug("setContent: {} candidates, selected={}", candidates != null ? candidates.size() : 0, selected);
+        IngameIME_Forge.logDebugInfo("[CandidateList] setContent: {} candidates, selected={}", candidates != null ? candidates.size() : 0, selected);
         if (candidates != null) {
             for (int i = 0; i < candidates.size(); i++) {
-                LOG.debug("  [{}] {}", i, candidates.get(i));
+                IngameIME_Forge.logDebugInfo("[CandidateList]   [{}] {}", i, candidates.get(i));
             }
         }
         Candidates = candidates;
@@ -78,7 +76,7 @@ public class WidgetCandidateList extends Widget {
 
         super.draw();
 
-        LOG.debug("Drawing {} candidates", Candidates.size());
+        IngameIME_Forge.logDebugInfo("[CandidateList] Drawing {} candidates", Candidates.size());
         Theme theme = ThemeManager.getInstance().getCurrentTheme();
         int drawX = X + Padding;
         int drawY = Y + Padding;
@@ -125,7 +123,7 @@ public class WidgetCandidateList extends Widget {
         }
 
         int getTotalWidth() {
-            // 改为类似于 1.17 的 padding
+            // 改为类似�?1.17 �?padding
             return 2 + getIndexAreaWidth() + getTextWidth() + 2;
         }
 
@@ -134,7 +132,7 @@ public class WidgetCandidateList extends Widget {
         }
 
         void draw(int x, int y, int textColor, Theme theme) {
-            // 改为类似于 1.17 的 padding
+            // 改为类似�?1.17 �?padding
             int offsetX = x + 2;
 
             String idx = Integer.toString(index);

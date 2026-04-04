@@ -271,6 +271,11 @@ public class Internal {
             }
             LOG.info("InputContext has created!");
             LOG.info("Rust IME library version: {}", RustImeLibrary.getVersion());
+            
+            // Initialize Rust logger with Java's Log4j
+            RustImeLibrary.initLogger(LOG);
+            LOG.info("Rust logger initialized, forwarding to Log4j");
+            
             // Set max candidates from config
             RustImeLibrary.setMaxCandidates(InputCtx, Config.MaxCandidates);
             LOG.info("Max candidates set to: {}", Config.MaxCandidates);
