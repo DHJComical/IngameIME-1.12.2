@@ -1,4 +1,4 @@
-package com.dhj.ingameime.rust;
+﻿package com.dhj.ingameime.rust;
 
 import com.dhj.ingameime.IngameIME_Forge;
 
@@ -35,6 +35,18 @@ public class RustImeLibrary {
 
     public static int getInputMode(long inputCtx, int mode) {
         return rust_ime_library_get_input_mode(inputCtx, mode);
+    }
+
+    public static native void rust_ime_library_force_alpha_mode(long contextPtr);
+
+    public static void forceAlphaMode(long contextPtr) {
+        rust_ime_library_force_alpha_mode(contextPtr);
+    }
+
+    public static native void rust_ime_library_force_native_mode(long contextPtr);
+
+    public static void forceNativeMode(long contextPtr) {
+        rust_ime_library_force_native_mode(contextPtr);
     }
 
     public static native void rust_ime_library_set_pre_edit_rect(long contextPtr, int x, int y, int width, int height);

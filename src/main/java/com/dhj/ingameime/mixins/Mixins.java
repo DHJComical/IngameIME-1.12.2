@@ -15,6 +15,7 @@ public enum Mixins implements IMixins {
         .setPhase(Phase.EARLY)
         .addClientMixins("MixinMinecraft")
         .addClientMixins("MixinGuiTextField")
+        .addClientMixins("AccessorGuiChat")
         .addClientMixins("AccessorGuiTextField")
         .addClientMixins("AccessorGuiScreen")
         .addClientMixins("MixinGuiSlot")
