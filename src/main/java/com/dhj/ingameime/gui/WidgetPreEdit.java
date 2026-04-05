@@ -2,9 +2,9 @@ package com.dhj.ingameime.gui;
 
 import com.dhj.ingameime.ClientProxy;
 import com.dhj.ingameime.Internal;
+import com.dhj.ingameime.rust.RustImeLibrary;
 import com.dhj.ingameime.theme.api.Theme;
 import com.dhj.ingameime.theme.api.ThemeManager;
-import ingameime.PreEditRect;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.ScaledResolution;
@@ -42,13 +42,8 @@ public class WidgetPreEdit extends Widget {
 
         isDirty = false;
 
-        if (!Internal.LIBRARY_LOADED || Internal.InputCtx == null) return;
-        PreEditRect rect = new PreEditRect();
-        rect.setX(X);
-        rect.setY(Y);
-        rect.setHeight(Height);
-        rect.setWidth(Width);
-        Internal.InputCtx.setPreEditRect(rect);
+        if (!Internal.LIBRARY_LOADED || Internal.InputCtx == 0) return;
+        RustImeLibrary.setPreEditRect(Internal.InputCtx, X, Y, Width, Height);
     }
 
     @Override

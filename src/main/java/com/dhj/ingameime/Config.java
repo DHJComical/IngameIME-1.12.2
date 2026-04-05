@@ -18,9 +18,10 @@ public class Config {
     public static boolean TurnOffOnMouseMove = true;
 
     public static String AlphaModeText = "A";
-    public static String NativeModeText = "中";
+    public static String NativeModeText = "\u4E2D";
 
     public static boolean DebugLog = false;
+    public static int MaxCandidates = 9;
 
     public static void init(File configFile) {
         if (config == null) {
@@ -76,6 +77,15 @@ public class Config {
                 DebugLog,
                 "Config if print debug log."
         ).setLanguageKey(PREFIX + CATEGORIES[4] + ".debug_log").getBoolean();
+
+        MaxCandidates = config.get(
+                CATEGORIES[2],
+                "MaxCandidates",
+                MaxCandidates,
+                "Maximum number of candidates to display per page.",
+                1,
+                20
+        ).setLanguageKey(PREFIX + CATEGORIES[2] + ".max_candidates").getInt();
 
         // Theme category - just a placeholder to show in config GUI
         // Actual theme configuration is handled by ThemeManager

@@ -1,7 +1,7 @@
 package com.dhj.ingameime.gui;
 
 import com.dhj.ingameime.Internal;
-import ingameime.InputContext;
+import com.dhj.ingameime.rust.RustImeLibrary;
 import net.minecraft.client.renderer.OpenGlHelper;
 import org.lwjgl.opengl.GL11;
 
@@ -12,8 +12,9 @@ public class OverlayScreen extends Widget {
 
     @Override
     public boolean isActive() {
-        InputContext inputCtx = Internal.InputCtx;
-        return inputCtx != null && inputCtx.getActivated();
+        return Internal.LIBRARY_LOADED
+                && Internal.InputCtx != 0
+                && RustImeLibrary.isInputContextActivated(Internal.InputCtx);
     }
 
     @Override

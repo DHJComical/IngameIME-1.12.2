@@ -7,7 +7,13 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.util.ResourceLocation;
 import org.lwjgl.opengl.GL11;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class ThemeRenderer {
+    private static final int LOG_INTERVAL_FRAMES = 60;
+    private static final Map<String, Integer> LOG_FRAME_COOLDOWNS = new HashMap<>();
+
     public static void render(Theme theme, int x, int y, int w, int h, String componentId) {
         if (theme == null) return;
         drawBackground(theme, x, y, w, h);
@@ -23,7 +29,10 @@ public class ThemeRenderer {
     private static void drawBackground(Theme theme, int x, int y, int w, int h) {
         ResourceLocation texture = ThemeManager.getInstance().getThemeTexture(theme.getId());
 
-        IngameIME_Forge.logDebugInfo(String.format("[ThemeRenderer] Rendering ID: %s | Texture: %b | Slice: %d", theme.getId(), (texture != null), theme.getSliceSize()));
+        logDebugWithFrameLimiter(
+                "theme_renderer_background_" + theme.getId(),
+                "[ThemeRenderer] Rendering ID: {} | Texture: {} | Slice: {}",
+                theme.getId(), texture != null, theme.getSliceSize());
 
         if (texture != null && theme.getSliceSize() > 0) {
             draw9Slice(texture, x, y, w, h, theme);
@@ -40,7 +49,10 @@ public class ThemeRenderer {
         ResourceLocation res = ThemeManager.getInstance().getThemeTexture(key);
 
         if (res == null) {
-            IngameIME_Forge.logDebugInfo("[ThemeRenderer] Decoration texture not found: {}", key);
+            logDebugWithFrameLimiter(
+                    "theme_renderer_deco_missing_" + key,
+                    "[ThemeRenderer] Decoration texture not found: {}",
+                    key);
             return;
         }
 
@@ -61,8 +73,10 @@ public class ThemeRenderer {
         int dx = ax + deco.offsetX - (deco.imageAnchor % 3) * dw / 2;
         int dy = ay + deco.offsetY - (deco.imageAnchor / 3) * dh / 2;
 
-        IngameIME_Forge.logDebugInfo(String.format("[ThemeRenderer] Draw Deco: File=%s | Pos=[%d,%d] | Size=[%d,%d]",
-                deco.textureFile, dx, dy, dw, dh));
+        logDebugWithFrameLimiter(
+                "theme_renderer_deco_draw_" + key,
+                "[ThemeRenderer] Draw Deco: File={} | Pos=[{},{}] | Size=[{},{}]",
+                deco.textureFile, dx, dy, dw, dh);
 
         Minecraft.getMinecraft().getTextureManager().bindTexture(res);
         GL11.glEnable(GL11.GL_BLEND);
@@ -157,5 +171,15 @@ public class ThemeRenderer {
      */
     private static void drawRect(int x1, int y1, int x2, int y2, int color) {
         Gui.drawRect(x1, y1, x2, y2, color);
+    }
+
+    private static void logDebugWithFrameLimiter(String key, String message, Object... params) {
+        Integer cooldown = LOG_FRAME_COOLDOWNS.get(key);
+        if (cooldown == null || cooldown <= 0) {
+            IngameIME_Forge.logDebugInfo(message, params);
+            LOG_FRAME_COOLDOWNS.put(key, LOG_INTERVAL_FRAMES - 1);
+            return;
+        }
+        LOG_FRAME_COOLDOWNS.put(key, cooldown - 1);
     }
 }
