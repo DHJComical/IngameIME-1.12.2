@@ -7,6 +7,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(value = PanelTextField.class, remap = false)
@@ -19,6 +20,20 @@ public abstract class MixinPanelTextField {
 
     @Inject(method = "onMouseClick", at = @At("RETURN"), remap = false)
     private void onMouseClickPost(int mx, int my, int button, CallbackInfoReturnable<Boolean> cir) {
+        syncFocusState();
+    }
+
+    @Inject(method = "lockFocus", at = @At("RETURN"), remap = false)
+    private void onLockFocusPost(boolean state, CallbackInfo ci) {
+        syncFocusState();
+    }
+
+    @Inject(method = "drawPanel", at = @At("HEAD"), remap = false)
+    private void onDrawPanelPre(int mx, int my, float partialTick, CallbackInfo ci) {
+        syncFocusState();
+    }
+
+    private void syncFocusState() {
         try {
             if (this.isFocused != lastFocusState) {
                 PanelTextFieldControl.onFocusChange(this, this.isFocused);
