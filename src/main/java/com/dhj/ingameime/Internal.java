@@ -24,6 +24,8 @@ public class Internal {
     static RustImeLibrary.CommitCallback commitCallback = null;
     static RustImeLibrary.CandidateListCallback candidateListCallback = null;
     static RustImeLibrary.InputModeCallback inputModeCallback = null;
+    private static boolean forceAlphaApiUnavailable = false;
+    private static boolean forceNativeApiUnavailable = false;
 
     private static void tryLoadLibrary(String libName) {
         if (!LIBRARY_LOADED) try {
@@ -415,6 +417,34 @@ public class Internal {
     public static boolean getActivated() {
         if (InputCtx != 0) return RustImeLibrary.isInputContextActivated(InputCtx);
         else return false;
+    }
+
+    public static void forceAlphaMode() {
+        if (!LIBRARY_LOADED || InputCtx == 0 || forceAlphaApiUnavailable) {
+            return;
+        }
+        try {
+            RustImeLibrary.forceAlphaMode(InputCtx);
+        } catch (UnsatisfiedLinkError e) {
+            forceAlphaApiUnavailable = true;
+            LOG.warn("Rust force alpha API is unavailable in current native library: {}", e.getClass().getSimpleName());
+        } catch (Throwable t) {
+            LOG.error("Failed to force alpha mode", t);
+        }
+    }
+
+    public static void forceNativeMode() {
+        if (!LIBRARY_LOADED || InputCtx == 0 || forceNativeApiUnavailable) {
+            return;
+        }
+        try {
+            RustImeLibrary.forceNativeMode(InputCtx);
+        } catch (UnsatisfiedLinkError e) {
+            forceNativeApiUnavailable = true;
+            LOG.warn("Rust force native API is unavailable in current native library: {}", e.getClass().getSimpleName());
+        } catch (Throwable t) {
+            LOG.error("Failed to force native mode", t);
+        }
     }
 
     public static void setActivated(boolean activated) {

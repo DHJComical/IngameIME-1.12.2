@@ -65,6 +65,24 @@ public class RustImeLibrary {
     }
 
     /**
+     * Force switch IME to English/alphanumeric mode.
+     */
+    public static native void rust_ime_library_force_alpha_mode(long contextPtr);
+
+    public static void forceAlphaMode(long contextPtr) {
+        rust_ime_library_force_alpha_mode(contextPtr);
+    }
+
+    /**
+     * Force switch IME to native mode.
+     */
+    public static native void rust_ime_library_force_native_mode(long contextPtr);
+
+    public static void forceNativeMode(long contextPtr) {
+        rust_ime_library_force_native_mode(contextPtr);
+    }
+
+    /**
      * Set the preedit rectangle for candidate window positioning.
      */
     public static native void rust_ime_library_set_pre_edit_rect(long contextPtr, int x, int y, int width, int height);

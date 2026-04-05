@@ -8,6 +8,7 @@
   "mixins": [],
   "server": [],
   "client": [
+    "AccessorGuiChat",
     "AccessorGuiScreen",
     "AccessorGuiTextField",
     "MixinGuiTextField",
