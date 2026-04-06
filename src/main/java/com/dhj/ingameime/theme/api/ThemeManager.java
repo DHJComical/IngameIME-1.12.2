@@ -502,7 +502,7 @@ public class ThemeManager {
 
             for (String themeEntry : index.themes) {
                 ResourceLocation themeLocation = parseThemeResourceLocation(
-                    indexResource.getResourceLocation().getResourceDomain(),
+                    RESOURCE_THEME_INDEX.getResourceDomain(),
                     themeEntry);
                 if (themeLocation != null) {
                     loadThemeFromResource(themeLocation);
@@ -511,7 +511,7 @@ public class ThemeManager {
         } catch (Exception e) {
             IngameIME_Forge.logDebugInfo(
                 "[ThemeManager] Failed to parse resource-pack theme index '{}': {} - {}",
-                indexResource.getResourceLocation(),
+                RESOURCE_THEME_INDEX,
                 e.getClass().getSimpleName(),
                 e.getMessage());
         }
@@ -557,8 +557,9 @@ public class ThemeManager {
     }
 
     private void loadThemeFromResource(ResourceLocation location) {
-        try (IResource resource = Minecraft.getMinecraft().getResourceManager().getResource(location);
-             Reader reader = new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8)) {
+        try {
+            IResource resource = Minecraft.getMinecraft().getResourceManager().getResource(location);
+            try (Reader reader = new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8)) {
             Theme theme = gson.fromJson(reader, Theme.class);
             if (theme == null) {
                 return;
@@ -593,6 +594,7 @@ public class ThemeManager {
                 theme.getId(),
                 theme.getName(),
                 location);
+            }
         } catch (Exception e) {
             IngameIME_Forge.logDebugInfo(
                 "[ThemeManager] Error loading resource-pack theme '{}': {} - {}",

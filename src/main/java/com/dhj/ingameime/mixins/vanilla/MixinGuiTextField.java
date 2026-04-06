@@ -1,4 +1,4 @@
-﻿package com.dhj.ingameime.mixins.vanilla;
+package com.dhj.ingameime.mixins.vanilla;
 
 import com.dhj.ingameime.IngameIME_Forge;
 import com.dhj.ingameime.Internal;

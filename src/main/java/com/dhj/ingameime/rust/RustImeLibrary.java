@@ -1,4 +1,4 @@
-﻿package com.dhj.ingameime.rust;
+package com.dhj.ingameime.rust;
 
 import com.dhj.ingameime.IngameIME_Forge;
 
