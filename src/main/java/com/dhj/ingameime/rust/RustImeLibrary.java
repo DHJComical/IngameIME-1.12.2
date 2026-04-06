@@ -6,7 +6,22 @@ import com.dhj.ingameime.IngameIME_Forge;
  * Rust-based IngameIME native library interface.
  */
 public class RustImeLibrary {
+    public static final String JNI_BIND_CLASS_PROPERTY = "ingameime.jni.bind_class";
+    public static final String JNI_BIND_CLASS_NAME = RustImeLibrary.class.getName();
 
+    // No static block - library is loaded by Internal.tryLoadLibrary()
+
+    public static String getJniBindClassName() {
+        return JNI_BIND_CLASS_NAME;
+    }
+
+    /**
+     * Create a new input context for Win32.
+     * @param hwnd Window handle
+     * @param api API type (0=TSF, 1=IMM32)
+     * @param uiLess Whether to hide candidate window
+     * @return Context pointer, or 0 if failed
+     */
     public static native long rust_ime_library_create_input_context_win32(long hwnd, int api, boolean uiLess);
 
     public static long createInputContextWin32(long hWnd, int api, boolean uiLessWindows) {
