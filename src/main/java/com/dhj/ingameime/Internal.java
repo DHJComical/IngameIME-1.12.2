@@ -27,8 +27,22 @@ public class Internal {
     private static boolean forceAlphaApiUnavailable = false;
     private static boolean forceNativeApiUnavailable = false;
 
+    private static void prepareRustJniBinding() {
+        String prop = RustImeLibrary.JNI_BIND_CLASS_PROPERTY;
+        String configured = System.getProperty(prop);
+        if (configured != null && !configured.trim().isEmpty()) {
+            LOG.info("Using configured Rust JNI bind class: {}", configured);
+            return;
+        }
+
+        String bindClass = RustImeLibrary.getJniBindClassName();
+        System.setProperty(prop, bindClass);
+        LOG.info("Configured Rust JNI bind class: {}", bindClass);
+    }
+
     private static void tryLoadLibrary(String libName) {
         if (!LIBRARY_LOADED) try {
+            prepareRustJniBinding();
             // Load DLL from resources using System.load() instead of System.loadLibrary()
             // because loadLibrary() adds platform prefixes/suffixes automatically
             InputStream lib = Internal.class.getClassLoader().getResourceAsStream(libName);

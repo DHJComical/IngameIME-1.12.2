@@ -7,8 +7,14 @@ package com.dhj.ingameime.rust;
  * Note: Native library is loaded by Internal class.
  */
 public class RustImeLibrary {
+    public static final String JNI_BIND_CLASS_PROPERTY = "ingameime.jni.bind_class";
+    public static final String JNI_BIND_CLASS_NAME = RustImeLibrary.class.getName();
 
     // No static block - library is loaded by Internal.tryLoadLibrary()
+
+    public static String getJniBindClassName() {
+        return JNI_BIND_CLASS_NAME;
+    }
 
     /**
      * Create a new input context for Win32.
