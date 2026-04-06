@@ -15,14 +15,18 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 public class ThemeManager {
     private static final ResourceLocation RESOURCE_THEME_INDEX = new ResourceLocation("ingameime", "themes/index.json");
     private static final String USER_THEME_PACK_NAME = "IngameIME_UserThemes";
     private static final String THIRD_PARTY_THEME_PACK_NAME = "IngameIME_ThirdPartyThemes";
+    private static final String THEME_ASSET_ROOT = "assets/ingameime/themes/";
 
     private static ThemeManager instance;
 
@@ -32,7 +36,9 @@ public class ThemeManager {
     private final Map<String, Integer[]> textureSizeCache = new HashMap<>();
     private final Map<String, ResourceThemeSource> resourceThemeSources = new HashMap<>();
     private final Map<String, File> userThemeBaseDirs = new HashMap<>();
+    private final Map<String, ZipThemeSource> zipThemeSources = new HashMap<>();
 
+    private final File resourcePacksDir;
     private final File stateDir;
     private final File lastThemeFile;
     private final File userThemePackDir;
@@ -58,8 +64,19 @@ public class ThemeManager {
         }
     }
 
+    private static class ZipThemeSource {
+        final File zipFile;
+        final String basePathInZip;
+
+        ZipThemeSource(File zipFile, String basePathInZip) {
+            this.zipFile = zipFile;
+            this.basePathInZip = basePathInZip;
+        }
+    }
+
     private ThemeManager() {
         File mcDir = Minecraft.getMinecraft().gameDir;
+        this.resourcePacksDir = new File(mcDir, "resourcepacks");
         this.stateDir = new File(mcDir, "config/ingameime");
         this.lastThemeFile = new File(stateDir, "last_theme.txt");
         this.userThemePackDir = new File(mcDir, "resourcepacks/" + USER_THEME_PACK_NAME);
@@ -176,6 +193,7 @@ public class ThemeManager {
         themes.clear();
         clearCache();
         loadAllFromResourcePacks();
+        loadAllFromImportedResourcePackFiles();
         loadAllFromThirdPartyThemePackFiles();
         loadAllFromUserThemePackFiles();
         ensureStandardThemes();
@@ -193,6 +211,7 @@ public class ThemeManager {
         textureSizeCache.clear();
         resourceThemeSources.clear();
         userThemeBaseDirs.clear();
+        zipThemeSources.clear();
     }
 
     public void scanForNewThemes() {
@@ -218,6 +237,71 @@ public class ThemeManager {
         for (File themeFile : collectThemeJsonFiles(thirdPartyThemePackThemesDir)) {
             loadThemeFromLocalPackFile(themeFile, thirdPartyThemePackThemesDir, "third-party-pack");
         }
+    }
+
+    private void loadAllFromImportedResourcePackFiles() {
+        if (!resourcePacksDir.exists()) {
+            return;
+        }
+
+        File[] packs = resourcePacksDir.listFiles();
+        if (packs == null) {
+            return;
+        }
+
+        for (File pack : packs) {
+            if (shouldSkipImportedPack(pack)) {
+                continue;
+            }
+            if (pack.isDirectory()) {
+                loadThemesFromImportedPackDirectory(pack);
+            } else if (pack.isFile() && pack.getName().toLowerCase().endsWith(".zip")) {
+                loadThemesFromImportedPackZip(pack);
+            }
+        }
+    }
+
+    private boolean shouldSkipImportedPack(File pack) {
+        String name = pack.getName();
+        if (name.equalsIgnoreCase(USER_THEME_PACK_NAME) || name.equalsIgnoreCase(THIRD_PARTY_THEME_PACK_NAME)) {
+            return true;
+        }
+        return name.equalsIgnoreCase(USER_THEME_PACK_NAME + ".zip")
+            || name.equalsIgnoreCase(THIRD_PARTY_THEME_PACK_NAME + ".zip");
+    }
+
+    private void loadThemesFromImportedPackDirectory(File packDir) {
+        File themeRoot = new File(packDir, THEME_ASSET_ROOT);
+        if (!themeRoot.exists()) {
+            return;
+        }
+
+        for (File themeFile : collectThemeJsonFiles(themeRoot)) {
+            loadThemeFromLocalPackFile(themeFile, themeRoot, "imported-pack");
+        }
+    }
+
+    private void loadThemesFromImportedPackZip(File zipFile) {
+        try (ZipFile zip = new ZipFile(zipFile)) {
+            Enumeration<? extends ZipEntry> entries = zip.entries();
+            while (entries.hasMoreElements()) {
+                ZipEntry entry = entries.nextElement();
+                String path = normalizeZipPath(entry.getName());
+                if (!entry.isDirectory() && isThemeJsonPath(path)) {
+                    loadThemeFromZipEntry(zipFile, path);
+                }
+            }
+        } catch (Exception e) {
+            IngameIME_Forge.logDebugInfo(
+                "[ThemeManager] Error scanning imported zip pack '{}': {} - {}",
+                zipFile.getAbsolutePath(),
+                e.getClass().getSimpleName(),
+                e.getMessage());
+        }
+    }
+
+    private boolean isThemeJsonPath(String path) {
+        return path.startsWith(THEME_ASSET_ROOT) && path.endsWith("/theme.json");
     }
 
     private List<File> collectThemeJsonFiles(File rootDir) {
@@ -275,16 +359,9 @@ public class ThemeManager {
             }
 
             String fileName = themeFile.getName();
-            String idFromFile = fileName.endsWith(".json")
+            String fileNameWithoutExt = fileName.endsWith(".json")
                 ? fileName.substring(0, fileName.length() - 5)
                 : fileName;
-
-            if (theme.getId() == null || theme.getId().isEmpty()) {
-                theme.setId(idFromFile);
-            }
-            if (theme.getName() == null || theme.getName().isEmpty()) {
-                theme.setName(theme.getId());
-            }
 
             String relativeParent = "";
             File parent = themeFile.getParentFile();
@@ -299,10 +376,18 @@ public class ThemeManager {
                 }
             }
 
+            String idFromFile = deriveFallbackThemeId(fileNameWithoutExt, relativeParent);
+            if (theme.getId() == null || theme.getId().isEmpty()) {
+                theme.setId(idFromFile);
+            }
+            if (theme.getName() == null || theme.getName().isEmpty()) {
+                theme.setName(theme.getId());
+            }
             String basePath = relativeParent.isEmpty() ? "themes" : "themes/" + relativeParent;
             themes.put(theme.getId(), theme);
             resourceThemeSources.put(theme.getId(), new ResourceThemeSource("ingameime", basePath));
             userThemeBaseDirs.put(theme.getId(), parent != null ? parent : themeRoot);
+            zipThemeSources.remove(theme.getId());
 
             IngameIME_Forge.logDebugInfo(
                 "[ThemeManager] Loaded {} theme: {} ({}) from {}",
@@ -318,6 +403,80 @@ public class ThemeManager {
                 e.getClass().getSimpleName(),
                 e.getMessage());
         }
+    }
+
+    private void loadThemeFromZipEntry(File zipFile, String themeJsonPath) {
+        try (ZipFile zip = new ZipFile(zipFile)) {
+            ZipEntry entry = zip.getEntry(themeJsonPath);
+            if (entry == null) {
+                return;
+            }
+
+            try (Reader reader = new InputStreamReader(zip.getInputStream(entry), StandardCharsets.UTF_8)) {
+                Theme theme = gson.fromJson(reader, Theme.class);
+                if (theme == null) {
+                    return;
+                }
+
+                String parentPath = parentPathOf(themeJsonPath);
+                String relativeParent = "";
+                if (parentPath.startsWith(THEME_ASSET_ROOT)) {
+                    relativeParent = parentPath.substring(THEME_ASSET_ROOT.length());
+                }
+                String fallbackId = deriveFallbackThemeId("theme", relativeParent);
+
+                if (theme.getId() == null || theme.getId().isEmpty()) {
+                    theme.setId(fallbackId);
+                }
+                if (theme.getName() == null || theme.getName().isEmpty()) {
+                    theme.setName(theme.getId());
+                }
+
+                String basePath = relativeParent.isEmpty() ? "themes" : "themes/" + relativeParent;
+                themes.put(theme.getId(), theme);
+                resourceThemeSources.put(theme.getId(), new ResourceThemeSource("ingameime", basePath));
+                userThemeBaseDirs.remove(theme.getId());
+                zipThemeSources.put(theme.getId(), new ZipThemeSource(zipFile, parentPath));
+
+                IngameIME_Forge.logDebugInfo(
+                    "[ThemeManager] Loaded imported-pack(zip) theme: {} ({}) from {}!{}",
+                    theme.getId(),
+                    theme.getName(),
+                    zipFile.getAbsolutePath(),
+                    themeJsonPath);
+            }
+        } catch (Exception e) {
+            IngameIME_Forge.logDebugInfo(
+                "[ThemeManager] Error loading imported-pack(zip) theme '{}!{}': {} - {}",
+                zipFile.getAbsolutePath(),
+                themeJsonPath,
+                e.getClass().getSimpleName(),
+                e.getMessage());
+        }
+    }
+
+    private String deriveFallbackThemeId(String fileNameWithoutExt, String relativeParent) {
+        if (!"theme".equalsIgnoreCase(fileNameWithoutExt)) {
+            return fileNameWithoutExt;
+        }
+        if (relativeParent == null || relativeParent.isEmpty()) {
+            return fileNameWithoutExt;
+        }
+        int slash = relativeParent.lastIndexOf('/');
+        return slash >= 0 ? relativeParent.substring(slash + 1) : relativeParent;
+    }
+
+    private String parentPathOf(String path) {
+        int slash = path.lastIndexOf('/');
+        return slash >= 0 ? path.substring(0, slash) : "";
+    }
+
+    private String normalizeZipPath(String path) {
+        String normalized = path.replace('\\', '/');
+        while (normalized.startsWith("/")) {
+            normalized = normalized.substring(1);
+        }
+        return normalized;
     }
 
     private void loadAllFromResourcePacks() {
@@ -428,6 +587,7 @@ public class ThemeManager {
                 theme.getId(),
                 new ResourceThemeSource(location.getNamespace(), basePath));
             userThemeBaseDirs.remove(theme.getId());
+            zipThemeSources.remove(theme.getId());
             IngameIME_Forge.logDebugInfo(
                 "[ThemeManager] Loaded resource-pack theme: {} ({}) from {}",
                 theme.getId(),
@@ -463,11 +623,50 @@ public class ThemeManager {
             return loadExternalTexture(key, userThemeTexture);
         }
 
+        ZipThemeSource zipThemeSource = zipThemeSources.get(themeId);
+        if (zipThemeSource != null && fileName.indexOf(':') < 0) {
+            ResourceLocation zipTexture = loadZipTexture(key, zipThemeSource, fileName);
+            if (zipTexture != null) {
+                return zipTexture;
+            }
+        }
+
         ResourceLocation textureResource = resolveResourceTexture(themeId, fileName);
         if (textureResource == null) {
             return null;
         }
         return loadResourceTexture(key, textureResource);
+    }
+
+    private ResourceLocation loadZipTexture(String cacheKey, ZipThemeSource zipThemeSource, String fileName) {
+        String normalized = normalizeZipPath(fileName);
+        String entryPath = normalizeZipPath(zipThemeSource.basePathInZip + "/" + normalized);
+        try (ZipFile zip = new ZipFile(zipThemeSource.zipFile)) {
+            ZipEntry entry = zip.getEntry(entryPath);
+            if (entry == null || entry.isDirectory()) {
+                return null;
+            }
+            try (InputStream in = zip.getInputStream(entry)) {
+                BufferedImage img = ImageIO.read(in);
+                if (img == null) {
+                    return null;
+                }
+                textureSizeCache.put(cacheKey, new Integer[] { img.getWidth(), img.getHeight() });
+                DynamicTexture dyn = new DynamicTexture(img);
+                ResourceLocation loc = Minecraft.getMinecraft().getTextureManager()
+                    .getDynamicTextureLocation("ingameime_" + cacheKey.replace(":", "_"), dyn);
+                textureCache.put(cacheKey, loc);
+                return loc;
+            }
+        } catch (Exception e) {
+            IngameIME_Forge.logDebugInfo(
+                "[ThemeManager] Failed to load zip texture '{}!{}': {} - {}",
+                zipThemeSource.zipFile.getAbsolutePath(),
+                entryPath,
+                e.getClass().getSimpleName(),
+                e.getMessage());
+            return null;
+        }
     }
 
     private File resolveUserThemeTexture(String themeId, String fileName) {
@@ -591,6 +790,7 @@ public class ThemeManager {
         themes.put(theme.getId(), theme);
         resourceThemeSources.put(theme.getId(), new ResourceThemeSource("ingameime", "themes/" + theme.getId()));
         userThemeBaseDirs.put(theme.getId(), folder);
+        zipThemeSources.remove(theme.getId());
         clearThemeTextureCache(theme.getId());
 
         IngameIME_Forge.logDebugInfo(
@@ -711,6 +911,7 @@ public class ThemeManager {
         themes.remove(id);
         resourceThemeSources.remove(id);
         userThemeBaseDirs.remove(id);
+        zipThemeSources.remove(id);
         clearThemeTextureCache(id);
 
         File resourceFolder = new File(userThemePackThemesDir, id);
