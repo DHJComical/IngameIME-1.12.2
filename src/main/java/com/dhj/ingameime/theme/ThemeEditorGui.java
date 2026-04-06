@@ -75,14 +75,14 @@ public class ThemeEditorGui extends GuiScreen {
 
         // Check if entering the theme name in the GUI returns and confirm.
         if (nameInputGui.isConfirmed()) {
-            String themeName = nameInputGui.getThemeName();
-            if (!themeName.isEmpty()) {
-                String newThemeId = generateThemeIdFromName(themeName);
-                Theme newTheme = Theme.createCustomTheme(newThemeId, themeName);
-                themeManager.saveCustomTheme(newTheme);
-                selectedThemeId = newThemeId;
-                // Reset the name input GUI state after creating the theme
-                nameInputGui.reset();
+                String themeName = nameInputGui.getThemeName();
+                if (!themeName.isEmpty()) {
+                    String newThemeId = generateThemeIdFromName(themeName);
+                    Theme newTheme = Theme.createCustomTheme(newThemeId, themeName);
+                    themeManager.saveCustomThemeToResourcePack(newTheme);
+                    selectedThemeId = newThemeId;
+                    // Reset the name input GUI state after creating the theme
+                    nameInputGui.reset();
             }
         }
 
@@ -221,7 +221,7 @@ public class ThemeEditorGui extends GuiScreen {
             theme.setCandidatePadding(Integer.parseInt(txtCandidatePadding.getText()));
             theme.setBorderWidth(Integer.parseInt(txtBorderWidth.getText()));
 
-            themeManager.saveCustomTheme(theme);
+            themeManager.saveCustomThemeToResourcePack(theme);
             themeManager.setThemeAndNotify(selectedThemeId);
             loadThemeList();
 
