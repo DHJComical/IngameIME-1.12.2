@@ -77,7 +77,7 @@ public class ThemeEditorGui extends GuiScreen {
                 // Generate a secure theme ID using the theme name.
                 String newThemeId = generateThemeIdFromName(themeName);
                 Theme newTheme = Theme.createCustomTheme(newThemeId, themeName);
-                themeManager.saveCustomTheme(newTheme);
+                themeManager.saveCustomThemeToResourcePack(newTheme);
                 selectedThemeId = newThemeId;
             }
         }
@@ -223,7 +223,7 @@ public class ThemeEditorGui extends GuiScreen {
             theme.setCandidatePadding(Integer.parseInt(txtCandidatePadding.getText()));
             theme.setBorderWidth(Integer.parseInt(txtBorderWidth.getText()));
 
-            themeManager.saveCustomTheme(theme);
+            themeManager.saveCustomThemeToResourcePack(theme);
 
             themeManager.setThemeAndNotify(selectedThemeId);
 
