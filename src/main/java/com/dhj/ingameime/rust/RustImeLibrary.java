@@ -33,6 +33,10 @@ public class RustImeLibrary {
         return rust_ime_library_create_input_context_win32(hWnd, api, uiLessWindows);
     }
 
+    public static long createInputContext(long windowHandle, int api, boolean uiLess) {
+        return rust_ime_library_create_input_context_win32(windowHandle, api, uiLess);
+    }
+
     /**
      * Destroy an input context.
      */

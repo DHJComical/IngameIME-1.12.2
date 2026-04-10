@@ -41,21 +41,36 @@ public class Internal {
     }
 
     private static void tryLoadLibrary(String libName) {
-        if (!LIBRARY_LOADED) try {
+        if (LIBRARY_LOADED) {
+            LOG.info("Library has loaded, skip loading of [{}]", libName);
+            return;
+        }
+
+        try {
             prepareRustJniBinding();
-            // Load DLL from resources using System.load() instead of System.loadLibrary()
-            // because loadLibrary() adds platform prefixes/suffixes automatically
             InputStream lib = Internal.class.getClassLoader().getResourceAsStream(libName);
-            if (lib == null) throw new RuntimeException("Required library resource not exist: " + libName);
-            Path path = Files.createTempFile("ingameime-core", ".dll");
-            Files.copy(lib, path, StandardCopyOption.REPLACE_EXISTING);
-            System.load(path.toString());
+            if (lib == null) {
+                throw new RuntimeException("Required library resource not exist: " + libName);
+            }
+
+            String suffix = ".bin";
+            int dot = libName.lastIndexOf('.');
+            if (dot >= 0 && dot < libName.length() - 1) {
+                suffix = libName.substring(dot);
+            }
+
+            Path path = Files.createTempFile("ingameime-core-", suffix);
+            try (InputStream in = lib) {
+                Files.copy(in, path, StandardCopyOption.REPLACE_EXISTING);
+            }
+            path.toFile().deleteOnExit();
+
+            System.load(path.toAbsolutePath().toString());
             LIBRARY_LOADED = true;
             LOG.info("Library [{}] has loaded!", libName);
         } catch (Throwable e) {
             LOG.warn("Try to load library [{}] but failed: {}", libName, e.getClass().getSimpleName());
         }
-        else LOG.info("Library has loaded, skip loading of [{}]", libName);
     }
 
     private static long callGlfwGetWin32Window(long glfwWindow) {
@@ -102,6 +117,42 @@ public class Internal {
         }
     }
 
+    private static long callGlfwGetX11Window(long glfwWindow) {
+        try {
+            String[] possibleClasses = {
+                    "org.lwjgl3.glfw.GLFWNativeX11",
+                    "org.lwjgl3.system.linux.GLFWNativeX11",
+                    "org.lwjgl.glfw.GLFWNativeX11",
+                    "org.lwjgl.system.linux.GLFWNativeX11"
+            };
+            for (String className : possibleClasses) {
+                try {
+                    Class<?> nativeClass = Class.forName(className);
+                    LOG.info("Found GLFWNativeX11 class: {}", className);
+                    try {
+                        Method getX11Window = nativeClass.getMethod("glfwGetX11Window", long.class);
+                        long window = ((Number) getX11Window.invoke(null, glfwWindow)).longValue();
+                        if (window != 0) {
+                            LOG.info("Successfully got X11 window 0x{} via {}", Long.toHexString(window), className);
+                            return window;
+                        } else {
+                            LOG.warn("{}.glfwGetX11Window returned 0", className);
+                        }
+                    } catch (NoSuchMethodException e) {
+                        LOG.debug("Method glfwGetX11Window not found in {}", className);
+                    }
+                } catch (ClassNotFoundException e) {
+                    LOG.debug("Class not found: {}", className);
+                }
+            }
+            LOG.warn("Could not find any GLFWNativeX11 class to convert GLFW window to X11 window");
+            return 0;
+        } catch (Throwable e) {
+            LOG.warn("Exception while calling glfwGetX11Window: {} - {}", e.getClass().getSimpleName(), e.getMessage());
+            return 0;
+        }
+    }
+
     private static long getWindowHandle_LWJGL3() {
         try {
             // Check if we have Display.getWindow() method (LWJGL3 indicator)
@@ -129,6 +180,27 @@ public class Internal {
             return 0;
         } catch (Throwable e) {
             LOG.warn("Failed to get window handle via LWJGL3: {} - {}", e.getClass().getSimpleName(), e.getMessage());
+            return 0;
+        }
+    }
+
+    private static long getWindowHandleLinux_LWJGL3() {
+        try {
+            Method getWindow = Display.class.getMethod("getWindow");
+            long glfwWindow = ((Number) getWindow.invoke(null)).longValue();
+
+            if (glfwWindow == 0) {
+                LOG.debug("GLFW window pointer is 0");
+                return 0;
+            }
+
+            LOG.info("Got GLFW window pointer: 0x{}", Long.toHexString(glfwWindow));
+            return callGlfwGetX11Window(glfwWindow);
+        } catch (NoSuchMethodException e) {
+            LOG.debug("Display.getWindow() method not found");
+            return 0;
+        } catch (Throwable e) {
+            LOG.warn("Failed to get Linux window handle via LWJGL3: {} - {}", e.getClass().getSimpleName(), e.getMessage());
             return 0;
         }
     }
@@ -209,6 +281,58 @@ public class Internal {
         }
     }
 
+    private static long getWindowHandleLinux_LWJGL2() {
+        try {
+            Method getImplementation = Display.class.getDeclaredMethod("getImplementation");
+            getImplementation.setAccessible(true);
+            Object impl = getImplementation.invoke(null);
+            if (impl == null) {
+                return 0;
+            }
+
+            String[] methodNames = {"getWindow", "getCurrentWindow"};
+            for (String methodName : methodNames) {
+                try {
+                    Method method = impl.getClass().getDeclaredMethod(methodName);
+                    method.setAccessible(true);
+                    Object value = method.invoke(impl);
+                    if (value instanceof Number) {
+                        long window = ((Number) value).longValue();
+                        if (window != 0) {
+                            LOG.info("Got Linux window 0x{} via {}.{}", Long.toHexString(window), impl.getClass().getName(), methodName);
+                            return window;
+                        }
+                    }
+                } catch (NoSuchMethodException ignored) {
+                    // Keep trying other method names and fallback fields.
+                }
+            }
+
+            String[] fieldNames = {"current_window", "currentWindow", "window"};
+            for (String fieldName : fieldNames) {
+                try {
+                    java.lang.reflect.Field field = impl.getClass().getDeclaredField(fieldName);
+                    field.setAccessible(true);
+                    Object value = field.get(impl);
+                    if (value instanceof Number) {
+                        long window = ((Number) value).longValue();
+                        if (window != 0) {
+                            LOG.info("Got Linux window 0x{} via {}.{}", Long.toHexString(window), impl.getClass().getName(), fieldName);
+                            return window;
+                        }
+                    }
+                } catch (NoSuchFieldException ignored) {
+                    // Keep trying fallback fields.
+                }
+            }
+
+            return 0;
+        } catch (Throwable e) {
+            LOG.warn("Failed to get Linux window handle via LWJGL2: {} - {}", e.getClass().getSimpleName(), e.getMessage());
+            return 0;
+        }
+    }
+
     private static long getWindowHandle() {
         long hWnd = 0;
         boolean hasGetWindow = false;
@@ -250,6 +374,30 @@ public class Internal {
         return hWnd;
     }
 
+    private static long getLinuxWindowHandle() {
+        long window = 0;
+        boolean hasGetWindow = false;
+        boolean hasGetImplementation = false;
+
+        try {
+            Display.class.getMethod("getWindow");
+            hasGetWindow = true;
+        } catch (NoSuchMethodException ignored) {}
+
+        try {
+            Display.class.getDeclaredMethod("getImplementation");
+            hasGetImplementation = true;
+        } catch (NoSuchMethodException ignored) {}
+
+        if (hasGetWindow) {
+            window = getWindowHandleLinux_LWJGL3();
+        }
+        if (window == 0 && hasGetImplementation) {
+            window = getWindowHandleLinux_LWJGL2();
+        }
+        return window;
+    }
+
     public static void destroyInputCtx() {
         if (InputCtx == 0) return;
         try {
@@ -265,44 +413,52 @@ public class Internal {
         if (!LIBRARY_LOADED) return;
 
         LOG.info("Using IngameIME Rust backend");
-        // LOG.info("Using IngameIME Rust: {}", RustImeLibrary.rust_ime_library_get_version());
 
         if (!Display.isCreated()) {
             LOG.warn("Display is not created yet, deferring InputContext creation");
             return;
         }
-        long hWnd = getWindowHandle();
-        if (hWnd != 0) {
+
+        int platform = LWJGLUtil.getPlatform();
+        if (platform == LWJGLUtil.PLATFORM_WINDOWS) {
+            long hWnd = getWindowHandle();
+            if (hWnd == 0) {
+                LOG.error("InputContext could not init as the hWnd is NULL!");
+                return;
+            }
             if (Minecraft.getMinecraft().isFullScreen()) {
                 Config.UiLess_Windows = true;
                 Config.sync();
             }
-            // API parameter is ignored in Rust version (only IMM32 supported)
             int api = Config.API_Windows.equals("TextServiceFramework") ? 0 : 1;
-            LOG.info("Using API: {}, UiLess: {}", api, Config.UiLess_Windows);
-            InputCtx = RustImeLibrary.createInputContextWin32(hWnd, api, Config.UiLess_Windows);
-            if (InputCtx == 0) {
-                LOG.error("Failed to create InputContext!");
-                return;
-            }
-            LOG.info("InputContext has created!");
-            LOG.info("Rust IME library version: {}", RustImeLibrary.getVersion());
-            
-            // Initialize Rust logger with Java's Log4j
-            RustImeLibrary.initLogger(LOG);
-            LOG.info("Rust logger initialized, forwarding to Log4j");
-            
-            // Set max candidates from config
-            RustImeLibrary.setMaxCandidates(InputCtx, Config.MaxCandidates);
-            LOG.info("Max candidates set to: {}", Config.MaxCandidates);
-            // Enable debug logging if configured
-            if (Config.DebugLog) {
-                RustImeLibrary.setDebugLogging(true);
-                LOG.info("Rust debug logging enabled");
-            }
+            LOG.info("Using Windows API: {}, UiLess: {}", api, Config.UiLess_Windows);
+            InputCtx = RustImeLibrary.createInputContext(hWnd, api, Config.UiLess_Windows);
+        } else if (platform == LWJGLUtil.PLATFORM_LINUX) {
+            long window = getLinuxWindowHandle();
+            LOG.info("Using Linux backend, X11 window=0x{}", Long.toHexString(window));
+            // Linux backend will choose Wayland/X11 internally by runtime availability.
+            InputCtx = RustImeLibrary.createInputContext(window, 0, false);
         } else {
-            LOG.error("InputContext could not init as the hWnd is NULL!");
+            LOG.error("Unsupported platform for context creation: {}", LWJGLUtil.getPlatformName());
             return;
+        }
+
+        if (InputCtx == 0) {
+            LOG.error("Failed to create InputContext!");
+            return;
+        }
+
+        LOG.info("InputContext has created!");
+        LOG.info("Rust IME library version: {}", RustImeLibrary.getVersion());
+
+        RustImeLibrary.initLogger(LOG);
+        LOG.info("Rust logger initialized, forwarding to Log4j");
+
+        RustImeLibrary.setMaxCandidates(InputCtx, Config.MaxCandidates);
+        LOG.info("Max candidates set to: {}", Config.MaxCandidates);
+        if (Config.DebugLog) {
+            RustImeLibrary.setDebugLogging(true);
+            LOG.info("Rust debug logging enabled");
         }
 
         // Setup callbacks
@@ -413,15 +569,27 @@ public class Internal {
     }
 
     static void loadLibrary() {
-        boolean isWindows = LWJGLUtil.getPlatform() == LWJGLUtil.PLATFORM_WINDOWS;
-
-        if (!isWindows) {
+        int platform = LWJGLUtil.getPlatform();
+        if (platform == LWJGLUtil.PLATFORM_WINDOWS) {
+            tryLoadLibrary("ingameime_core.dll");
+        } else if (platform == LWJGLUtil.PLATFORM_LINUX) {
+            String waylandDisplay = System.getenv("WAYLAND_DISPLAY");
+            boolean preferWayland = waylandDisplay != null && !waylandDisplay.trim().isEmpty();
+            if (preferWayland) {
+                tryLoadLibrary("libingameime_core_wayland.so");
+                if (!LIBRARY_LOADED) {
+                    tryLoadLibrary("libingameime_core_x11.so");
+                }
+            } else {
+                tryLoadLibrary("libingameime_core_x11.so");
+                if (!LIBRARY_LOADED) {
+                    tryLoadLibrary("libingameime_core_wayland.so");
+                }
+            }
+        } else {
             LOG.error("Unsupported platform: {}", LWJGLUtil.getPlatformName());
             return;
         }
-
-        // Load Rust-compiled native library (only x64 supported for now)
-        tryLoadLibrary("ingameime_core.dll");
 
         if (!LIBRARY_LOADED) {
             LOG.error("Unsupported arch: {}", System.getProperty("os.arch"));
