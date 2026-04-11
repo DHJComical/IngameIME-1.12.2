@@ -42,6 +42,9 @@ public class WidgetInputMode extends Widget {
     public void layout() {
         if (!isDirty) return;
         FontRenderer font = Minecraft.getMinecraft().fontRenderer;
+        if (font == null) {
+            return;
+        }
         Height = font.FONT_HEIGHT;
         Width = font.getStringWidth(isNativeMode ? NativeModeText : AlphaModeText);
         super.layout();
@@ -51,8 +54,12 @@ public class WidgetInputMode extends Widget {
     public void draw() {
         if (!isActive()) return;
         if (isDirty) layout();
+        FontRenderer font = Minecraft.getMinecraft().fontRenderer;
+        if (font == null) {
+            return;
+        }
         super.draw();
         String text = isNativeMode ? NativeModeText : AlphaModeText;
-        Minecraft.getMinecraft().fontRenderer.drawString(text, X + Padding, Y + Padding, TextColor);
+        font.drawString(text, X + Padding, Y + Padding, TextColor);
     }
 }
