@@ -38,4 +38,5 @@ dependencies {
     implementation("com.github.GTNewHorizons:BetterQuesting:3.8.26-GTNH:dev")
 
     implementation rfg.deobf("curse.maven:bibliocraft-228027:2423369")
+    compileOnly rfg.deobf("curse.maven:notes-256087:2444459")
 }

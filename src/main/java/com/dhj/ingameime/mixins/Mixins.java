@@ -34,6 +34,15 @@ public enum Mixins implements IMixins {
         .addRequiredMod(TargetMods.BIBLIOCRAFT)
         .addClientMixins("bibliocraft.MixinGuiClipboard")
         .addClientMixins("bibliocraft.AccessorGuiBiblioTextField")
+    ),
+
+    NOTES(new MixinBuilder()
+        .setPhase(Phase.LATE)
+        .addRequiredMod(TargetMods.NOTES)
+        .addClientMixins("notes.MixinGuiNoteTitleField")
+        .addClientMixins("notes.AccessorGuiNoteTitleField")
+        .addClientMixins("notes.MixinGuiNoteTextField")
+        .addClientMixins("notes.AccessorGuiNoteTextField")
     );
 
     private final MixinBuilder builder;

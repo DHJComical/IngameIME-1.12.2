@@ -12,7 +12,8 @@ public enum TargetMods implements ITargetMod {
     // Add to this enum information about the mods you need to identify during runtime
 
     BETTERQUESTING("betterquesting"),
-    BIBLIOCRAFT("BiblioCraft");
+    BIBLIOCRAFT("BiblioCraft"),
+    NOTES("notes");
 
     private final TargetModBuilder builder;
 
