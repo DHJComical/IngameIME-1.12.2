@@ -1,6 +1,7 @@
 package com.dhj.ingameime.control;
 
 import com.dhj.ingameime.ClientProxy;
+import com.dhj.ingameime.UnicodeTextHelper;
 import com.dhj.ingameime.mixins.vanilla.AccessorGuiTextField;
 import mezz.jei.api.IJeiRuntime;
 import mezz.jei.api.IModPlugin;
@@ -22,6 +23,10 @@ public class JEITextFieldControl extends VanillaTextFieldControl<GuiTextFieldFil
 
     @Override
     public void writeText(String text) {
+        text = UnicodeTextHelper.repairUtf8Mojibake(text);
+        if (text == null || text.isEmpty()) {
+            return;
+        }
         // FIXME: It just works!
         this.controlObject.writeText(text);
         int cursorPos = this.controlObject.getCursorPosition();

@@ -1,5 +1,6 @@
 package com.dhj.ingameime.control;
 
+import com.dhj.ingameime.UnicodeTextHelper;
 import com.dhj.ingameime.mixins.vanilla.AccessorGuiScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
@@ -33,10 +34,33 @@ public abstract class AbstractControl<T> implements IControl {
      * Universal write method.
      */
     public static void writeCurrentScreenText(String text) throws IOException {
+        text = UnicodeTextHelper.repairUtf8Mojibake(text);
+        if (text == null || text.isEmpty()) {
+            return;
+        }
+
         final GuiScreen screen = Minecraft.getMinecraft().currentScreen;
         if (screen != null) {
-            for (char c : text.toCharArray()) {
-                ((AccessorGuiScreen) screen).callKeyTyped(c, Keyboard.KEY_NONE);
+            for (int i = 0; i < text.length(); ) {
+                int codePoint = text.codePointAt(i);
+                i += Character.charCount(codePoint);
+
+                if (com.dhj.ingameime.config.Config.DebugLog) {
+                    com.dhj.ingameime.IngameIME_Forge.logDebugInfo(
+                            "[IME KeyTyped] screen={} cp=U+{} utf16=[{}]",
+                            screen.getClass().getName(),
+                            Integer.toHexString(codePoint).toUpperCase(),
+                            UnicodeTextHelper.debugUtf16(new String(Character.toChars(codePoint)))
+                    );
+                }
+
+                if (codePoint <= Character.MAX_VALUE) {
+                    ((AccessorGuiScreen) screen).callKeyTyped((char) codePoint, Keyboard.KEY_NONE);
+                } else {
+                    char[] chars = Character.toChars(codePoint);
+                    ((AccessorGuiScreen) screen).callKeyTyped(chars[0], Keyboard.KEY_NONE);
+                    ((AccessorGuiScreen) screen).callKeyTyped(chars[1], 0);
+                }
             }
         }
     }
