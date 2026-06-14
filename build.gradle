@@ -2,15 +2,19 @@
  * It is advised that you do not edit anything in the build.gradle; unless you are sure of what you are doing
  */
 import com.gtnewhorizons.retrofuturagradle.mcp.InjectTagsTask
+import org.jetbrains.changelog.Changelog
 import org.jetbrains.gradle.ext.Gradle
 
 plugins {
     id 'java'
     id 'java-library'
     id 'maven-publish'
-    id 'org.jetbrains.gradle.plugin.idea-ext' version '1.1.9'
-    id 'com.gtnewhorizons.retrofuturagradle' version '1.4.1'
+    id 'org.jetbrains.gradle.plugin.idea-ext' version '1.4.1'
+    id 'com.gtnewhorizons.retrofuturagradle' version '2.0.2'
     id 'com.matthewprenger.cursegradle' version '1.4.0' apply false
+    id 'com.modrinth.minotaur' version '2.+' apply false
+    id 'org.jetbrains.changelog' version '2.5.0'
+    id 'com.gradleup.shadow' version '9.4.+'
 }
 
 apply from: 'gradle/scripts/helpers.gradle'
@@ -28,6 +32,7 @@ assertSubProperties 'is_coremod', 'coremod_includes_mod', 'coremod_plugin_class_
 assertSubProperties 'use_asset_mover', 'asset_mover_version'
 
 setDefaultProperty 'use_modern_java_syntax', false, false
+setDefaultProperty 'use_jetbrains_annotations', false, false
 setDefaultProperty 'generate_sources_jar', true, false
 setDefaultProperty 'generate_javadocs_jar', true, false
 setDefaultProperty 'mapping_channel', true, 'stable'
@@ -45,7 +50,7 @@ base {
     archivesName.set(propertyString('mod_id'))
 }
 
-tasks.decompressDecompiledSources.enabled !propertyBool('change_minecraft_sources')
+tasks.decompressDecompiledSources.enabled !propertyBool('change_minecraft_sources') || !layout.buildDirectory.dir('rfg/minecraft-src').get().asFile.exists()
 
 java {
     toolchain {
@@ -59,11 +64,6 @@ java {
     if (propertyBool('generate_javadocs_jar')) {
         withJavadocJar()
     }
-}
-
-configurations {
-    embed
-    implementation.extendsFrom(embed)
 }
 
 minecraft {
@@ -91,9 +91,13 @@ minecraft {
 
     if (propertyBool('use_tags')) {
         if (file('tags.properties').exists()) {
-            Properties props = new Properties().tap {  it.load(file('tags.properties').newInputStream()); it }
+            Properties props = new Properties().tap { it.load(file('tags.properties').newInputStream()); it }
             if (!props.isEmpty()) {
-                injectedTags.set(props.collectEntries { k, v -> [(k): interpolate(v)] })
+                injectedTags.set(props.collectEntries { k, v ->
+                        def interpolated = interpolate(v)
+                        if (interpolated == null || interpolated.isEmpty()) throw new GradleException("Empty tag value found for key: $k")
+                        [(k): interpolated]
+                    })
             }
         }
     }
@@ -121,6 +125,9 @@ dependencies {
         testCompileOnly('com.github.bsideup.jabel:jabel-javac-plugin:1.0.0') {
             transitive = false // We only care about the 1 annotation class
         }
+    }
+    if (propertyBool('use_jetbrains_annotations')) {
+        compileOnly 'org.jetbrains:annotations:26.1.0'
     }
     if (propertyBool('use_asset_mover')) {
         implementation "com.cleanroommc:assetmover:${propertyString('asset_mover_version')}"
@@ -226,8 +233,6 @@ jar {
         }
         attributes(attribute_map)
     }
-    // Add all embedded dependencies into the jar
-    from(provider{ configurations.embed.collect {it.isDirectory() ? it : zipTree(it)} })
 }
 
 idea {
@@ -237,9 +242,6 @@ idea {
     project {
         settings {
             runConfigurations {
-                "0. Apply Spotless"(Gradle) {
-                    taskNames = ["spotlessApply"]
-                }
                 "1. Run Client"(Gradle) {
                     taskNames = ["runClient"]
                 }
@@ -251,9 +253,6 @@ idea {
                 }
                 "4. Run Obfuscated Server"(Gradle) {
                     taskNames = ["runObfServer"]
-                }
-                "5. Build Mod"(Gradle) {
-                    taskNames = ["build"]
                 }
             }
             compiler.javac {
@@ -282,6 +281,19 @@ test {
             showStandardStreams = true
         }
     }
+}
+
+String parserChangelog() {
+    if (!file('CHANGELOG.md').exists()) {
+        throw new GradleException('publish_with_changelog is true, but CHANGELOG.md does not exist in the workspace!')
+    }
+    String parsedChangelog = changelog.renderItem(
+            changelog.get(propertyString('mod_version')).withHeader(false).withEmptySections(false),
+            Changelog.OutputType.MARKDOWN)
+    if (parsedChangelog.isEmpty()) {
+        throw new GradleException('publish_with_changelog is true, but the changelog for the latest version is empty!')
+    }
+    return parsedChangelog
 }
 
 tasks.register('generateMixinJson') {
