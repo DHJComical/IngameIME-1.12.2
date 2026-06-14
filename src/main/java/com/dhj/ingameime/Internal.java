@@ -354,12 +354,14 @@ public class Internal {
             int api = Config.API_Windows.equals("TextServiceFramework") ? 0 : 1;
             LOG.info("Using API: {}, UiLess: {}", api, Config.UiLess_Windows);
             InputCtx = RustImeLibrary.createInputContext(hWnd, api, Config.UiLess_Windows);
-        } else if (platform == LWJGLUtil.PLATFORM_LINUX) {
-            long window = getLinuxWindowHandle();
-            LOG.info("Using Linux backend, X11 window=0x{}", Long.toHexString(window));
-            // Linux backend will choose Wayland/X11 internally by runtime availability.
-            InputCtx = RustImeLibrary.createInputContext(window, 0, false);
-        } else {
+        }
+//        else if (platform == LWJGLUtil.PLATFORM_LINUX) {
+//            long window = getLinuxWindowHandle();
+//            LOG.info("Using Linux backend, X11 window=0x{}", Long.toHexString(window));
+//            // Linux backend will choose Wayland/X11 internally by runtime availability.
+//            InputCtx = RustImeLibrary.createInputContext(window, 0, false);
+//        }
+        else {
             LOG.error("Unsupported platform for context creation: {}", LWJGLUtil.getPlatformName());
             return;
         }
