@@ -1,6 +1,8 @@
 package com.dhj.ingameime.gui;
 
+import com.dhj.ingameime.CandidateDisplayText;
 import com.dhj.ingameime.IngameIME_Forge;
+import com.dhj.ingameime.UnicodeTextHelper;
 import com.dhj.ingameime.theme.api.Theme;
 import com.dhj.ingameime.theme.api.ThemeManager;
 import net.minecraft.client.Minecraft;
@@ -36,7 +38,15 @@ public class WidgetCandidateList extends Widget {
             IngameIME_Forge.logDebugInfo("[Java Candidates] Received: {} items, selected={}", candidates != null ? candidates.size() : 0, selected);
             if (candidates != null) {
                 for (int i = 0; i < candidates.size(); i++) {
-                    IngameIME_Forge.logDebugInfo("[Java Candidates]   [{}] {}", i, candidates.get(i));
+                    String candidate = candidates.get(i);
+                    IngameIME_Forge.logDebugInfo(
+                            "[Java Candidates]   [{}] raw='{}' display='{}' utf16=[{}] cp=[{}]",
+                            i,
+                            UnicodeTextHelper.debugEscaped(candidate),
+                            CandidateDisplayText.debugForCurrentFont(candidate),
+                            UnicodeTextHelper.debugUtf16(candidate),
+                            UnicodeTextHelper.debugCodePoints(candidate)
+                    );
                 }
             }
         }
@@ -113,7 +123,7 @@ public class WidgetCandidateList extends Widget {
         }
 
         void setText(String text) {
-            this.text = text;
+            this.text = CandidateDisplayText.forCurrentFont(text);
         }
 
         void setIndex(int index) {
