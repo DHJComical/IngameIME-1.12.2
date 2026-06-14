@@ -12,4 +12,7 @@ public interface AccessorGuiTextField {
 
     @Accessor("field_146211_a")
     FontRenderer getFont();
+
+    @Accessor("isEnabled")
+    boolean isEnabled();
 }

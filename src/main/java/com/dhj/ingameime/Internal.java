@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.dhj.ingameime.IngameIME_Forge.LOG;
 
@@ -23,6 +24,7 @@ public class Internal {
     static RustImeLibrary.CommitCallback commitCallback = null;
     static RustImeLibrary.CandidateListCallback candidateListCallback = null;
     static RustImeLibrary.InputModeCallback inputModeCallback = null;
+    private static final AtomicInteger COMMIT_DEBUG_SEQUENCE = new AtomicInteger();
     private static boolean forceAlphaApiUnavailable = false;
     private static boolean forceNativeApiUnavailable = false;
 
@@ -410,7 +412,36 @@ public class Internal {
 
         commitCallback = text -> {
             try {
-                IMStates.getActiveControl().writeText(text);
+                final int commitId = COMMIT_DEBUG_SEQUENCE.incrementAndGet();
+                final String commitText = UnicodeTextHelper.repairUtf8Mojibake(text);
+                IngameIME_Forge.logDebugInfo(
+                        "[IME Commit #{}] raw='{}' repaired='{}' rawUtf16=[{}] repairedUtf16=[{}] rawCp=[{}] repairedCp=[{}]",
+                        commitId,
+                        UnicodeTextHelper.debugEscaped(text),
+                        UnicodeTextHelper.debugEscaped(commitText),
+                        UnicodeTextHelper.debugUtf16(text),
+                        UnicodeTextHelper.debugUtf16(commitText),
+                        UnicodeTextHelper.debugCodePoints(text),
+                        UnicodeTextHelper.debugCodePoints(commitText)
+                );
+                Minecraft.getMinecraft().func_152344_a(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            IngameIME_Forge.logDebugInfo(
+                                    "[IME Commit #{}] targetControl={} targetObject={}",
+                                    commitId,
+                                    IMStates.getActiveControl().getClass().getName(),
+                                    IMStates.getActiveControl().getControlObject() == null
+                                            ? "null"
+                                            : IMStates.getActiveControl().getControlObject().getClass().getName()
+                            );
+                            IMStates.getActiveControl().writeText(commitText);
+                        } catch (Throwable e) {
+                            LOG.error("Exception in Commit callback", e);
+                        }
+                    }
+                });
             } catch (Throwable e) {
                 LOG.error("Exception in Commit callback", e);
             }
@@ -419,9 +450,31 @@ public class Internal {
         candidateListCallback = (state, candidates, selected) -> {
             try {
                 if (candidates != null) {
+                    LOG.debug("CandidateList callback: received {} candidates, selected={}", candidates.length, selected);
+                    for (int i = 0; i < candidates.length; i++) {
+                        IngameIME_Forge.logDebugInfo(
+                                "[Java Candidates Raw]   [{}] '{}' utf16=[{}] cp=[{}]",
+                                i,
+                                UnicodeTextHelper.debugEscaped(candidates[i]),
+                                UnicodeTextHelper.debugUtf16(candidates[i]),
+                                UnicodeTextHelper.debugCodePoints(candidates[i])
+                        );
+                    }
                     List<String> flattened = getStrings(candidates);
+                    LOG.debug("Normalized to {} candidates", flattened.size());
+                    for (int i = 0; i < flattened.size(); i++) {
+                        String candidate = flattened.get(i);
+                        IngameIME_Forge.logDebugInfo(
+                                "[Java Candidates Flat]  [{}] '{}' utf16=[{}] cp=[{}]",
+                                i,
+                                UnicodeTextHelper.debugEscaped(candidate),
+                                UnicodeTextHelper.debugUtf16(candidate),
+                                UnicodeTextHelper.debugCodePoints(candidate)
+                        );
+                    }
                     if (flattened.size() > Config.MaxCandidates) {
                         flattened = new ArrayList<>(flattened.subList(0, Config.MaxCandidates));
+                        LOG.debug("Truncated to {} candidates", flattened.size());
                     }
                     ClientProxy.Screen.CandidateList.setContent(flattened, selected);
                 } else {
@@ -450,32 +503,15 @@ public class Internal {
 
     @Nonnull
     private static List<String> getStrings(String[] candidates) {
-        List<String> flattened = new ArrayList<>();
+        List<String> out = new ArrayList<>(candidates.length);
         for (String candidate : candidates) {
-            StringBuilder current = new StringBuilder();
-            for (int i = 0; i < candidate.length(); i++) {
-                char c = candidate.charAt(i);
-                int type = Character.getType(c);
-                boolean isVisible = type != Character.SPACE_SEPARATOR
-                        && type != Character.LINE_SEPARATOR
-                        && type != Character.PARAGRAPH_SEPARATOR
-                        && type != Character.CONTROL
-                        && type != Character.FORMAT
-                        && type != Character.PRIVATE_USE
-                        && type != Character.SURROGATE
-                        && type != Character.UNASSIGNED;
-                if (isVisible) {
-                    current.append(c);
-                } else if (current.length() > 0) {
-                    flattened.add(current.toString());
-                    current.setLength(0);
-                }
+            if (candidate == null) {
+                out.add("");
+                continue;
             }
-            if (current.length() > 0) {
-                flattened.add(current.toString());
-            }
+            out.add(UnicodeTextHelper.repairUtf8Mojibake(candidate.trim()));
         }
-        return flattened;
+        return out;
     }
 
     static void loadLibrary() {

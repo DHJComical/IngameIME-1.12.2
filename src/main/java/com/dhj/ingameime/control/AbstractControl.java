@@ -1,6 +1,8 @@
 package com.dhj.ingameime.control;
 
 import codechicken.nei.guihook.GuiContainerManager;
+import com.dhj.ingameime.IngameIME_Forge;
+import com.dhj.ingameime.UnicodeTextHelper;
 import com.dhj.ingameime.mixins.vanilla.AccessorGuiScreen;
 import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.Optional;
@@ -34,11 +36,26 @@ public abstract class AbstractControl<T> implements IControl {
      * Universal write method.
      */
     public static void writeCurrentScreenText(String text) throws IOException {
+        text = UnicodeTextHelper.repairUtf8Mojibake(text);
+        if (text == null || text.isEmpty()) {
+            return;
+        }
+
         if (Loader.isModLoaded("NotEnoughItems") && writeCurrentScreenTextNEI(text)) return;
         final GuiScreen screen = Minecraft.getMinecraft().currentScreen;
         if (screen != null) {
-            for (char c : text.toCharArray()) {
-                ((AccessorGuiScreen) screen).callKeyTyped(c, Keyboard.KEY_NONE);
+            for (int i = 0; i < text.length(); ) {
+                int codePoint = text.codePointAt(i);
+                i += Character.charCount(codePoint);
+
+                IngameIME_Forge.logDebugInfo(
+                        "[IME KeyTyped] screen={} cp=U+{} utf16=[{}]",
+                        screen.getClass().getName(),
+                        Integer.toHexString(codePoint).toUpperCase(),
+                        UnicodeTextHelper.debugUtf16(new String(Character.toChars(codePoint)))
+                );
+
+                sendCodePointToScreen(screen, codePoint);
             }
         }
     }
@@ -46,12 +63,44 @@ public abstract class AbstractControl<T> implements IControl {
     @Optional.Method(modid = "NotEnoughItems")
     private static boolean writeCurrentScreenTextNEI(String string) {
         if (GuiContainerManager.getManager() != null) {
-            for (char c : string.toCharArray()) {
-                GuiContainerManager.getManager().keyTyped(c, Keyboard.KEY_NONE);
+            for (int i = 0; i < string.length(); ) {
+                int codePoint = string.codePointAt(i);
+                i += Character.charCount(codePoint);
+
+                IngameIME_Forge.logDebugInfo(
+                        "[IME KeyTyped NEI] cp=U+{} utf16=[{}]",
+                        Integer.toHexString(codePoint).toUpperCase(),
+                        UnicodeTextHelper.debugUtf16(new String(Character.toChars(codePoint)))
+                );
+
+                sendCodePointToNEI(codePoint);
             }
             return true;
         }
         return false;
+    }
+
+    private static void sendCodePointToScreen(GuiScreen screen, int codePoint) throws IOException {
+        if (codePoint <= Character.MAX_VALUE) {
+            ((AccessorGuiScreen) screen).callKeyTyped((char) codePoint, Keyboard.KEY_NONE);
+            return;
+        }
+
+        char[] chars = Character.toChars(codePoint);
+        ((AccessorGuiScreen) screen).callKeyTyped(chars[0], Keyboard.KEY_NONE);
+        ((AccessorGuiScreen) screen).callKeyTyped(chars[1], 0);
+    }
+
+    @Optional.Method(modid = "NotEnoughItems")
+    private static void sendCodePointToNEI(int codePoint) {
+        if (codePoint <= Character.MAX_VALUE) {
+            GuiContainerManager.getManager().keyTyped((char) codePoint, Keyboard.KEY_NONE);
+            return;
+        }
+
+        char[] chars = Character.toChars(codePoint);
+        GuiContainerManager.getManager().keyTyped(chars[0], Keyboard.KEY_NONE);
+        GuiContainerManager.getManager().keyTyped(chars[1], 0);
     }
 
     /**
