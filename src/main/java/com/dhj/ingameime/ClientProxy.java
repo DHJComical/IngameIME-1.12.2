@@ -75,8 +75,7 @@ public class ClientProxy extends CommonProxy implements IMEventHandler {
     public void preInit(@Nonnull FMLPreInitializationEvent event) {
         Config.init(event.getSuggestedConfigurationFile());
         ClientRegistry.registerKeyBinding(KeyBind);
-        Internal.loadLibrary();
-        Internal.createInputCtx();
+        IngameIME_Forge.LOG.info("Deferring native IME initialization until first use.");
         MinecraftForge.EVENT_BUS.register(this);
         FMLCommonHandler.instance().bus().register(this);
         ThemeManager.getInstance();

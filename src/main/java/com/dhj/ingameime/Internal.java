@@ -333,7 +333,14 @@ public class Internal {
     }
 
     public static void createInputCtx() {
-        if (!LIBRARY_LOADED) return;
+        if (!LIBRARY_LOADED) {
+            LOG.info("InputContext requested before native library was loaded. Attempting lazy load now.");
+            loadLibrary();
+            if (!LIBRARY_LOADED) {
+                LOG.error("Native IME library is still unavailable after lazy load attempt.");
+                return;
+            }
+        }
 
         LOG.info("Using IngameIME Rust backend");
 
