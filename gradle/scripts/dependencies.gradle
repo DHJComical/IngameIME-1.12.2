@@ -1,73 +1,53 @@
 apply from: 'gradle/scripts/helpers.gradle'
 
 repositories {
+    flatDir {
+        dirs('libs') // /libs
+    }
     // Other repositories described by default:
     // CleanroomMC: https://maven.cleanroommc.com
-    exclusiveContent {
-        forRepository {
-            maven {
-                name 'CurseMaven'
-                url 'https://curse.cleanroommc.com'
-            }
-        }
-        filter {
-            includeGroup 'curse.maven'
-        }
+    maven {
+        name = 'CleanroomMC'
+        url = 'https://maven.cleanroommc.com'
     }
-    exclusiveContent {
-        forRepository {
-            maven {
-                name 'Modrinth'
-                url 'https://api.modrinth.com/maven'
-            }
-        }
-        filter {
-            includeGroup 'maven.modrinth'
-        }
+    maven {
+        name = 'CurseMaven'
+        url = 'https://cursemaven.com'
     }
-    exclusiveContent {
-        forRepository {
-            maven {
-                name 'CodeChickenLib'
-                url 'https://maven.covers1624.net'
-            }
-        }
-        filter {
-            includeGroup 'mezz:jei'
-        }
+    maven {
+        name = 'CleanroomCurseMaven'
+        url = 'https://curse.cleanroommc.com'
     }
+    maven {
+        name = 'Modrinth'
+        url = 'https://api.modrinth.com/maven'
+    }
+    maven {
+        name = 'CodeChickenLib'
+        url = 'https://maven.covers1624.net'
+    }
+    mavenCentral()
     mavenLocal() // Must be last for caching to work
 }
 
 dependencies {
-    // Include StripLatestForgeRequirements by default for the dev env, saves everyone a hassle
-    runtimeOnly 'com.cleanroommc:strip-latest-forge-requirements:1.0'
-    // Include OSXNarratorBlocker by default for the dev env, for M1+ Macs
-    runtimeOnly 'com.cleanroommc:osxnarratorblocker:1.0'
-
-    implementation 'mezz:jei:4.29.8'
-    implementation rfg.deobf('curse.maven:flux-networks-248020:3178199')
-    implementation rfg.deobf('curse.maven:ftb-lib-237167:2985811')
-    implementation rfg.deobf('curse.maven:better-questing-unofficial-629629:7421294')
-    implementation rfg.deobf("curse.maven:antique-atlas-227795:2823030")
-    implementation rfg.deobf("curse.maven:bibliocraft-228027:3647708")
-    implementation rfg.deobf("curse.maven:journeymap-32274:5172461")
-    implementation rfg.deobf("curse.maven:quark-243121:2924091")
-    implementation rfg.deobf("curse.maven:autoreglib-250363:2746011")
-    implementation rfg.deobf("curse.maven:notes-256087:2444465")
+    modImplementation 'maven.modrinth:2iXFLwYO:sXmGWeF6'
+    modImplementation 'curse.maven:flux-networks-248020:3178199'
+    modImplementation 'curse.maven:ftb-lib-237167:2985811'
+    modImplementation 'curse.maven:better-questing-unofficial-629629:7421294'
+    modImplementation 'curse.maven:antique-atlas-227795:2823030'
+    modImplementation 'curse.maven:bibliocraft-228027:3647708'
+    modImplementation 'curse.maven:journeymap-32274:5172461'
+    modImplementation 'curse.maven:quark-243121:2924091'
+    modImplementation 'curse.maven:autoreglib-250363:2746011'
+    modImplementation 'curse.maven:notes-256087:2444465'
     compileOnly 'org.lwjgl:lwjgl-glfw:3.3.1'
     compileOnly 'org.lwjgl:lwjgl-glfw:3.3.1:natives-windows'
-    
-    // Gson for theme serialization
     implementation 'com.google.code.gson:gson:2.8.9'
+
     // Example - Dependency descriptor:
     // 'com.google.code.gson:gson:2.8.6' << group: com.google.code.gson, name:gson, version:2.8.6
     // 'group:name:version:classifier' where classifier is optional
-
-    // Example - Deobfuscating dependencies:
-    // rfg.deobf('curse.maven:had-enough-items-557549:4543375')
-    // By wrapping a dependency descriptor in rfg.deobf() method call, the dependency is queued for deobfuscation
-    // When deobfuscating, RFG respects the mapping_channel + mapping_version stated in gradle.properties
 
     // Example - CurseMaven dependencies:
     // 'curse.maven:had-enough-items-557549:4543375' << had-enough-items = project slug, 557549 = project id, 4543375 = file id
@@ -77,12 +57,19 @@ dependencies {
     // 'maven.modrinth:jei:4.16.1.1000' << jei = project name, 4.16.1.1000 = file version
     // Full documentation: https://docs.modrinth.com/docs/tutorials/maven/
 
+    // Example - Local dependencies:
+    // 'libs:ctm-1.2.1; << libs = folder name (/libs) in flatDir, ctm-1.2.1 = file name (ctm-1.2.1.jar)
+
     // Common dependency types (configuration):
     // implementation = dependency available at both compile time and runtime
     // runtimeOnly = runtime dependency
     // compileOnly = compile time dependency
     // annotationProcessor = annotation processing dependencies
-    // embed = bundle dependencies into final output artifact (no relocation)
+    // contain = bundle dependency jars into final artifact, will extract them in mod loading. Can be used it as jar-in-jar
+    // shadow = bundle dependencies into shadow output artifact (relocation configurable in shadowJar task)
+    // modImplementation = mod dependency available at both compile time and runtime
+    // modCompileOnly = mod dependency available only at compile time
+    // modRuntimeOnly = mod dependency available only at runtime
 
     // Transitive dependencies:
     // (Dependencies that your dependency depends on)

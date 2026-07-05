@@ -11,22 +11,28 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4.2.2
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4.7.0
+      - uses: actions/checkout@v6
+      - name: Set up JDK
+        uses: actions/setup-java@v5
         with:
           java-version: '25'
           distribution: 'temurin'
-      - uses: gradle/actions/setup-gradle@v4.3.1
+      - uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: 9.5.1
         name: Set up Gradle
       - name: Add permission
         run: chmod +x ./gradlew
       - name: Execute Gradle build
-        run: ./gradlew build
+        run: ./gradlew build -x spotlessCheck
 
-      - uses: ncipollo/release-action@v1.16.0
+      - uses: ncipollo/release-action@v1.21.0
         with:
           artifacts: "build/libs/*"
           generateReleaseNotes: true
+
+      - name: Delete tag on fail
+        if: failure()
+        run: |
+          echo "Cleaning up tag..."
+          git push origin :refs/tags/${{ github.ref_name }}

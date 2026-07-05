@@ -2,4 +2,16 @@
 // This file is automatically applied after build.gradle + dependencies.gradle is ran
 
 // If you wish to use the default helper methods, uncomment the line below
-// apply from: 'gradle/scripts/helpers.gradle'
+apply from: 'gradle/scripts/helpers.gradle'
+
+spotless {
+    java {
+        target fileTree('.') {
+            include "src/*/java/${propertyString('root_package').replace('.', '/')}/**/*.java"
+        }
+
+        leadingTabsToSpaces()
+        endWithNewline()
+        removeUnusedImports()
+    }
+}
