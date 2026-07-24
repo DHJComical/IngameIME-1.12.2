@@ -367,12 +367,16 @@ public class Internal {
         try {
             Display.class.getMethod("getWindow");
             hasGetWindow = true;
-        } catch (NoSuchMethodException ignored) {}
+        } catch (NoSuchMethodException e) {
+            LOG.debug("Display.getWindow() method not found");
+        }
 
         try {
             Display.class.getDeclaredMethod("getImplementation");
             hasGetImplementation = true;
-        } catch (NoSuchMethodException ignored) {}
+        } catch (NoSuchMethodException e) {
+            LOG.debug("Display.getImplementation() method not found");
+        }
         LOG.info("LWJGL method detection - getWindow: {}, getImplementation: {}", hasGetWindow, hasGetImplementation);
 
         // Try LWJGL3 first if available
@@ -408,12 +412,16 @@ public class Internal {
         try {
             Display.class.getMethod("getWindow");
             hasGetWindow = true;
-        } catch (NoSuchMethodException ignored) {}
+        } catch (NoSuchMethodException e) {
+            LOG.debug("Display.getWindow() method not found");
+        }
 
         try {
             Display.class.getDeclaredMethod("getImplementation");
             hasGetImplementation = true;
-        } catch (NoSuchMethodException ignored) {}
+        } catch (NoSuchMethodException e) {
+            LOG.debug("Display.getImplementation() method not found");
+        }
 
         if (hasGetWindow) {
             window = getWindowHandleLinux_LWJGL3();
