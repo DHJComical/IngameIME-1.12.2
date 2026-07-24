@@ -3,6 +3,7 @@ package com.dhj.ingameime;
 import com.dhj.ingameime.config.Config;
 import com.dhj.ingameime.control.IControl;
 import com.dhj.ingameime.gui.OverlayScreen;
+import com.dhj.ingameime.rust.RustImeLibrary;
 import com.dhj.ingameime.theme.api.ThemeManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
@@ -21,6 +22,8 @@ import org.lwjgl.input.Mouse;
 
 import javax.annotation.Nonnull;
 import java.awt.*;
+
+import static com.dhj.ingameime.IngameIME_Forge.LOG;
 
 public class ClientProxy extends CommonProxy implements IMEventHandler {
     public static ClientProxy INSTANCE = null;
@@ -49,7 +52,7 @@ public class ClientProxy extends CommonProxy implements IMEventHandler {
             onToggleKey();
         }
 
-        if (Mouse.getDX() > 0 || Mouse.getDY() > 0) {
+        if (Mouse.getDX() != 0 || Mouse.getDY() != 0) {
             onMouseMove();
         }
     }
@@ -72,6 +75,16 @@ public class ClientProxy extends CommonProxy implements IMEventHandler {
     public void onConfigChanged(@Nonnull ConfigChangedEvent.OnConfigChangedEvent event) {
         if (event.getModID().equals(Tags.MOD_ID)) {
             Config.sync();
+            if (Internal.InputCtx != 0) {
+                try {
+                    RustImeLibrary.setMaxCandidates(Internal.InputCtx, Config.MaxCandidates);
+                    RustImeLibrary.setDebugLogging(Config.DebugLog);
+                    LOG.info("Synced config to native context: MaxCandidates={}, DebugLog={}",
+                            Config.MaxCandidates, Config.DebugLog);
+                } catch (Throwable t) {
+                    LOG.error("Failed to sync config to native context", t);
+                }
+            }
         }
     }
 
