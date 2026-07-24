@@ -442,6 +442,14 @@ public class Internal {
             LOG.error("Failed to destroy InputContext", e);
         }
         InputCtx = 0;
+        // Drop any leftover composition/candidate state so a destroyed context
+        // (e.g. fullscreen switch on TSF) cannot leave stale widgets on screen.
+        try {
+            ClientProxy.Screen.PreEdit.setContent(null, -1);
+            ClientProxy.Screen.CandidateList.setContent(null, -1);
+        } catch (Throwable e) {
+            LOG.error("Failed to clear IME widgets on InputContext destroy", e);
+        }
     }
 
     public static void createInputCtx() {
