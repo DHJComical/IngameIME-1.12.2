@@ -92,6 +92,12 @@ public class RustImeLibrary {
         rust_ime_library_force_native_mode(contextPtr);
     }
 
+    public static native void rust_ime_library_poll_events(long contextPtr);
+
+    public static void pollEvents(long contextPtr) {
+        rust_ime_library_poll_events(contextPtr);
+    }
+
     public static native boolean rust_ime_library_process_key_event(
         long contextPtr,
         int keyval,

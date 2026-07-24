@@ -26,6 +26,7 @@ public class Internal {
     static RustImeLibrary.CandidateListCallback candidateListCallback = null;
     static RustImeLibrary.InputModeCallback inputModeCallback = null;
     private static final AtomicInteger COMMIT_DEBUG_SEQUENCE = new AtomicInteger();
+    private static final DeferredCallbackQueue LINUX_CALLBACK_QUEUE = new DeferredCallbackQueue();
     private static boolean forceAlphaApiUnavailable = false;
     private static boolean forceNativeApiUnavailable = false;
     private static boolean linuxKeyBridgeUnavailableLogged = false;
@@ -402,6 +403,7 @@ public class Internal {
     }
 
     public static void destroyInputCtx() {
+        LINUX_CALLBACK_QUEUE.clear();
         if (InputCtx == 0) return;
         try {
             RustImeLibrary.destroyInputContext(InputCtx);
@@ -465,100 +467,34 @@ public class Internal {
 
         // Setup callbacks
         preEditCallback = (state, content, cursor) -> {
-            try {
-                if (state == 0) { // Begin
-                    ClientProxy.Screen.WInputMode.setActive(false);
-                }
-                if (content != null) {
-                    ClientProxy.Screen.PreEdit.setContent(content, cursor);
-                } else {
-                    ClientProxy.Screen.PreEdit.setContent(null, -1);
-                }
-            } catch (Throwable e) {
-                LOG.error("Exception in PreEdit callback", e);
+            if (LWJGLUtil.getPlatform() == LWJGLUtil.PLATFORM_LINUX) {
+                LINUX_CALLBACK_QUEUE.enqueue(() -> handlePreEditCallback(state, content, cursor));
+            } else {
+                handlePreEditCallback(state, content, cursor);
             }
         };
 
         commitCallback = text -> {
-            try {
-                int commitId = COMMIT_DEBUG_SEQUENCE.incrementAndGet();
-                String commitText = UnicodeTextHelper.repairUtf8Mojibake(text);
-                IngameIME_Forge.logDebugInfo(
-                        "[IME Commit #{}] raw='{}' repaired='{}' rawUtf16=[{}] repairedUtf16=[{}] rawCp=[{}] repairedCp=[{}]",
-                        commitId,
-                        UnicodeTextHelper.debugEscaped(text),
-                        UnicodeTextHelper.debugEscaped(commitText),
-                        UnicodeTextHelper.debugUtf16(text),
-                        UnicodeTextHelper.debugUtf16(commitText),
-                        UnicodeTextHelper.debugCodePoints(text),
-                        UnicodeTextHelper.debugCodePoints(commitText)
-                );
-                Minecraft.getMinecraft().addScheduledTask(() -> {
-                    try {
-                        IngameIME_Forge.logDebugInfo(
-                                "[IME Commit #{}] targetControl={} targetObject={}",
-                                commitId,
-                                IMStates.getActiveControl().getClass().getName(),
-                                IMStates.getActiveControl().getControlObject() == null
-                                        ? "null"
-                                        : IMStates.getActiveControl().getControlObject().getClass().getName()
-                        );
-                        IMStates.getActiveControl().writeText(commitText);
-                    } catch (Throwable e) {
-                        LOG.error("Exception in Commit callback", e);
-                    }
-                });
-            } catch (Throwable e) {
-                LOG.error("Exception scheduling Commit task", e);
+            if (LWJGLUtil.getPlatform() == LWJGLUtil.PLATFORM_LINUX) {
+                LINUX_CALLBACK_QUEUE.enqueue(() -> handleCommitCallback(text));
+            } else {
+                handleCommitCallback(text);
             }
         };
 
         candidateListCallback = (state, candidates, selected) -> {
-            try {
-                if (candidates != null) {
-                    LOG.debug("CandidateList callback: received {} candidates, selected={}", candidates.length, selected);
-                    for (int i = 0; i < candidates.length; i++) {
-                        IngameIME_Forge.logDebugInfo(
-                                "[Java Candidates Raw]   [{}] '{}' utf16=[{}] cp=[{}]",
-                                i,
-                                UnicodeTextHelper.debugEscaped(candidates[i]),
-                                UnicodeTextHelper.debugUtf16(candidates[i]),
-                                UnicodeTextHelper.debugCodePoints(candidates[i])
-                        );
-                    }
-                    // Keep one Java entry per native candidate so indexes match the IME.
-                    List<String> flattened = getStrings(candidates);
-                    LOG.debug("Normalized to {} candidates", flattened.size());
-                    for (int i = 0; i < flattened.size(); i++) {
-                        String candidate = flattened.get(i);
-                        IngameIME_Forge.logDebugInfo(
-                                "[Java Candidates Flat]  [{}] '{}' utf16=[{}] cp=[{}]",
-                                i,
-                                UnicodeTextHelper.debugEscaped(candidate),
-                                UnicodeTextHelper.debugUtf16(candidate),
-                                UnicodeTextHelper.debugCodePoints(candidate)
-                        );
-                    }
-                    // Apply max candidates limit
-                    if (flattened.size() > Config.MaxCandidates) {
-                        flattened = new ArrayList<>(flattened.subList(0, Config.MaxCandidates));
-                        LOG.debug("Truncated to {} candidates", flattened.size());
-                    }
-                    ClientProxy.Screen.CandidateList.setContent(flattened, selected);
-                } else {
-                    ClientProxy.Screen.CandidateList.setContent(null, -1);
-                }
-            } catch (Throwable e) {
-                LOG.error("Exception in CandidateList callback", e);
+            if (LWJGLUtil.getPlatform() == LWJGLUtil.PLATFORM_LINUX) {
+                LINUX_CALLBACK_QUEUE.enqueue(() -> handleCandidateListCallback(candidates, selected));
+            } else {
+                handleCandidateListCallback(candidates, selected);
             }
         };
 
         inputModeCallback = mode -> {
-            try {
-                // mode: 0=Alpha, 1=Native, 2=Unsupported
-                ClientProxy.Screen.WInputMode.setMode(mode == 1);
-            } catch (Throwable e) {
-                LOG.error("Exception in InputMode callback", e);
+            if (LWJGLUtil.getPlatform() == LWJGLUtil.PLATFORM_LINUX) {
+                LINUX_CALLBACK_QUEUE.enqueue(() -> handleInputModeCallback(mode));
+            } else {
+                handleInputModeCallback(mode);
             }
         };
 
@@ -569,6 +505,104 @@ public class Internal {
         RustImeLibrary.setInputModeCallback(InputCtx, inputModeCallback);
 
         System.gc();
+    }
+
+    private static void handlePreEditCallback(int state, String content, int cursor) {
+        try {
+            if (state == 0) { // Begin
+                ClientProxy.Screen.WInputMode.setActive(false);
+            }
+            if (content != null) {
+                ClientProxy.Screen.PreEdit.setContent(content, cursor);
+            } else {
+                ClientProxy.Screen.PreEdit.setContent(null, -1);
+            }
+        } catch (Throwable e) {
+            LOG.error("Exception in PreEdit callback", e);
+        }
+    }
+
+    private static void handleCommitCallback(String text) {
+        try {
+            int commitId = COMMIT_DEBUG_SEQUENCE.incrementAndGet();
+            String commitText = UnicodeTextHelper.repairUtf8Mojibake(text);
+            IngameIME_Forge.logDebugInfo(
+                    "[IME Commit #{}] raw='{}' repaired='{}' rawUtf16=[{}] repairedUtf16=[{}] rawCp=[{}] repairedCp=[{}]",
+                    commitId,
+                    UnicodeTextHelper.debugEscaped(text),
+                    UnicodeTextHelper.debugEscaped(commitText),
+                    UnicodeTextHelper.debugUtf16(text),
+                    UnicodeTextHelper.debugUtf16(commitText),
+                    UnicodeTextHelper.debugCodePoints(text),
+                    UnicodeTextHelper.debugCodePoints(commitText)
+            );
+            Minecraft.getMinecraft().addScheduledTask(() -> {
+                try {
+                    IngameIME_Forge.logDebugInfo(
+                            "[IME Commit #{}] targetControl={} targetObject={}",
+                            commitId,
+                            IMStates.getActiveControl().getClass().getName(),
+                            IMStates.getActiveControl().getControlObject() == null
+                                    ? "null"
+                                    : IMStates.getActiveControl().getControlObject().getClass().getName()
+                    );
+                    IMStates.getActiveControl().writeText(commitText);
+                } catch (Throwable e) {
+                    LOG.error("Exception in Commit callback", e);
+                }
+            });
+        } catch (Throwable e) {
+            LOG.error("Exception scheduling Commit task", e);
+        }
+    }
+
+    private static void handleCandidateListCallback(String[] candidates, int selected) {
+        try {
+            if (candidates != null) {
+                LOG.debug("CandidateList callback: received {} candidates, selected={}", candidates.length, selected);
+                for (int i = 0; i < candidates.length; i++) {
+                    IngameIME_Forge.logDebugInfo(
+                            "[Java Candidates Raw]   [{}] '{}' utf16=[{}] cp=[{}]",
+                            i,
+                            UnicodeTextHelper.debugEscaped(candidates[i]),
+                            UnicodeTextHelper.debugUtf16(candidates[i]),
+                            UnicodeTextHelper.debugCodePoints(candidates[i])
+                    );
+                }
+                // Keep one Java entry per native candidate so indexes match the IME.
+                List<String> flattened = getStrings(candidates);
+                LOG.debug("Normalized to {} candidates", flattened.size());
+                for (int i = 0; i < flattened.size(); i++) {
+                    String candidate = flattened.get(i);
+                    IngameIME_Forge.logDebugInfo(
+                            "[Java Candidates Flat]  [{}] '{}' utf16=[{}] cp=[{}]",
+                            i,
+                            UnicodeTextHelper.debugEscaped(candidate),
+                            UnicodeTextHelper.debugUtf16(candidate),
+                            UnicodeTextHelper.debugCodePoints(candidate)
+                    );
+                }
+                // Apply max candidates limit
+                if (flattened.size() > Config.MaxCandidates) {
+                    flattened = new ArrayList<>(flattened.subList(0, Config.MaxCandidates));
+                    LOG.debug("Truncated to {} candidates", flattened.size());
+                }
+                ClientProxy.Screen.CandidateList.setContent(flattened, selected);
+            } else {
+                ClientProxy.Screen.CandidateList.setContent(null, -1);
+            }
+        } catch (Throwable e) {
+            LOG.error("Exception in CandidateList callback", e);
+        }
+    }
+
+    private static void handleInputModeCallback(int mode) {
+        try {
+            // mode: 0=Alpha, 1=Native, 2=Unsupported
+            ClientProxy.Screen.WInputMode.setMode(mode == 1);
+        } catch (Throwable e) {
+            LOG.error("Exception in InputMode callback", e);
+        }
     }
 
     @Nonnull
@@ -682,6 +716,22 @@ public class Internal {
         } catch (Throwable t) {
             LOG.error("Failed to process Linux key event", t);
             return false;
+        } finally {
+            LINUX_CALLBACK_QUEUE.drain();
+        }
+    }
+
+    public static void pollLinuxEvents() {
+        if (LWJGLUtil.getPlatform() != LWJGLUtil.PLATFORM_LINUX || !LIBRARY_LOADED || InputCtx == 0) {
+            return;
+        }
+
+        try {
+            RustImeLibrary.pollEvents(InputCtx);
+        } catch (Throwable t) {
+            LOG.error("Failed to poll Linux IME events", t);
+        } finally {
+            LINUX_CALLBACK_QUEUE.drain();
         }
     }
 

@@ -15,6 +15,7 @@ import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.InputEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
@@ -57,6 +58,13 @@ public class ClientProxy extends CommonProxy implements IMEventHandler {
     public void onKeyInput(InputEvent.KeyInputEvent event) {
         if (KeyBind.isPressed()) {
             onToggleKey();
+        }
+    }
+
+    @SubscribeEvent
+    public void onClientTick(TickEvent.ClientTickEvent event) {
+        if (event.phase == TickEvent.Phase.END) {
+            Internal.pollLinuxEvents();
         }
     }
 
