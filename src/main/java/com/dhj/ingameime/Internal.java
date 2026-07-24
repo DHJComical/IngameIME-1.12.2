@@ -7,6 +7,7 @@ import org.lwjgl.LWJGLUtil;
 import org.lwjgl.opengl.Display;
 
 import javax.annotation.Nonnull;
+import java.io.File;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
@@ -63,6 +64,8 @@ public class Internal {
                 suffix = libName.substring(dot);
             }
 
+            cleanupStaleTempLibraries();
+
             Path path = Files.createTempFile("ingameime-core-", suffix);
             try (InputStream in = lib) {
                 Files.copy(in, path, StandardCopyOption.REPLACE_EXISTING);
@@ -74,6 +77,25 @@ public class Internal {
             LOG.info("Library [{}] has loaded!", libName);
         } catch (Throwable e) {
             LOG.warn("Try to load library [{}] but failed: {}", libName, e.getClass().getSimpleName());
+        }
+    }
+
+    // On Windows a mapped DLL cannot be deleted, so deleteOnExit() leaves temp copies
+    // behind after every launch. Best-effort sweep of leftovers from previous runs;
+    // files still locked by a running process are skipped.
+    private static void cleanupStaleTempLibraries() {
+        File tmpDir = new File(System.getProperty("java.io.tmpdir"));
+        File[] stale = tmpDir.listFiles((dir, name) -> name.startsWith("ingameime-core-"));
+        if (stale == null) {
+            return;
+        }
+        for (File file : stale) {
+            try {
+                Files.deleteIfExists(file.toPath());
+                LOG.debug("Deleted stale native library temp file: {}", file.getName());
+            } catch (Throwable t) {
+                LOG.debug("Stale native library temp file is locked, skipping: {}", file.getName());
+            }
         }
     }
 
