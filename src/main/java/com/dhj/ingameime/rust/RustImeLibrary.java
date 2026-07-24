@@ -92,6 +92,22 @@ public class RustImeLibrary {
         rust_ime_library_force_native_mode(contextPtr);
     }
 
+    public static native boolean rust_ime_library_process_key_event(
+        long contextPtr,
+        int keyval,
+        int keycode,
+        int state,
+        boolean release);
+
+    public static boolean processKeyEvent(
+        long contextPtr,
+        int keyval,
+        int keycode,
+        int state,
+        boolean release) {
+        return rust_ime_library_process_key_event(contextPtr, keyval, keycode, state, release);
+    }
+
     /**
      * Set the preedit rectangle for candidate window positioning.
      */

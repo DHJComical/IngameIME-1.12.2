@@ -28,6 +28,7 @@ public class Internal {
     private static final AtomicInteger COMMIT_DEBUG_SEQUENCE = new AtomicInteger();
     private static boolean forceAlphaApiUnavailable = false;
     private static boolean forceNativeApiUnavailable = false;
+    private static boolean linuxKeyBridgeUnavailableLogged = false;
 
     private static void prepareRustJniBinding() {
         String prop = RustImeLibrary.JNI_BIND_CLASS_PROPERTY;
@@ -435,14 +436,11 @@ public class Internal {
             int api = Config.API_Windows.equals("TextServiceFramework") ? 0 : 1;
             LOG.info("Using Windows API: {}, UiLess: {}", api, Config.UiLess_Windows);
             InputCtx = RustImeLibrary.createInputContext(hWnd, api, Config.UiLess_Windows);
-        }
-//        else if (platform == LWJGLUtil.PLATFORM_LINUX) {
-//            long window = getLinuxWindowHandle();
-//            LOG.info("Using Linux backend, X11 window=0x{}", Long.toHexString(window));
-//            // Linux backend will choose Wayland/X11 internally by runtime availability.
-//            InputCtx = RustImeLibrary.createInputContext(window, 0, false);
-//        }
-        else {
+        } else if (platform == LWJGLUtil.PLATFORM_LINUX) {
+            long window = getLinuxWindowHandle();
+            LOG.info("Using Linux backend, native window=0x{}", Long.toHexString(window));
+            InputCtx = RustImeLibrary.createInputContext(window, 0, false);
+        } else {
             LOG.error("Unsupported platform for context creation: {}", LWJGLUtil.getPlatformName());
             return;
         }
@@ -644,6 +642,46 @@ public class Internal {
             LOG.warn("Rust force native API is unavailable in current native library: {}", e.getClass().getSimpleName());
         } catch (Throwable t) {
             LOG.error("Failed to force native mode", t);
+        }
+    }
+
+    public static boolean processLinuxKeyEvent(long keyval, int x11Keycode, int state, boolean release) {
+        if (LWJGLUtil.getPlatform() != LWJGLUtil.PLATFORM_LINUX) {
+            LOG.error("Linux key event bridge called on platform: {}", LWJGLUtil.getPlatformName());
+            return false;
+        }
+
+        final int jniKeyval;
+        final int ibusKeycode;
+        try {
+            jniKeyval = LinuxKeyEventConverter.toJniKeyval(keyval);
+            ibusKeycode = LinuxKeyEventConverter.toIbusKeycode(x11Keycode);
+            LinuxKeyEventConverter.validateState(state);
+        } catch (IllegalArgumentException e) {
+            LOG.error("Rejected invalid X11 key event", e);
+            return false;
+        }
+
+        if (!LIBRARY_LOADED || InputCtx == 0) {
+            if (!linuxKeyBridgeUnavailableLogged) {
+                LOG.error(
+                    "Linux key event bridge is unavailable: libraryLoaded={}, inputContext=0x{}",
+                    LIBRARY_LOADED,
+                    Long.toHexString(InputCtx));
+                linuxKeyBridgeUnavailableLogged = true;
+            }
+            return false;
+        }
+        if (!RustImeLibrary.isInputContextActivated(InputCtx)) {
+            return false;
+        }
+
+        linuxKeyBridgeUnavailableLogged = false;
+        try {
+            return RustImeLibrary.processKeyEvent(InputCtx, jniKeyval, ibusKeycode, state, release);
+        } catch (Throwable t) {
+            LOG.error("Failed to process Linux key event", t);
+            return false;
         }
     }
 
