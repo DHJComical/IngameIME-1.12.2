@@ -461,13 +461,10 @@ public class Internal {
                 LOG.error("InputContext could not init as the hWnd is NULL!");
                 return;
             }
-            if (Minecraft.getMinecraft().isFullScreen()) {
-                Config.UiLess_Windows = true;
-                Config.sync();
-            }
+            boolean uiLess = Minecraft.getMinecraft().isFullScreen() || Config.UiLess_Windows;
             int api = Config.API_Windows.equals("TextServiceFramework") ? 0 : 1;
-            LOG.info("Using Windows API: {}, UiLess: {}", api, Config.UiLess_Windows);
-            InputCtx = RustImeLibrary.createInputContext(hWnd, api, Config.UiLess_Windows);
+            LOG.info("Using Windows API: {}, UiLess: {}", api, uiLess);
+            InputCtx = RustImeLibrary.createInputContext(hWnd, api, uiLess);
         } else if (platform == LWJGLUtil.PLATFORM_LINUX) {
             long window = getLinuxWindowHandle();
             LOG.info("Using Linux backend, native window=0x{}", Long.toHexString(window));
