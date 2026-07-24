@@ -599,7 +599,7 @@ public class Internal {
     private static void handleInputModeCallback(int mode) {
         try {
             // mode: 0=Alpha, 1=Native, 2=Unsupported
-            ClientProxy.Screen.WInputMode.setMode(mode == 1);
+            ClientProxy.Screen.WInputMode.setMode(mode);
         } catch (Throwable e) {
             LOG.error("Exception in InputMode callback", e);
         }
