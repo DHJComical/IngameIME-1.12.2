@@ -46,6 +46,7 @@ public class ThemeManager {
     private final File userThemePackIndexFile;
     private final File thirdPartyThemePackDir;
     private final File thirdPartyThemePackThemesDir;
+    private final ThemePathPolicy themePathPolicy;
 
     private final Gson gson;
     private final List<ThemeChangeListener> listeners = new ArrayList<>();
@@ -84,6 +85,7 @@ public class ThemeManager {
         this.userThemePackIndexFile = new File(userThemePackThemesDir, "index.json");
         this.thirdPartyThemePackDir = new File(mcDir, "resourcepacks/" + THIRD_PARTY_THEME_PACK_NAME);
         this.thirdPartyThemePackThemesDir = new File(thirdPartyThemePackDir, "assets/ingameime/themes");
+        this.themePathPolicy = new ThemePathPolicy(userThemePackThemesDir.toPath());
         this.gson = new GsonBuilder().setPrettyPrinting().create();
 
         ensureStateDirectory();
@@ -175,8 +177,16 @@ public class ThemeManager {
     }
 
     private void updateThemeIndexEntry(String themeId, boolean add) {
+        String validThemeId = themePathPolicy.requireValidThemeId(themeId);
+        try {
+            themePathPolicy.resolveThemeFile(validThemeId);
+            themePathPolicy.resolveIndexEntry(validThemeId + "/theme.json");
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Unable to resolve theme index entry: " + validThemeId, e);
+        }
+
         ensureUserThemePackDirectory();
-        String entry = themeId + "/theme.json";
+        String entry = validThemeId + "/theme.json";
         ResourceThemeIndex index = readThemeIndex();
         if (index.themes == null) {
             index.themes = new ArrayList<>();
@@ -327,28 +337,12 @@ public class ThemeManager {
     }
 
     private File resolveUserThemeFile(String entry) {
-        if (entry == null) {
+        try {
+            return themePathPolicy.resolveIndexEntry(entry).toFile();
+        } catch (IllegalArgumentException | IOException e) {
+            IngameIME_Forge.LOG.error("[ThemeManager] Refusing unsafe user theme index entry '{}': {}", entry, e.getMessage());
             return null;
         }
-
-        String path = entry.trim().replace('\\', '/');
-        if (path.isEmpty()) {
-            return null;
-        }
-        while (path.startsWith("/")) {
-            path = path.substring(1);
-        }
-        int colon = path.indexOf(':');
-        if (colon >= 0 && colon + 1 < path.length()) {
-            path = path.substring(colon + 1);
-        }
-        if (path.startsWith("themes/")) {
-            path = path.substring("themes/".length());
-        }
-        if (!path.endsWith(".json")) {
-            path = path + ".json";
-        }
-        return new File(userThemePackThemesDir, path);
     }
 
     private void loadThemeFromLocalPackFile(File themeFile, File themeRoot, String sourceTag) {
@@ -382,6 +376,16 @@ public class ThemeManager {
             }
             if (theme.getName() == null || theme.getName().isEmpty()) {
                 theme.setName(theme.getId());
+            }
+            try {
+                theme.setId(themePathPolicy.requireValidThemeId(theme.getId()));
+            } catch (IllegalArgumentException e) {
+                IngameIME_Forge.LOG.error(
+                    "[ThemeManager] Refusing {} theme with invalid ID '{}': {}",
+                    sourceTag,
+                    theme.getId(),
+                    e.getMessage());
+                return;
             }
             String basePath = relativeParent.isEmpty() ? "themes" : "themes/" + relativeParent;
             themes.put(theme.getId(), theme);
@@ -430,6 +434,15 @@ public class ThemeManager {
                 }
                 if (theme.getName() == null || theme.getName().isEmpty()) {
                     theme.setName(theme.getId());
+                }
+                try {
+                    theme.setId(themePathPolicy.requireValidThemeId(theme.getId()));
+                } catch (IllegalArgumentException e) {
+                    IngameIME_Forge.LOG.error(
+                        "[ThemeManager] Refusing zip theme with invalid ID '{}': {}",
+                        theme.getId(),
+                        e.getMessage());
+                    return;
                 }
 
                 String basePath = relativeParent.isEmpty() ? "themes" : "themes/" + relativeParent;
@@ -580,6 +593,15 @@ public class ThemeManager {
             if (theme.getName() == null || theme.getName().isEmpty()) {
                 theme.setName(theme.getId());
             }
+            try {
+                theme.setId(themePathPolicy.requireValidThemeId(theme.getId()));
+            } catch (IllegalArgumentException e) {
+                IngameIME_Forge.LOG.error(
+                    "[ThemeManager] Refusing resource theme with invalid ID '{}': {}",
+                    theme.getId(),
+                    e.getMessage());
+                return;
+            }
 
             String basePath = slash >= 0 ? path.substring(0, slash) : "";
             themes.put(theme.getId(), theme);
@@ -679,11 +701,18 @@ public class ThemeManager {
             return null;
         }
 
-        String normalized = fileName.replace('\\', '/');
-        while (normalized.startsWith("/")) {
-            normalized = normalized.substring(1);
+        final String safeFileName;
+        try {
+            safeFileName = ThemePathPolicy.requireSafeFileName(fileName);
+        } catch (IllegalArgumentException e) {
+            IngameIME_Forge.LOG.error(
+                "[ThemeManager] Refusing unsafe texture file name '{}' for theme '{}': {}",
+                fileName,
+                themeId,
+                e.getMessage());
+            return null;
         }
-        return new File(baseDir, normalized);
+        return new File(baseDir, safeFileName);
     }
 
     private ResourceLocation resolveResourceTexture(String themeId, String fileName) {
@@ -769,14 +798,29 @@ public class ThemeManager {
     }
 
     public void saveCustomThemeToResourcePack(Theme theme) {
+        String themeId;
+        Path folderPath;
+        Path themeFilePath;
+        try {
+            themeId = themePathPolicy.requireValidThemeId(theme.getId());
+            folderPath = themePathPolicy.resolveThemeDirectory(themeId);
+            themeFilePath = themePathPolicy.resolveThemeFile(themeId);
+        } catch (IllegalArgumentException | IOException e) {
+            IngameIME_Forge.LOG.error(
+                "[ThemeManager] Refusing to save theme with invalid ID '{}': {}",
+                theme.getId(),
+                e.getMessage());
+            return;
+        }
+        theme.setId(themeId);
         ensureUserThemePackDirectory();
 
-        File folder = new File(userThemePackThemesDir, theme.getId());
+        File folder = folderPath.toFile();
         if (!folder.exists()) {
             folder.mkdirs();
         }
 
-        try (Writer writer = new OutputStreamWriter(Files.newOutputStream(new File(folder, "theme.json").toPath()), StandardCharsets.UTF_8)) {
+        try (Writer writer = new OutputStreamWriter(Files.newOutputStream(themeFilePath), StandardCharsets.UTF_8)) {
             gson.toJson(theme, writer);
             IngameIME_Forge.logDebugInfo(
                 "[ThemeManager] Saved theme to resource pack: {} ({})",
@@ -908,28 +952,54 @@ public class ThemeManager {
     }
 
     public void deleteCustomTheme(String id) {
-        themes.remove(id);
-        resourceThemeSources.remove(id);
-        userThemeBaseDirs.remove(id);
-        zipThemeSources.remove(id);
-        clearThemeTextureCache(id);
-
-        File resourceFolder = new File(userThemePackThemesDir, id);
-        if (resourceFolder.exists()) {
-            deleteRecursive(resourceFolder);
-            IngameIME_Forge.logDebugInfo("[ThemeManager] Deleted resource-pack theme: {}", id);
+        String validThemeId;
+        Path resourceFolderPath;
+        try {
+            validThemeId = themePathPolicy.requireValidThemeId(id);
+            resourceFolderPath = themePathPolicy.resolveThemeDirectory(validThemeId);
+        } catch (IllegalArgumentException | IOException e) {
+            IngameIME_Forge.LOG.error(
+                "[ThemeManager] Refusing to delete theme with invalid ID '{}': {}",
+                id,
+                e.getMessage());
+            return;
         }
 
-        updateThemeIndexEntry(id, false);
+        themes.remove(validThemeId);
+        resourceThemeSources.remove(validThemeId);
+        userThemeBaseDirs.remove(validThemeId);
+        zipThemeSources.remove(validThemeId);
+        clearThemeTextureCache(validThemeId);
+
+        File resourceFolder = resourceFolderPath.toFile();
+        if (resourceFolder.exists()) {
+            deleteRecursive(resourceFolder);
+            IngameIME_Forge.logDebugInfo("[ThemeManager] Deleted resource-pack theme: {}", validThemeId);
+        }
+
+        updateThemeIndexEntry(validThemeId, false);
     }
 
     private void deleteRecursive(File file) {
-        File[] children = file.listFiles();
-        if (children != null) {
-            for (File child : children) {
-                deleteRecursive(child);
+        Path path = file.toPath();
+        try {
+            if (Files.isSymbolicLink(path)) {
+                // Never follow links: remove the link itself, not the target's content.
+                Files.deleteIfExists(path);
+                return;
             }
+            File[] children = file.listFiles();
+            if (children != null) {
+                for (File child : children) {
+                    deleteRecursive(child);
+                }
+            }
+            Files.deleteIfExists(path);
+        } catch (IOException e) {
+            IngameIME_Forge.LOG.error(
+                "[ThemeManager] Failed to delete '{}': {}",
+                file.getAbsolutePath(),
+                e.getMessage());
         }
-        file.delete();
     }
 }
