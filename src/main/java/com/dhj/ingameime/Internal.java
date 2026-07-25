@@ -7,6 +7,7 @@ import org.lwjgl.LWJGLUtil;
 import org.lwjgl.opengl.Display;
 
 import javax.annotation.Nonnull;
+import java.io.File;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
@@ -63,6 +64,8 @@ public class Internal {
                 suffix = libName.substring(dot);
             }
 
+            cleanupStaleTempLibraries();
+
             Path path = Files.createTempFile("ingameime-core-", suffix);
             try (InputStream in = lib) {
                 Files.copy(in, path, StandardCopyOption.REPLACE_EXISTING);
@@ -74,6 +77,25 @@ public class Internal {
             LOG.info("Library [{}] has loaded!", libName);
         } catch (Throwable e) {
             LOG.warn("Try to load library [{}] but failed: {}", libName, e.getClass().getSimpleName());
+        }
+    }
+
+    // On Windows a mapped DLL cannot be deleted, so deleteOnExit() leaves temp copies
+    // behind after every launch. Best-effort sweep of leftovers from previous runs;
+    // files still locked by a running process are skipped.
+    private static void cleanupStaleTempLibraries() {
+        File tmpDir = new File(System.getProperty("java.io.tmpdir"));
+        File[] stale = tmpDir.listFiles((dir, name) -> name.startsWith("ingameime-core-"));
+        if (stale == null) {
+            return;
+        }
+        for (File file : stale) {
+            try {
+                Files.deleteIfExists(file.toPath());
+                LOG.debug("Deleted stale native library temp file: {}", file.getName());
+            } catch (Throwable t) {
+                LOG.debug("Stale native library temp file is locked, skipping: {}", file.getName());
+            }
         }
     }
 
@@ -345,12 +367,16 @@ public class Internal {
         try {
             Display.class.getMethod("getWindow");
             hasGetWindow = true;
-        } catch (NoSuchMethodException ignored) {}
+        } catch (NoSuchMethodException e) {
+            LOG.debug("Display.getWindow() method not found");
+        }
 
         try {
             Display.class.getDeclaredMethod("getImplementation");
             hasGetImplementation = true;
-        } catch (NoSuchMethodException ignored) {}
+        } catch (NoSuchMethodException e) {
+            LOG.debug("Display.getImplementation() method not found");
+        }
         LOG.info("LWJGL method detection - getWindow: {}, getImplementation: {}", hasGetWindow, hasGetImplementation);
 
         // Try LWJGL3 first if available
@@ -386,12 +412,16 @@ public class Internal {
         try {
             Display.class.getMethod("getWindow");
             hasGetWindow = true;
-        } catch (NoSuchMethodException ignored) {}
+        } catch (NoSuchMethodException e) {
+            LOG.debug("Display.getWindow() method not found");
+        }
 
         try {
             Display.class.getDeclaredMethod("getImplementation");
             hasGetImplementation = true;
-        } catch (NoSuchMethodException ignored) {}
+        } catch (NoSuchMethodException e) {
+            LOG.debug("Display.getImplementation() method not found");
+        }
 
         if (hasGetWindow) {
             window = getWindowHandleLinux_LWJGL3();
@@ -412,6 +442,14 @@ public class Internal {
             LOG.error("Failed to destroy InputContext", e);
         }
         InputCtx = 0;
+        // Drop any leftover composition/candidate state so a destroyed context
+        // (e.g. fullscreen switch on TSF) cannot leave stale widgets on screen.
+        try {
+            ClientProxy.Screen.PreEdit.setContent(null, -1);
+            ClientProxy.Screen.CandidateList.setContent(null, -1);
+        } catch (Throwable e) {
+            LOG.error("Failed to clear IME widgets on InputContext destroy", e);
+        }
     }
 
     public static void createInputCtx() {
@@ -431,13 +469,10 @@ public class Internal {
                 LOG.error("InputContext could not init as the hWnd is NULL!");
                 return;
             }
-            if (Minecraft.getMinecraft().isFullScreen()) {
-                Config.UiLess_Windows = true;
-                Config.sync();
-            }
+            boolean uiLess = Minecraft.getMinecraft().isFullScreen() || Config.UiLess_Windows;
             int api = Config.API_Windows.equals("TextServiceFramework") ? 0 : 1;
-            LOG.info("Using Windows API: {}, UiLess: {}", api, Config.UiLess_Windows);
-            InputCtx = RustImeLibrary.createInputContext(hWnd, api, Config.UiLess_Windows);
+            LOG.info("Using Windows API: {}, UiLess: {}", api, uiLess);
+            InputCtx = RustImeLibrary.createInputContext(hWnd, api, uiLess);
         } else if (platform == LWJGLUtil.PLATFORM_LINUX) {
             long window = getLinuxWindowHandle();
             LOG.info("Using Linux backend, native window=0x{}", Long.toHexString(window));
@@ -599,7 +634,7 @@ public class Internal {
     private static void handleInputModeCallback(int mode) {
         try {
             // mode: 0=Alpha, 1=Native, 2=Unsupported
-            ClientProxy.Screen.WInputMode.setMode(mode == 1);
+            ClientProxy.Screen.WInputMode.setMode(mode);
         } catch (Throwable e) {
             LOG.error("Exception in InputMode callback", e);
         }

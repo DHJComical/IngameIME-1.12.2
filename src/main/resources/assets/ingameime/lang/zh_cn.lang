@@ -11,6 +11,8 @@ ingameime.config.modetext.alpha_mode=英文模式文字
 ingameime.config.modetext.alpha_mode.tooltip=在英文模式时显示的文字。
 ingameime.config.modetext.native_mode=本地模式文字
 ingameime.config.modetext.native_mode.tooltip=在本地模式时显示的文字。
+ingameime.config.modetext.unsupported_mode=不支持模式文字
+ingameime.config.modetext.unsupported_mode.tooltip=在不支持的输入模式时显示的文字。
 ingameime.config.debug.debug_log=调试日志
 ingameime.config.debug.debug_log.tooltip=配置是否打印调试日志。
 

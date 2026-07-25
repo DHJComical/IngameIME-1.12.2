@@ -20,6 +20,7 @@ public class Config {
 
     public static String AlphaModeText = "A";
     public static String NativeModeText = "中";
+    public static String UnsupportedModeText = "?";
 
     public static boolean DebugLog = false;
 
@@ -72,6 +73,13 @@ public class Config {
                 NativeModeText,
                 "Text to display when in Native mode."
         ).setLanguageKey(PREFIX + CATEGORIES[3] + ".native_mode").getString();
+
+        UnsupportedModeText = config.get(
+                CATEGORIES[3],
+                "UnsupportedMode",
+                UnsupportedModeText,
+                "Text to display when the input mode is unsupported."
+        ).setLanguageKey(PREFIX + CATEGORIES[3] + ".unsupported_mode").getString();
 
         DebugLog = config.get(
                 CATEGORIES[4],

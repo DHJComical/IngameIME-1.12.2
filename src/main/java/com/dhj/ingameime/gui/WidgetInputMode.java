@@ -5,11 +5,12 @@ import net.minecraft.client.gui.FontRenderer;
 
 import static com.dhj.ingameime.config.Config.AlphaModeText;
 import static com.dhj.ingameime.config.Config.NativeModeText;
+import static com.dhj.ingameime.config.Config.UnsupportedModeText;
 
 public class WidgetInputMode extends Widget {
     public final long ActiveTime = 3000;
     private long LastActive = 0;
-    private boolean isNativeMode = false;  // false=Alpha, true=Native
+    private int mode = 0;  // 0=Alpha, 1=Native, 2=Unsupported
 
     public WidgetInputMode() {
         DrawInline = false;
@@ -31,11 +32,22 @@ public class WidgetInputMode extends Widget {
         else LastActive = 0;
     }
 
-    public void setMode(boolean nativeMode) {
-        isNativeMode = nativeMode;
+    public void setMode(int mode) {
+        this.mode = mode;
         setActive(true);
         isDirty = true;
         layout();
+    }
+
+    private String getModeText() {
+        switch (mode) {
+            case 1:
+                return NativeModeText;
+            case 2:
+                return UnsupportedModeText;
+            default:
+                return AlphaModeText;
+        }
     }
 
     @Override
@@ -46,7 +58,7 @@ public class WidgetInputMode extends Widget {
             return;
         }
         Height = font.FONT_HEIGHT;
-        Width = font.getStringWidth(isNativeMode ? NativeModeText : AlphaModeText);
+        Width = font.getStringWidth(getModeText());
         super.layout();
     }
 
@@ -59,7 +71,6 @@ public class WidgetInputMode extends Widget {
             return;
         }
         super.draw();
-        String text = isNativeMode ? NativeModeText : AlphaModeText;
-        font.drawString(text, X + Padding, Y + Padding, TextColor);
+        font.drawString(getModeText(), X + Padding, Y + Padding, TextColor);
     }
 }
