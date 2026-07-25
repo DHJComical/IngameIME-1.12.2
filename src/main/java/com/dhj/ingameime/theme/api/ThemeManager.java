@@ -165,26 +165,21 @@ public class ThemeManager {
         }
     }
 
-    private void writeThemeIndex(ResourceThemeIndex index) {
+    private boolean writeThemeIndex(ResourceThemeIndex index) {
         if (index.themes == null) {
             index.themes = new ArrayList<>();
         }
         try (Writer writer = new OutputStreamWriter(Files.newOutputStream(userThemePackIndexFile.toPath()), StandardCharsets.UTF_8)) {
             gson.toJson(index, writer);
+            return true;
         } catch (Exception e) {
-            IngameIME_Forge.logDebugInfo("[ThemeManager] Failed to write user theme index: {}", e.getMessage());
+            IngameIME_Forge.LOG.error("[ThemeManager] Failed to write user theme index: {}", e.getMessage());
+            return false;
         }
     }
 
-    private void updateThemeIndexEntry(String themeId, boolean add) {
+    private boolean updateThemeIndexEntry(String themeId, boolean add) {
         String validThemeId = themePathPolicy.requireValidThemeId(themeId);
-        try {
-            themePathPolicy.resolveThemeFile(validThemeId);
-            themePathPolicy.resolveIndexEntry(validThemeId + "/theme.json");
-        } catch (IOException e) {
-            throw new IllegalArgumentException("Unable to resolve theme index entry: " + validThemeId, e);
-        }
-
         ensureUserThemePackDirectory();
         String entry = validThemeId + "/theme.json";
         ResourceThemeIndex index = readThemeIndex();
@@ -195,7 +190,7 @@ public class ThemeManager {
         if (add) {
             index.themes.add(entry);
         }
-        writeThemeIndex(index);
+        return writeThemeIndex(index);
     }
 
     public void reloadThemes() {
@@ -797,7 +792,7 @@ public class ThemeManager {
         }
     }
 
-    public void saveCustomThemeToResourcePack(Theme theme) {
+    public boolean saveCustomThemeToResourcePack(Theme theme) {
         String themeId;
         Path folderPath;
         Path themeFilePath;
@@ -810,40 +805,51 @@ public class ThemeManager {
                 "[ThemeManager] Refusing to save theme with invalid ID '{}': {}",
                 theme.getId(),
                 e.getMessage());
-            return;
+            return false;
         }
         theme.setId(themeId);
         ensureUserThemePackDirectory();
 
         File folder = folderPath.toFile();
-        if (!folder.exists()) {
-            folder.mkdirs();
+        if (!folder.isDirectory() && !folder.mkdirs()) {
+            IngameIME_Forge.LOG.error(
+                "[ThemeManager] Failed to create theme directory '{}'",
+                folder.getAbsolutePath());
+            return false;
         }
 
         try (Writer writer = new OutputStreamWriter(Files.newOutputStream(themeFilePath), StandardCharsets.UTF_8)) {
             gson.toJson(theme, writer);
-            IngameIME_Forge.logDebugInfo(
-                "[ThemeManager] Saved theme to resource pack: {} ({})",
-                theme.getId(),
-                theme.getName());
         } catch (IOException e) {
-            IngameIME_Forge.logDebugInfo("[ThemeManager] Failed to save resource-pack theme '{}': {}", theme.getId(), e.getMessage());
+            IngameIME_Forge.LOG.error(
+                "[ThemeManager] Failed to save resource-pack theme '{}': {}",
+                themeId,
+                e.getMessage());
+            return false;
         }
 
-        updateThemeIndexEntry(theme.getId(), true);
-        themes.put(theme.getId(), theme);
-        resourceThemeSources.put(theme.getId(), new ResourceThemeSource("ingameime", "themes/" + theme.getId()));
-        userThemeBaseDirs.put(theme.getId(), folder);
-        zipThemeSources.remove(theme.getId());
-        clearThemeTextureCache(theme.getId());
+        if (!updateThemeIndexEntry(themeId, true)) {
+            return false;
+        }
 
+        themes.put(themeId, theme);
+        resourceThemeSources.put(themeId, new ResourceThemeSource("ingameime", "themes/" + themeId));
+        userThemeBaseDirs.put(themeId, folder);
+        zipThemeSources.remove(themeId);
+        clearThemeTextureCache(themeId);
+
+        IngameIME_Forge.logDebugInfo(
+            "[ThemeManager] Saved theme to resource pack: {} ({})",
+            themeId,
+            theme.getName());
         IngameIME_Forge.logDebugInfo(
             "[ThemeManager] User theme pack path: {} (enable this resource pack in game if needed)",
             userThemePackDir.getAbsolutePath());
+        return true;
     }
 
-    public void saveCustomTheme(Theme theme) {
-        saveCustomThemeToResourcePack(theme);
+    public boolean saveCustomTheme(Theme theme) {
+        return saveCustomThemeToResourcePack(theme);
     }
 
     private void loadCurrentTheme() {
