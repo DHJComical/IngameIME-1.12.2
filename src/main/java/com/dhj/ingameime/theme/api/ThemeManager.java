@@ -768,6 +768,11 @@ public class ThemeManager {
             textureCache.put(cacheKey, loc);
             return loc;
         } catch (Exception e) {
+            IngameIME_Forge.logDebugInfo(
+                "[ThemeManager] Failed to load external texture '{}': {} - {}",
+                file.getAbsolutePath(),
+                e.getClass().getSimpleName(),
+                e.getMessage());
             return null;
         }
     }
@@ -874,7 +879,11 @@ public class ThemeManager {
                 if (!lines.isEmpty()) {
                     return lines.get(0).trim();
                 }
-            } catch (IOException ignored) {
+            } catch (IOException e) {
+                IngameIME_Forge.logDebugInfo(
+                    "[ThemeManager] Failed to read last theme file '{}': {}",
+                    lastThemeFile.getAbsolutePath(),
+                    e.getMessage());
             }
         }
         return null;
@@ -920,7 +929,11 @@ public class ThemeManager {
             currentTheme = themes.get(id);
             try (Writer writer = new OutputStreamWriter(Files.newOutputStream(lastThemeFile.toPath()), StandardCharsets.UTF_8)) {
                 writer.write(id);
-            } catch (IOException ignored) {
+            } catch (IOException e) {
+                IngameIME_Forge.logDebugInfo(
+                    "[ThemeManager] Failed to persist last theme id to '{}': {}",
+                    lastThemeFile.getAbsolutePath(),
+                    e.getMessage());
             }
             IngameIME_Forge.logDebugInfo("[ThemeManager] Theme switched to: {} ({})", id, currentTheme.getName());
             notifyThemeChanged();
