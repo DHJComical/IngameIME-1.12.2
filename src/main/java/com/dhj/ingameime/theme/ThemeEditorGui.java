@@ -618,6 +618,11 @@ public class ThemeEditorGui extends GuiScreen {
             safeId = "theme_" + safeId;
         }
 
+        // ThemePathPolicy accepts at most 64 characters
+        if (safeId.length() > 64) {
+            safeId = safeId.substring(0, 64);
+        }
+
         return safeId;
     }
 }
