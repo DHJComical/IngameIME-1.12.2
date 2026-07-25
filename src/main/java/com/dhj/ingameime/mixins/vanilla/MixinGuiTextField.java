@@ -6,6 +6,7 @@ import com.dhj.ingameime.UnicodeTextHelper;
 import com.dhj.ingameime.control.DirectTextFieldControl;
 import com.dhj.ingameime.control.JEITextFieldControl;
 import com.dhj.ingameime.control.VanillaTextFieldControl;
+import journeymap.client.ui.fullscreen.Fullscreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.gui.GuiScreen;
@@ -21,8 +22,12 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.lang.reflect.Field;
+
 @Mixin(GuiTextField.class)
 public abstract class MixinGuiTextField {
+    @Unique
+    private static final String JOURNEYMAP_MOD_ID = "journeymap";
     @Unique
     private int ingameime$lastCursorPosition = -1;
     @Unique
@@ -38,12 +43,9 @@ public abstract class MixinGuiTextField {
 
         try {
             GuiScreen currentScreen = Minecraft.getMinecraft().currentScreen;
-            if (currentScreen != null) {
-                String screenClassName = currentScreen.getClass().getName();
-                if (screenClassName.equals("journeymap.client.ui.fullscreen.Fullscreen")) {
-                    if (!ingameime$isJourneyMapSearchField(self, currentScreen)) {
-                        return;
-                    }
+            if (Loader.isModLoaded(JOURNEYMAP_MOD_ID) && currentScreen instanceof Fullscreen) {
+                if (!ingameime$isJourneyMapSearchField(self, (Fullscreen) currentScreen)) {
+                    return;
                 }
             }
 
@@ -208,7 +210,7 @@ public abstract class MixinGuiTextField {
                     selection,
                     aligned,
                     direction,
-                    com.dhj.ingameime.UnicodeTextHelper.debugEscaped(self.getText())
+                    UnicodeTextHelper.debugEscaped(self.getText())
             );
             ingameime$adjustingSelection = true;
             self.setSelectionPos(aligned);
@@ -247,22 +249,29 @@ public abstract class MixinGuiTextField {
     }
 
     @Unique
-    private boolean ingameime$isJourneyMapSearchField(GuiTextField field, GuiScreen screen) {
+    private boolean ingameime$isJourneyMapSearchField(GuiTextField field, Fullscreen screen) {
+        // JourneyMap is a compile-time dependency (modImplementation in
+        // gradle/scripts/dependencies.gradle), but Fullscreen#searchTextX/searchTextZ are
+        // package-private members of the journeymap.client.ui.fullscreen package with no
+        // public getter, so they cannot be referenced directly and are read reflectively.
         try {
-            java.lang.reflect.Field fieldX = screen.getClass().getDeclaredField("searchTextX");
+            Field fieldX = Fullscreen.class.getDeclaredField("searchTextX");
             fieldX.setAccessible(true);
             Object searchTextX = fieldX.get(screen);
             if (searchTextX != null && searchTextX == field) {
                 return true;
             }
 
-            java.lang.reflect.Field fieldZ = screen.getClass().getDeclaredField("searchTextZ");
+            Field fieldZ = Fullscreen.class.getDeclaredField("searchTextZ");
             fieldZ.setAccessible(true);
             Object searchTextZ = fieldZ.get(screen);
             if (searchTextZ != null && searchTextZ == field) {
                 return true;
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            IngameIME_Forge.LOG.warn(
+                "IngameIME failed to read JourneyMap fullscreen search fields; IME focus handling on the JourneyMap fullscreen map may not engage.",
+                e);
         }
         return false;
     }
