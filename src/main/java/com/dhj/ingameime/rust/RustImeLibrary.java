@@ -199,34 +199,47 @@ public class RustImeLibrary {
      * Callback for commit text events.
      */
     public interface CommitCallback {
+        /**
+         * Commit text notification.
+         * @param text Committed text
+         */
         void onCommit(String text);
     }
 
     /**
      * Callback for preedit events.
-     * @param state 0=Begin, 1=Update, 2=End
-     * @param content Preedit content (null for Begin/End)
-     * @param cursor Cursor position in preedit
      */
     public interface PreEditCallback {
+        /**
+         * Preedit event notification.
+         * @param state 0=Begin, 1=Update, 2=End
+         * @param content Preedit content (null for Begin/End)
+         * @param cursor Cursor position in preedit
+         */
         void onPreEdit(int state, String content, int cursor);
     }
 
     /**
      * Callback for candidate list events.
-     * @param state 0=Begin, 1=Update, 2=End
-     * @param candidates Array of candidate strings
-     * @param selected Selected candidate index
      */
     public interface CandidateListCallback {
+        /**
+         * Candidate list event notification.
+         * @param state 0=Begin, 1=Update, 2=End
+         * @param candidates Array of candidate strings
+         * @param selected Selected candidate index
+         */
         void onCandidateList(int state, String[] candidates, int selected);
     }
 
     /**
      * Callback for input mode changes.
-     * @param mode 0=Alpha, 1=Native, 2=Unsupported
      */
     public interface InputModeCallback {
+        /**
+         * Input mode change notification.
+         * @param mode 0=Alpha, 1=Native, 2=Unsupported
+         */
         void onInputModeChanged(int mode);
     }
 
