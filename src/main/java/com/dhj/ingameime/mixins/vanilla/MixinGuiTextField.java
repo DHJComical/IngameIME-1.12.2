@@ -6,21 +6,28 @@ import com.dhj.ingameime.UnicodeTextHelper;
 import com.dhj.ingameime.control.DirectTextFieldControl;
 import com.dhj.ingameime.control.JEITextFieldControl;
 import com.dhj.ingameime.control.VanillaTextFieldControl;
+import journeymap.client.ui.fullscreen.Fullscreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
+import net.minecraft.util.ChatAllowedCharacters;
 import net.minecraftforge.fml.common.Loader;
 import org.lwjgl.input.Keyboard;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.lang.reflect.Field;
+
 @Mixin(GuiTextField.class)
 public abstract class MixinGuiTextField {
+    @Unique
+    private static final String JOURNEYMAP_MOD_ID = "journeymap";
     @Unique
     private int ingameime$lastCursorPosition = -1;
     @Unique
@@ -36,12 +43,9 @@ public abstract class MixinGuiTextField {
 
         try {
             GuiScreen currentScreen = Minecraft.getMinecraft().currentScreen;
-            if (currentScreen != null) {
-                String screenClassName = currentScreen.getClass().getName();
-                if (screenClassName.equals("journeymap.client.ui.fullscreen.Fullscreen")) {
-                    if (!ingameime$isJourneyMapSearchField(self, currentScreen)) {
-                        return;
-                    }
+            if (Loader.isModLoaded(JOURNEYMAP_MOD_ID) && currentScreen instanceof Fullscreen) {
+                if (!ingameime$isJourneyMapSearchField(self, (Fullscreen) currentScreen)) {
+                    return;
                 }
             }
 
@@ -97,6 +101,44 @@ public abstract class MixinGuiTextField {
                 cir.setReturnValue(true);
             }
         }
+    }
+
+    /**
+     * Vanilla {@code writeText} truncates the inserted text at a UTF-16 char index
+     * ({@code s1.substring(0, k)}), which splits a surrogate pair or emoji cluster when the
+     * field is nearly full. The filtered text is pre-truncated here at a grapheme cluster
+     * boundary that never exceeds the length vanilla would allow, so vanilla's own length
+     * and cursor math (including {@code l = k}) keeps working on cluster-safe input.
+     */
+    @Redirect(
+            method = "writeText(Ljava/lang/String;)V",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/util/ChatAllowedCharacters;filterAllowedCharacters(Ljava/lang/String;)Ljava/lang/String;"))
+    private String ingameime$filterWriteTextClusterSafe(String textToWrite) {
+        String filtered = ChatAllowedCharacters.filterAllowedCharacters(textToWrite);
+
+        GuiTextField self = (GuiTextField) (Object) this;
+        int cursor = self.getCursorPosition();
+        int selection = self.getSelectionEnd();
+        int selectionStart = cursor < selection ? cursor : selection;
+        int selectionEnd = cursor < selection ? selection : cursor;
+        // Same inputs vanilla uses to compute its truncation length k in writeText.
+        int available = self.getMaxStringLength() - self.getText().length() - (selectionStart - selectionEnd);
+
+        if (available <= 0 || available >= filtered.length()) {
+            return filtered;
+        }
+
+        int aligned = GraphemeClusters.floorClusterBoundary(filtered, available);
+        if (aligned != available) {
+            IngameIME_Forge.logDebugInfo(
+                    "[IME ClusterWriteText] available={} aligned={} inserted='{}' text='{}'",
+                    available,
+                    aligned,
+                    UnicodeTextHelper.debugEscaped(filtered.substring(0, aligned)),
+                    UnicodeTextHelper.debugEscaped(self.getText())
+            );
+        }
+        return filtered.substring(0, aligned);
     }
 
     @Inject(method = "setFocused(Z)V", at = @At("TAIL"))
@@ -168,7 +210,7 @@ public abstract class MixinGuiTextField {
                     selection,
                     aligned,
                     direction,
-                    com.dhj.ingameime.UnicodeTextHelper.debugEscaped(self.getText())
+                    UnicodeTextHelper.debugEscaped(self.getText())
             );
             ingameime$adjustingSelection = true;
             self.setSelectionPos(aligned);
@@ -207,22 +249,29 @@ public abstract class MixinGuiTextField {
     }
 
     @Unique
-    private boolean ingameime$isJourneyMapSearchField(GuiTextField field, GuiScreen screen) {
+    private boolean ingameime$isJourneyMapSearchField(GuiTextField field, Fullscreen screen) {
+        // JourneyMap is a compile-time dependency (modImplementation in
+        // gradle/scripts/dependencies.gradle), but Fullscreen#searchTextX/searchTextZ are
+        // package-private members of the journeymap.client.ui.fullscreen package with no
+        // public getter, so they cannot be referenced directly and are read reflectively.
         try {
-            java.lang.reflect.Field fieldX = screen.getClass().getDeclaredField("searchTextX");
+            Field fieldX = Fullscreen.class.getDeclaredField("searchTextX");
             fieldX.setAccessible(true);
             Object searchTextX = fieldX.get(screen);
             if (searchTextX != null && searchTextX == field) {
                 return true;
             }
 
-            java.lang.reflect.Field fieldZ = screen.getClass().getDeclaredField("searchTextZ");
+            Field fieldZ = Fullscreen.class.getDeclaredField("searchTextZ");
             fieldZ.setAccessible(true);
             Object searchTextZ = fieldZ.get(screen);
             if (searchTextZ != null && searchTextZ == field) {
                 return true;
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            IngameIME_Forge.LOG.warn(
+                "IngameIME failed to read JourneyMap fullscreen search fields; IME focus handling on the JourneyMap fullscreen map may not engage.",
+                e);
         }
         return false;
     }
@@ -234,7 +283,7 @@ public abstract class MixinGuiTextField {
         }
         int[] previous = null;
         for (int start = 0; start < text.length(); ) {
-            int end = ingameime$nextClusterEnd(text, start);
+            int end = GraphemeClusters.nextClusterEnd(text, start);
             if (cursor <= start) {
                 return previous;
             }
@@ -253,7 +302,7 @@ public abstract class MixinGuiTextField {
             return null;
         }
         for (int start = 0; start < text.length(); ) {
-            int end = ingameime$nextClusterEnd(text, start);
+            int end = GraphemeClusters.nextClusterEnd(text, start);
             if (cursor < end) {
                 return new int[] {start, end};
             }
@@ -268,7 +317,7 @@ public abstract class MixinGuiTextField {
             return position;
         }
         for (int start = 0; start < text.length(); ) {
-            int end = ingameime$nextClusterEnd(text, start);
+            int end = GraphemeClusters.nextClusterEnd(text, start);
             if (position <= start) {
                 return position;
             }
@@ -278,35 +327,6 @@ public abstract class MixinGuiTextField {
             start = end;
         }
         return position;
-    }
-
-    @Unique
-    private int ingameime$nextClusterEnd(String text, int start) {
-        int i = start;
-        int first = text.codePointAt(i);
-        i += Character.charCount(first);
-
-        if (ingameime$isRegionalIndicator(first) && i < text.length()) {
-            int next = text.codePointAt(i);
-            if (ingameime$isRegionalIndicator(next)) {
-                return i + Character.charCount(next);
-            }
-        }
-
-        while (i < text.length()) {
-            int next = text.codePointAt(i);
-            if (next == 0x200D) {
-                i += Character.charCount(next);
-                if (i < text.length()) {
-                    i += Character.charCount(text.codePointAt(i));
-                }
-            } else if (ingameime$isClusterContinuation(next)) {
-                i += Character.charCount(next);
-            } else {
-                break;
-            }
-        }
-        return i;
     }
 
     @Unique
@@ -331,26 +351,81 @@ public abstract class MixinGuiTextField {
         );
     }
 
-    @Unique
-    private boolean ingameime$isClusterContinuation(int codePoint) {
-        if (codePoint == 0xFE0E
-                || codePoint == 0xFE0F
-                || (codePoint >= 0xE0100 && codePoint <= 0xE01EF)) {
-            return true;
+    /**
+     * Grapheme cluster boundary logic shared by the GuiTextField cluster operations. Kept
+     * free of Minecraft and mixin references so the logic can be unit-tested in isolation.
+     */
+    static final class GraphemeClusters {
+        private GraphemeClusters() {
         }
-        int type = Character.getType(codePoint);
-        if (type == Character.NON_SPACING_MARK
-                || type == Character.COMBINING_SPACING_MARK
-                || type == Character.ENCLOSING_MARK) {
-            return true;
-        }
-        return codePoint == 0x20E3
-                || (codePoint >= 0x1F3FB && codePoint <= 0x1F3FF)
-                || (codePoint >= 0xE0020 && codePoint <= 0xE007F);
-    }
 
-    @Unique
-    private boolean ingameime$isRegionalIndicator(int codePoint) {
-        return codePoint >= 0x1F1E6 && codePoint <= 0x1F1FF;
+        /**
+         * End offset (exclusive) of the grapheme cluster that starts at {@code start}.
+         */
+        static int nextClusterEnd(String text, int start) {
+            int i = start;
+            int first = text.codePointAt(i);
+            i += Character.charCount(first);
+
+            if (isRegionalIndicator(first) && i < text.length()) {
+                int next = text.codePointAt(i);
+                if (isRegionalIndicator(next)) {
+                    return i + Character.charCount(next);
+                }
+            }
+
+            while (i < text.length()) {
+                int next = text.codePointAt(i);
+                if (next == 0x200D) {
+                    i += Character.charCount(next);
+                    if (i < text.length()) {
+                        i += Character.charCount(text.codePointAt(i));
+                    }
+                } else if (isClusterContinuation(next)) {
+                    i += Character.charCount(next);
+                } else {
+                    break;
+                }
+            }
+            return i;
+        }
+
+        /**
+         * Largest grapheme cluster boundary that is still {@code <= limit}. Rolls a UTF-16
+         * char-based truncation length back to a cluster-safe cut point.
+         */
+        static int floorClusterBoundary(String text, int limit) {
+            int boundary = 0;
+            for (int start = 0; start < limit && start < text.length(); ) {
+                int end = nextClusterEnd(text, start);
+                if (end > limit) {
+                    break;
+                }
+                boundary = end;
+                start = end;
+            }
+            return boundary;
+        }
+
+        private static boolean isClusterContinuation(int codePoint) {
+            if (codePoint == 0xFE0E
+                    || codePoint == 0xFE0F
+                    || (codePoint >= 0xE0100 && codePoint <= 0xE01EF)) {
+                return true;
+            }
+            int type = Character.getType(codePoint);
+            if (type == Character.NON_SPACING_MARK
+                    || type == Character.COMBINING_SPACING_MARK
+                    || type == Character.ENCLOSING_MARK) {
+                return true;
+            }
+            return codePoint == 0x20E3
+                    || (codePoint >= 0x1F3FB && codePoint <= 0x1F3FF)
+                    || (codePoint >= 0xE0020 && codePoint <= 0xE007F);
+        }
+
+        private static boolean isRegionalIndicator(int codePoint) {
+            return codePoint >= 0x1F1E6 && codePoint <= 0x1F1FF;
+        }
     }
 }

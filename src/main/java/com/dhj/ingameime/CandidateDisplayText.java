@@ -9,6 +9,8 @@ import java.lang.reflect.Method;
 public final class CandidateDisplayText {
     private static final String FALLBACK = "\u00D7";
 
+    private static boolean neoFontRenderFailureLogged = false;
+
     private CandidateDisplayText() {
     }
 
@@ -118,6 +120,13 @@ public final class CandidateDisplayText {
         return false;
     }
 
+    /**
+     * NeoFontRender is not declared as a dependency in build.gradle or
+     * gradle/scripts/dependencies.gradle, so its classes are not compile-time available and
+     * its font manager state is probed reflectively. A missing class simply means the mod is
+     * not installed; anything failing after the class was found is a real incompatibility
+     * and is logged.
+     */
     private static boolean isNeoFontRenderActive() {
         try {
             Class<?> fontManagerClass = Class.forName(
@@ -130,7 +139,13 @@ public final class CandidateDisplayText {
             return callBoolean(instance, fontManagerClass, "isSkiaActive")
                     || callBoolean(instance, fontManagerClass, "isSfrActive")
                     || callBoolean(instance, fontManagerClass, "isActive");
-        } catch (Throwable ignored) {
+        } catch (ClassNotFoundException e) {
+            // NeoFontRender is not installed; this is the normal case, not a failure.
+            return false;
+        } catch (Throwable t) {
+            logNeoFontRenderFailure(
+                    "IngameIME found NeoFontRender but failed to query its FontManager; falling back to vanilla font metrics.",
+                    t);
             return false;
         }
     }
@@ -140,8 +155,24 @@ public final class CandidateDisplayText {
             Method method = targetClass.getMethod(methodName);
             Object value = method.invoke(target);
             return value instanceof Boolean && (Boolean) value;
-        } catch (Throwable ignored) {
+        } catch (NoSuchMethodException e) {
+            // The probed methods are alternatives across NeoFontRender versions; a missing
+            // one is expected and only means "try the next probe".
+            return false;
+        } catch (Throwable t) {
+            logNeoFontRenderFailure(
+                    "IngameIME failed to invoke NeoFontRender FontManager#" + methodName + "; treating NeoFontRender as inactive.",
+                    t);
             return false;
         }
+    }
+
+    private static void logNeoFontRenderFailure(String message, Throwable t) {
+        // Candidate text is re-evaluated every frame; log only the first failure to avoid spam.
+        if (neoFontRenderFailureLogged) {
+            return;
+        }
+        neoFontRenderFailureLogged = true;
+        IngameIME_Forge.LOG.warn(message, t);
     }
 }
