@@ -26,6 +26,9 @@ public class MixinLate implements ILateMixinLoader {
         if (Loader.isModLoaded("notes")) {
             mixins.add("mixins.ingameime.notes.json");
         }
+        if (Loader.isModLoaded("journeymap")) {
+            mixins.add("mixins.ingameime.journeymap.json");
+        }
         return mixins;
     }
 }

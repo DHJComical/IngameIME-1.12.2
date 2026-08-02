@@ -6,7 +6,8 @@ import com.dhj.ingameime.UnicodeTextHelper;
 import com.dhj.ingameime.control.DirectTextFieldControl;
 import com.dhj.ingameime.control.JEITextFieldControl;
 import com.dhj.ingameime.control.VanillaTextFieldControl;
-import journeymap.client.ui.fullscreen.Fullscreen;
+import com.dhj.ingameime.mixins.journeymap.AccessorJourneyMapFullscreen;
+import com.dhj.ingameime.mixins.journeymap.AccessorTextBoxButton;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.gui.GuiScreen;
@@ -22,12 +23,8 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.lang.reflect.Field;
-
 @Mixin(GuiTextField.class)
 public abstract class MixinGuiTextField {
-    @Unique
-    private static final String JOURNEYMAP_MOD_ID = "journeymap";
     @Unique
     private int ingameime$lastCursorPosition = -1;
     @Unique
@@ -43,8 +40,8 @@ public abstract class MixinGuiTextField {
 
         try {
             GuiScreen currentScreen = Minecraft.getMinecraft().currentScreen;
-            if (Loader.isModLoaded(JOURNEYMAP_MOD_ID) && currentScreen instanceof Fullscreen) {
-                if (!ingameime$isJourneyMapSearchField(self, (Fullscreen) currentScreen)) {
+            if (currentScreen instanceof AccessorJourneyMapFullscreen) {
+                if (!ingameime$isJourneyMapSearchField(self, (AccessorJourneyMapFullscreen) currentScreen)) {
                     return;
                 }
             }
@@ -249,31 +246,15 @@ public abstract class MixinGuiTextField {
     }
 
     @Unique
-    private boolean ingameime$isJourneyMapSearchField(GuiTextField field, Fullscreen screen) {
-        // JourneyMap is a compile-time dependency (modImplementation in
-        // gradle/scripts/dependencies.gradle), but Fullscreen#searchTextX/searchTextZ are
-        // package-private members of the journeymap.client.ui.fullscreen package with no
-        // public getter, so they cannot be referenced directly and are read reflectively.
-        try {
-            Field fieldX = Fullscreen.class.getDeclaredField("searchTextX");
-            fieldX.setAccessible(true);
-            Object searchTextX = fieldX.get(screen);
-            if (searchTextX != null && searchTextX == field) {
-                return true;
-            }
+    private boolean ingameime$isJourneyMapSearchField(GuiTextField field, AccessorJourneyMapFullscreen screen) {
+        return ingameime$isTextBoxButtonField(screen.getSearchTextX(), field)
+            || ingameime$isTextBoxButtonField(screen.getSearchTextZ(), field);
+    }
 
-            Field fieldZ = Fullscreen.class.getDeclaredField("searchTextZ");
-            fieldZ.setAccessible(true);
-            Object searchTextZ = fieldZ.get(screen);
-            if (searchTextZ != null && searchTextZ == field) {
-                return true;
-            }
-        } catch (Exception e) {
-            IngameIME_Forge.LOG.warn(
-                "IngameIME failed to read JourneyMap fullscreen search fields; IME focus handling on the JourneyMap fullscreen map may not engage.",
-                e);
-        }
-        return false;
+    @Unique
+    private boolean ingameime$isTextBoxButtonField(Object textBoxButton, GuiTextField field) {
+        return textBoxButton instanceof AccessorTextBoxButton
+            && ((AccessorTextBoxButton) textBoxButton).getTextBox() == field;
     }
 
     @Unique
