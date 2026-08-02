@@ -20,12 +20,12 @@ jobs:
         distribution: 'temurin'
     - uses: gradle/actions/setup-gradle@v6
       with:
-        gradle-version: 9.5.1
+        gradle-version: 9.6.1
       name: Set up Gradle
     - name: Add permission
       run: chmod +x ./gradlew
     - name: Execute Gradle build
-      run: ./gradlew build -x spotlessCheck
+      run: ./gradlew build
         
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v7

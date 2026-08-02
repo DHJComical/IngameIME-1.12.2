@@ -1,35 +1,28 @@
-.gradle
-**/build/
-!src/**/build/
-run/
-out/
-
-# Ignore Gradle GUI config
-gradle-app.setting
-
-# Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
-!gradle-wrapper.jar
-
-# Avoid ignore Gradle wrapper properties
-!gradle-wrapper.properties
-
-# Cache of project
-.gradletasknamecache
-
-# Eclipse Gradle plugin generated files
-bin/
+# eclipse
+bin
 *.launch
-.settings/
-.metadata/
-.project
+.settings
+.metadata
 .classpath
-eclipse/
+.project
 
-# IDEA config
-.idea/
+# idea
+out
 *.ipr
 *.iws
 *.iml
+.idea
+
+# gradle
+build
+.gradle
+
+# kate
+*.kate-swp
+
+# other
+eclipse
+run
 
 # Local desktop layout
 layout.json
