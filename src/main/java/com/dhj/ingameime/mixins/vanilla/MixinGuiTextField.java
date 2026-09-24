@@ -2,6 +2,7 @@ package com.dhj.ingameime.mixins.vanilla;
 
 import com.dhj.ingameime.IngameIME_Forge;
 import com.dhj.ingameime.Internal;
+import com.dhj.ingameime.IMStates;
 import com.dhj.ingameime.UnicodeTextHelper;
 import com.dhj.ingameime.control.DirectTextFieldControl;
 import com.dhj.ingameime.control.JEITextFieldControl;
@@ -41,7 +42,10 @@ public abstract class MixinGuiTextField {
         try {
             GuiScreen currentScreen = Minecraft.getMinecraft().currentScreen;
             if (currentScreen instanceof AccessorJourneyMapFullscreen) {
-                if (!ingameime$isJourneyMapSearchField(self, (AccessorJourneyMapFullscreen) currentScreen)) {
+                boolean journeyMapTextField = ingameime$isJourneyMapTextField(
+                    self,
+                    (AccessorJourneyMapFullscreen) currentScreen);
+                if (!journeyMapTextField && (isFocusedIn || !IMStates.isControlObject(self, false))) {
                     return;
                 }
             }
@@ -246,15 +250,22 @@ public abstract class MixinGuiTextField {
     }
 
     @Unique
-    private boolean ingameime$isJourneyMapSearchField(GuiTextField field, AccessorJourneyMapFullscreen screen) {
-        return ingameime$isTextBoxButtonField(screen.getSearchTextX(), field)
-            || ingameime$isTextBoxButtonField(screen.getSearchTextZ(), field);
+    private boolean ingameime$isJourneyMapTextField(GuiTextField field, AccessorJourneyMapFullscreen screen) {
+        if (ingameime$isTextBoxButtonField(screen.ingameime$getSearchTextX(), field)
+            || ingameime$isTextBoxButtonField(screen.ingameime$getSearchTextZ(), field)) {
+            return true;
+        }
+
+        journeymap.client.ui.fullscreen.MapChat chat = screen.ingameime$getChat();
+        return chat != null
+            && !chat.isHidden()
+            && ((AccessorGuiChat) chat).getInputField() == field;
     }
 
     @Unique
     private boolean ingameime$isTextBoxButtonField(Object textBoxButton, GuiTextField field) {
         return textBoxButton instanceof AccessorTextBoxButton
-            && ((AccessorTextBoxButton) textBoxButton).getTextBox() == field;
+            && ((AccessorTextBoxButton) textBoxButton).ingameime$getTextBox() == field;
     }
 
     @Unique

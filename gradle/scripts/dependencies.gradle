@@ -45,15 +45,15 @@ dependencies {
     implementation rfg.deobf('curse.maven:better-questing-unofficial-629629:7421294')
     implementation rfg.deobf('curse.maven:antique-atlas-227795:2823030')
     implementation rfg.deobf('curse.maven:bibliocraft-228027:3647708')
-    compileOnly rfg.deobf('curse.maven:journeymap-32274:5172461')
+    implementation rfg.deobf('curse.maven:journeymap-32274:8923612')
     implementation rfg.deobf('curse.maven:quark-243121:2924091')
     implementation rfg.deobf('curse.maven:autoreglib-250363:2746011')
     implementation rfg.deobf('curse.maven:notes-256087:2444465')
 
-    implementation rfg.deobf('curse.maven:xaeros-minimap-263420:8449793')
-    implementation rfg.deobf('curse.maven:xaeros-world-map-317780:8449883')
-    implementation rfg.deobf('curse.maven:xaeroplus-866084:8461544')
-    implementation rfg.deobf('curse.maven:xaerolib-1417462:8450080')
+    compileOnly rfg.deobf('curse.maven:xaeros-minimap-263420:8449793')
+    compileOnly rfg.deobf('curse.maven:xaeros-world-map-317780:8449883')
+    compileOnly rfg.deobf('curse.maven:xaeroplus-866084:8461544')
+    compileOnly rfg.deobf('curse.maven:xaerolib-1417462:8450080')
 
     compileOnly 'org.lwjgl:lwjgl-glfw:3.3.1'
     compileOnly 'org.lwjgl:lwjgl-glfw:3.3.1:natives-windows'

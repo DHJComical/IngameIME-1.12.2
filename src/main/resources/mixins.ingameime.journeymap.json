@@ -9,6 +9,8 @@
   "server": [],
   "client": [
     "AccessorJourneyMapFullscreen",
-    "AccessorTextBoxButton"
+    "AccessorTextBoxButton",
+    "MixinLayeredScreen",
+    "MixinJourneyMapFullscreenChat"
   ]
 }
